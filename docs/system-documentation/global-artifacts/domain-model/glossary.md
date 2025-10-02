@@ -1,0 +1,6 @@
+# Glossary
+
+
+| **Term or Expression** (EN)              | **Termo ou Expressão** (PT)                                                                                      | **Description (Definition and Information)** (EN)                                                                                                                                                  |                                       
+|:-----------------------------------------|:-----------------------------------------------------------------------------------------------------------------|:---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **AnnualProfit**                         | **LucroAnual**                                                                                                   | Represents the profit of a given station for a specific year, used for statistical analysis in US015.                                                                                              |
