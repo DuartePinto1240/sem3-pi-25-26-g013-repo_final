@@ -1,0 +1,37 @@
+@startuml
+left to right direction
+
+actor TerminalOperator as "Terminal operator"
+actor WarehousePlanner as "Warehouse planner"
+actor Planner as "Planner"
+actor Picker as "Picker"
+actor QualityOperator as "Quality operator"
+actor ProductOwner as "Product owner"
+
+package "Logistics in Railway Networks" {
+    rectangle "Sprint 1" {
+
+        usecase "UC1 - Instantiate the relational model using SQL DDL" as UC1
+        usecase "UC2 - Insert the date into the the new database" as UC2
+        usecase "UC3 - Wagons Unloading (Inventory replenishment)" as UC3
+        usecase "UC4 - Order Eligibility & Allocation" as UC4
+        usecase "UC5 - Picking Plans" as UC5
+        usecase "UC6 - Pick Path Sequencing" as UC6
+        usecase "UC7 - Returns & Quarantine" as UC7
+        usecase "UC8 - Present the Cargo Handling functionality" as UC8
+
+    }
+}
+
+
+' Associations
+ProductOwner --> UC1
+ProductOwner --> UC2
+TerminalOperator --> UC3
+WarehousePlanner --> UC4
+Planner --> UC5
+Picker --> UC6
+QualityOperator --> UC7
+ProductOwner --> UC8
+
+@enduml
