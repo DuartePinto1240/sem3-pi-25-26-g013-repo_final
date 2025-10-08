@@ -52,7 +52,7 @@ UserSession --> User : refers to >
 AuthRepository --> User
 AuthRepository --> Role
 
-' --- Exemplo de papéis ferroviários ---
+' --- Exemplo de papéis ferroviários ----
 Role <|-- Planner
 Role <|-- StationMaster
 Role <|-- FreightManager

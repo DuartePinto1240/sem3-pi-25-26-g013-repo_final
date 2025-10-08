@@ -1,4 +1,5 @@
 @startuml
+
 entity User
 entity Role
 entity Permission
