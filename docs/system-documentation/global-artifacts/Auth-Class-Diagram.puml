@@ -1,0 +1,61 @@
+@startuml
+title Auth Class Diagram - Railway Logistics Project
+
+' --- Entidades de domínio da autenticação ---
+class User {
+  - name : String
+  - email : String
+  - passwordHash : String
+  + getName() : String
+  + getEmail() : String
+  + checkPassword(pwd : String) : boolean
+}
+
+class Role {
+  - id : String
+  - description : String
+}
+
+' Associação entre utilizadores e papéis
+User "*" -- "*" Role : plays >
+
+' --- Camada de autenticação / lógica de negócio ---
+class AuthFacade {
+  + addUserRole(id : String, description : String) : boolean
+  + addUser(name : String, email : String, pwd : String) : void
+  + addUserWithRole(name : String, email : String, pwd : String, roleId : String) : boolean
+  + addUserWithRoles(name : String, email : String, pwd : String, rolesId : String[]) : boolean
+  + existsUser(email : String) : boolean
+  + doLogin(email : String, password : String) : UserSession
+  + getCurrentUserSession() : UserSession
+  + doLogout() : void
+}
+
+class UserSession {
+  + isLoggedIn() : boolean
+  + isLoggedInWithRole(roleId : String) : boolean
+  + getUserName() : String
+  + getUserId() : String
+}
+
+class AuthRepository {
+  + saveUser(user : User) : void
+  + findUserByEmail(email : String) : User
+  + saveRole(role : Role) : void
+  + findRoleById(id : String) : Role
+}
+
+' --- Relações ---
+AuthFacade --> UserSession : manages >
+AuthFacade --> AuthRepository : uses >
+UserSession --> User : refers to >
+AuthRepository --> User
+AuthRepository --> Role
+
+' --- Exemplo de papéis ferroviários ---
+Role <|-- Planner
+Role <|-- StationMaster
+Role <|-- FreightManager
+Role <|-- TrainDriver
+
+@enduml
