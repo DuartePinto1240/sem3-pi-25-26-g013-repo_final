@@ -1,0 +1,38 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Product Owner" as PO
+participant ":System" as System
+participant ":Database" as DB
+
+activate PO
+
+    PO -> System : requests to insert provided data
+    activate System
+
+        System --> PO : requests data file or manual input
+    deactivate System
+
+        PO -> System : provides data to insert
+    activate System
+
+        System -> DB : connects to new database (created in USBD03)
+        activate DB
+            DB --> System : connection successful
+        deactivate DB
+
+        System -> DB : executes INSERT statements with provided data
+        activate DB
+            DB --> System : data inserted successfully
+        deactivate DB
+
+        System --> PO : displays success message and inserted records summary
+    deactivate System
+
+deactivate PO
+
+@enduml
