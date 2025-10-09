@@ -45,7 +45,7 @@ new database generated in USBD03.
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![System Sequence Diagram](svg/US012-SSD.svg)
+![System Sequence Diagram](svg/SSD.svg)
 
 ### 1.7 Other Relevant Remarks
 
