@@ -1,0 +1,27 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Planner" as Planner
+participant ":System" as System
+participant ":Database" as DB
+
+activate Planner
+
+    Planner -> System : requests list of all line segments for a given owner (with owner ID)
+    activate System
+
+        System -> DB : query line segments where the owner equals given owner
+        activate DB
+            DB --> System : returns list of segments and their corresponding lines
+        deactivate DB
+
+        System --> Planner : displays list of line segments with line information
+    deactivate System
+
+deactivate Planner
+
+@enduml
