@@ -12,17 +12,7 @@ activate APP
 
 APP -> DB : execute SQL query\n(filter by type, gauge, operator)
 activate DB
-note right
-    SQL logic:
-    SELECT wagon_id, type, gauge, tare, payload_capacity,
-           volume_capacity, operator_name
-    FROM wagon JOIN operator
-    WHERE LOWER(type)=LOWER(:type)
-      AND LOWER(gauge)=LOWER(:gauge)
-      AND LOWER(operator_name)=LOWER(:operator)
-      AND status='ACTIVE'
-    ORDER BY wagon_id;
-end note
+
 DB --> APP : return query results (rows or empty set)
 deactivate DB
 

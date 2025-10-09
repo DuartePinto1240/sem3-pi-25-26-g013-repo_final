@@ -8,6 +8,7 @@ As a planner, I want a list of all wagons of a given type and gauge that belong 
 
 This functionality helps planners to quickly identify wagons suitable for specific routes (which depend on track gauge and cargo type) and ensures that only wagons owned or operated by a specific company are considered in operational planning.
 
+---
 ### 1.2. Customer Specifications and Clarifications
 
 **From the specifications document:**
@@ -64,9 +65,9 @@ wagon_id, type, gauge, tare, payload_capacity, volume_capacity, operator_id.
 
 **Input Data:**
 - **Parameters (UI / API):**
-  - `type` (VARCHAR2) — e.g., `'Flatcar'`
-  - `gauge` (VARCHAR2) — e.g., `'1435mm'`
-  - `operator_name` (VARCHAR2) — e.g., `'Medway Portugal'`
+  - `type` (VARCHAR) — e.g., `'Flatcar'`
+  - `gauge` (VARCHAR) — e.g., `'1435mm'`
+  - `operator_name` (VARCHAR) — e.g., `'Medway Portugal'`
 - **Contextual Data (base de dados):**
   - Tabela `WAGON` com colunas relevantes: `wagon_id`, `type`, `gauge`, `tare`, `payload_capacity`, `volume_capacity`, `operator_id`, `status`
   - Tabela `OPERATOR` com: `operator_id`, `operator_name`
