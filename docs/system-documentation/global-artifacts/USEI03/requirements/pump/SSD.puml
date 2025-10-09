@@ -1,0 +1,32 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Terminal Operator" as OPERATOR
+participant ":System" as System
+participant "WMS" as WMS
+
+activate OPERATOR
+
+OPERATOR -> System : requests to unload wagons (wagons.csv)
+@startuml
+
+actor Planner as P
+participant "Warehouse Management System (WMS)" as S
+
+P -> S: Select packing heuristic (FF / FFD / BFD)\nand input trolley capacity
+S --> P: Confirm input received
+
+P -> S: Request picking plan generation
+
+S -> S: Retrieve allocation rows from USEI02
+S -> S: Apply selected heuristic to pack allocations
+S -> S: Check trolley capacity and split/defer items if needed
+S -> S: Calculate trolley utilization (usedWeight / capacityWeight)
+S -> P: Return picking plan summary\n(number of trolleys, utilization, plan details)
+
+@enduml
+
