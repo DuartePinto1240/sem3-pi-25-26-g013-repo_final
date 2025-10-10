@@ -120,7 +120,7 @@ Every action performed must be **logged into an audit file** for accountability 
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI05-SSD](svg/USEI05-SSD.svg)
+![USEI05-SSD](../svg/SSD.png)
 
 ---
 

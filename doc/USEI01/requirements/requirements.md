@@ -109,7 +109,7 @@ Each product SKU is stored in boxes, each with a **unique location code** (Aisle
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI01-SSD](requirements/pump/USEI01-SSD.svg)
+![USEI01-SSD](svg/SSD.png)
 
 ---
 

@@ -73,7 +73,7 @@ to coordinate (a2, b2) is given by the following movement model:
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI04-SSD](../requirements/svg/SSD.svg)
+![USEI04-SSD](svg/SSD.svg)
 
 ---
 

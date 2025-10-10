@@ -79,7 +79,7 @@ parts of orders, that fit within the capacity of the trolley. So, pickers can sa
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI03-SSD](../requirements/svg/SSD.svg)
+![USEI03-SSD](svg/SSD.svg)
 
 ---
 
