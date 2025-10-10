@@ -7,6 +7,7 @@ actor Planner as "Planner"
 actor Picker as "Picker"
 actor QualityOperator as "Quality operator"
 actor ProductOwner as "Product owner"
+actor TrafficDispatcher as "Traffic Dispatcher"
 
 package "Logistics in Railway Networks" {
     rectangle "Sprint 1" {
@@ -19,6 +20,7 @@ package "Logistics in Railway Networks" {
         usecase "UC6 - Pick Path Sequencing" as UC6
         usecase "UC7 - Returns & Quarantine" as UC7
         usecase "UC8 - Present the Cargo Handling functionality" as UC8
+        usecase "UC9 - Calculate the estimated travel time between two stations" as UC9
 
     }
 }
@@ -33,5 +35,6 @@ Planner --> UC5
 Picker --> UC6
 QualityOperator --> UC7
 ProductOwner --> UC8
+TrafficDispatcher --> UC9
 
 @enduml

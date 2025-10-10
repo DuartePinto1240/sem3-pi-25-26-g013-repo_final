@@ -131,7 +131,7 @@ The outcome consists of:
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI02-SSD](../svg/SSD.png)
+![USEI02-SSD](svg/SSD.png)
 
 ---
 
