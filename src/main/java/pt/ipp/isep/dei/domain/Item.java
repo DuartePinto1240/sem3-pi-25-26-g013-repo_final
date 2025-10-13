@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 public class Item {
     private String sku;
     private String name;
@@ -43,7 +45,7 @@ public class Item {
 
     @Override
     public String toString() {
-        return "Item{" +
+        return "main.java.pt.ipp.isep.dei.domain.Item{" +
                 "sku='" + sku + '\'' +
                 ", name='" + name + '\'' +
                 ", category='" + category + '\'' +

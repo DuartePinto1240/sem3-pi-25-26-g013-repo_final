@@ -1,4 +1,4 @@
-import java.util.List;
+package main.java.pt.ipp.isep.dei.domain;
 
 class InventoryManager {
     private Warehouse warehouse;

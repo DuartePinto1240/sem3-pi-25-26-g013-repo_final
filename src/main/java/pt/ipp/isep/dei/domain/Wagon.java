@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.util.List;
 
 public class Wagon {
@@ -17,7 +19,7 @@ public class Wagon {
 
     @Override
     public String toString() {
-        return "Wagon{" +
+        return "main.java.pt.ipp.isep.dei.domain.Wagon{" +
                 "wagonId='" + wagonId + '\'' +
                 ", boxes=" + boxes +
                 '}';

@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.util.List;
 
 class Validator {

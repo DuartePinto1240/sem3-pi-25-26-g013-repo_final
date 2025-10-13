@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -67,13 +69,13 @@ public class WagonUnloader {
         for (Bay bay : bayList) {
             if (bay.canStoreBox(box)) {
                 bay.addBox(box);
-                System.out.println("Box " + box.getBoxId() + " alocada no Bay " + bay.getBay() + " do Warehouse " + bay.getWarehouseId());
+                System.out.println("main.java.pt.ipp.isep.dei.domain.Box " + box.getBoxId() + " alocada no main.java.pt.ipp.isep.dei.domain.Bay " + bay.getBay() + " do main.java.pt.ipp.isep.dei.domain.Warehouse " + bay.getWarehouseId());
                 return;
             }
         }
 
         // Se não houver bay com capacidade suficiente
-        System.out.println("Não há capacidade suficiente para armazenar a Box " + box.getBoxId());
+        System.out.println("Não há capacidade suficiente para armazenar a main.java.pt.ipp.isep.dei.domain.Box " + box.getBoxId());
     }
 }
 

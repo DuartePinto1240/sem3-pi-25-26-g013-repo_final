@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public class Bay {
 
     @Override
     public String toString() {
-        return "Bay{" +
+        return "main.java.pt.ipp.isep.dei.domain.Bay{" +
                 "warehouseId='" + warehouseId + '\'' +
                 ", aisle=" + aisle +
                 ", bay=" + bay +

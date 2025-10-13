@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -30,7 +32,7 @@ public class Warehouse {
 
     @Override
     public String toString() {
-        return "Warehouse{" +
+        return "main.java.pt.ipp.isep.dei.domain.Warehouse{" +
                 "id='" + id + '\'' +
                 ", bays=" + bays +
                 '}';

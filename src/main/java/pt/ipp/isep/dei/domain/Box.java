@@ -1,3 +1,5 @@
+package main.java.pt.ipp.isep.dei.domain;
+
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
@@ -40,7 +42,7 @@ public class Box {
 
     @Override
     public String toString() {
-        return "Box{" +
+        return "main.java.pt.ipp.isep.dei.domain.Box{" +
                 "boxId='" + boxId + '\'' +
                 ", sku='" + sku + '\'' +
                 ", quantity=" + quantity +
