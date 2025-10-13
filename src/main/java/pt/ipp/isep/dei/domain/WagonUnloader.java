@@ -32,51 +32,47 @@ public class WagonUnloader {
 
     // Método que realiza a alocação da caixa no armazém, respeitando FEFO ou FIFO
     private void placeBoxInBay(Box box, boolean isPerishable) {
-        // Obter os bays do warehouse através do getter
         Map<String, Bay> bays = warehouse.getBays();
 
-        // Ordenar os bays do armazém
-        List<Bay> bayList = new ArrayList<>(bays.values());
-
-        // Ordenação: FEFO (para perecíveis) ou FIFO (para não perecíveis)
+        Comparator<Box> comparator = null;
         if (isPerishable) {
-            // Ordena por data de expiração (mais próxima primeiro) ou por data de recebimento
-            Collections.sort(bayList, new Comparator<Bay>() {
+            comparator = new Comparator<Box>() {
                 @Override
-                public int compare(Bay bay1, Bay bay2) {
-                    // Ordena as caixas em cada bay por data de expiração (mais próxima primeiro)
-                    Box box1 = bay1.getStoredBoxes().get(0); // Pega a primeira caixa (ou a mais antiga)
-                    Box box2 = bay2.getStoredBoxes().get(0); // Pega a primeira caixa (ou a mais antiga)
-                    if (box1.getExpiryDate() == null) return 1;
-                    if (box2.getExpiryDate() == null) return -1;
-                    return box1.getExpiryDate().compareTo(box2.getExpiryDate());
+                public int compare(Box b1, Box b2) {
+                    if (b1.getExpiryDate() == null && b2.getExpiryDate() == null) return 0;
+                    if (b1.getExpiryDate() == null) return 1; // Não perecível vai depois
+                    if (b2.getExpiryDate() == null) return -1; // Não perecível vai depois
+                    return b1.getExpiryDate().compareTo(b2.getExpiryDate());
                 }
-            });
+            };
         } else {
-            // FIFO: ordena pelas caixas recebidas primeiro
-            Collections.sort(bayList, new Comparator<Bay>() {
+            comparator = new Comparator<Box>() {
                 @Override
-                public int compare(Bay bay1, Bay bay2) {
-                    // Ordena as caixas pela data de recebimento (primeiro recebido, primeiro armazenado)
-                    Box box1 = bay1.getStoredBoxes().get(0); // Pega a primeira caixa (ou a mais antiga)
-                    Box box2 = bay2.getStoredBoxes().get(0); // Pega a primeira caixa (ou a mais antiga)
-                    return box1.getReceivedAt().compareTo(box2.getReceivedAt());
+                public int compare(Box b1, Box b2) {
+                    return b1.getReceivedAt().compareTo(b2.getReceivedAt());
                 }
-            });
+            };
         }
 
-        // Buscar o primeiro bay com capacidade para armazenar a caixa
-        for (Bay bay : bayList) {
+        for (Bay bay : bays.values()) {
             if (bay.canStoreBox(box)) {
                 bay.addBox(box);
-                System.out.println("main.java.pt.ipp.isep.dei.domain.Box " + box.getBoxId() + " alocada no main.java.pt.ipp.isep.dei.domain.Bay " + bay.getBay() + " do main.java.pt.ipp.isep.dei.domain.Warehouse " + bay.getWarehouseId());
+
+                // Ordenar APÓS adicionar, apenas neste bay
+                Collections.sort(bay.getStoredBoxes(), comparator);
+
+                System.out.println("Box " + box.getBoxId() + " alocada no Bay " + bay.getBay() + " do Warehouse " + bay.getWarehouseId());
                 return;
             }
         }
 
         // Se não houver bay com capacidade suficiente
-        System.out.println("Não há capacidade suficiente para armazenar a main.java.pt.ipp.isep.dei.domain.Box " + box.getBoxId());
+        System.out.println("Não há capacidade suficiente para armazenar a Box " + box.getBoxId());
     }
+
+
+
+
 }
 
 
