@@ -1,32 +1,170 @@
-CREATE TABLE RailwayLine (line_id number(10) GENERATED AS IDENTITY, owner nvarchar2(255) NOT NULL, name nvarchar2(255) NOT NULL, PRIMARY KEY (line_id));
-CREATE TABLE LineSegment (segment_id number(10) GENERATED AS IDENTITY, line_id number(10) NOT NULL, TrackElectrificationtrackelectrification_id number(10) NOT NULL, lenght_km number(10) NOT NULL, track_type nvarchar2(255) NOT NULL, speed_limit number(10) NOT NULL, max_weight nvarchar2(255) NOT NULL, Gaugegauge_id number(10) NOT NULL, PRIMARY KEY (segment_id));
-CREATE TABLE Locomotive (loco_id number(10) GENERATED AS IDENTITY, Operatoroperator_id number(10) NOT NULL, Trainstrains_id number(10) NOT NULL, FuelTypefueltype_id number(10) NOT NULL, model nvarchar2(255) NOT NULL, type nvarchar2(255) NOT NULL, power number(10) NOT NULL, weight number(10) NOT NULL, operator number(10) NOT NULL, Gaugegauge_id number(10) NOT NULL, PRIMARY KEY (loco_id));
-CREATE TABLE Wagon (wagon_id number(10) GENERATED AS IDENTITY, Operatoroperator_id number(10) NOT NULL, Freightfreight_id number(10) NOT NULL, WagonsTypewagonstype_id number(10) NOT NULL, type nvarchar2(255) NOT NULL, capacity number(10) NOT NULL, tare_weight number(10) NOT NULL, operator number(10) NOT NULL, Gaugegauge_id number(10) NOT NULL, PRIMARY KEY (wagon_id));
-CREATE TABLE Station (station_id number(10) GENERATED AS IDENTITY, Facilitiesfacilities_id number(10) NOT NULL, name nvarchar2(255) NOT NULL, location nvarchar2(255) NOT NULL UNIQUE, Facilitiestype nvarchar2(255) NOT NULL, PRIMARY KEY (station_id));
-CREATE TABLE Freight (freight_id number(10) GENERATED AS IDENTITY, departure_time date NOT NULL, arrival_time date, Trainstrains_id number(10) NOT NULL, Stationstation_id number(10) NOT NULL, PRIMARY KEY (freight_id));
-CREATE TABLE Terminal (terminal_id number(10) GENERATED AS IDENTITY, Facilitiesfacilities_id number(10) NOT NULL, name nvarchar2(255) NOT NULL, location number(10) NOT NULL UNIQUE, capacity number(10) NOT NULL, Facilitiestype nvarchar2(255) NOT NULL, PRIMARY KEY (terminal_id));
-CREATE TABLE Operator (operator_id number(10) GENERATED AS IDENTITY, name number(10) NOT NULL, country nvarchar2(255) NOT NULL, PRIMARY KEY (operator_id));
-CREATE TABLE Facilities (facilities_id number(10) GENERATED AS IDENTITY, type nvarchar2(255) NOT NULL, PRIMARY KEY (facilities_id));
-CREATE TABLE FreightYard (freightyard_id number(10) GENERATED AS IDENTITY, Facilitiesfacilities_id number(10) NOT NULL, name nvarchar2(255) NOT NULL, location nvarchar2(255) NOT NULL UNIQUE, Facilitiestype nvarchar2(255) NOT NULL, PRIMARY KEY (freightyard_id));
-CREATE TABLE Trains (trains_id number(10) GENERATED AS IDENTITY, PRIMARY KEY (trains_id));
-CREATE TABLE WagonsType (wagonstype_id number(10) GENERATED AS IDENTITY, type number(10) NOT NULL, PRIMARY KEY (wagonstype_id));
-CREATE TABLE FuelType (fueltype_id number(10) GENERATED AS IDENTITY, description nvarchar2(255) NOT NULL, PRIMARY KEY (fueltype_id));
-CREATE TABLE TrackElectrification (trackelectrification_id number(10) GENERATED AS IDENTITY, description nvarchar2(255), PRIMARY KEY (trackelectrification_id));
-CREATE TABLE Gauge (gauge_id number(10) GENERATED AS IDENTITY, width_mm number(10) NOT NULL, description nvarchar2(255) NOT NULL, PRIMARY KEY (gauge_id));
-CREATE TABLE Cargo (cargo_id number(10) GENERATED AS IDENTITY, description nvarchar2(255) NOT NULL, type nvarchar2(255) NOT NULL, quantity number(10) NOT NULL, volume number(10) NOT NULL, weight number(10) NOT NULL, expiry_date date NOT NULL, Wagonwagon_id number(10) NOT NULL, PRIMARY KEY (cargo_id));
-ALTER TABLE LineSegment ADD CONSTRAINT FKLineSegmen69130 FOREIGN KEY (line_id) REFERENCES RailwayLine (line_id);
-ALTER TABLE Locomotive ADD CONSTRAINT FKLocomotive307984 FOREIGN KEY (Operatoroperator_id) REFERENCES Operator (operator_id);
-ALTER TABLE Wagon ADD CONSTRAINT FKWagon734447 FOREIGN KEY (Operatoroperator_id) REFERENCES Operator (operator_id);
-ALTER TABLE Wagon ADD CONSTRAINT FKWagon170127 FOREIGN KEY (Freightfreight_id) REFERENCES Freight (freight_id);
-ALTER TABLE Locomotive ADD CONSTRAINT FKLocomotive242080 FOREIGN KEY (Trainstrains_id) REFERENCES Trains (trains_id);
-ALTER TABLE Wagon ADD CONSTRAINT FKWagon638704 FOREIGN KEY (WagonsTypewagonstype_id) REFERENCES WagonsType (wagonstype_id);
-ALTER TABLE Locomotive ADD CONSTRAINT FKLocomotive492751 FOREIGN KEY (FuelTypefueltype_id) REFERENCES FuelType (fueltype_id);
-ALTER TABLE LineSegment ADD CONSTRAINT FKLineSegmen313705 FOREIGN KEY (TrackElectrificationtrackelectrification_id) REFERENCES TrackElectrification (trackelectrification_id);
-ALTER TABLE Station ADD CONSTRAINT FKStation42837 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
-ALTER TABLE FreightYard ADD CONSTRAINT FKFreightYar631300 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
-ALTER TABLE Terminal ADD CONSTRAINT FKTerminal80279 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
-ALTER TABLE Freight ADD CONSTRAINT FKFreight679191 FOREIGN KEY (Stationstation_id) REFERENCES Station (station_id);
-ALTER TABLE Cargo ADD CONSTRAINT FKCargo517547 FOREIGN KEY (Wagonwagon_id) REFERENCES Wagon (wagon_id);
-ALTER TABLE LineSegment ADD CONSTRAINT FKLineSegmen752311 FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
-ALTER TABLE Locomotive ADD CONSTRAINT FKLocomotive149230 FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
-ALTER TABLE Wagon ADD CONSTRAINT FKWagon424306 FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
+CREATE TABLE RailwayLine
+(
+    line_id number(10) GENERATED AS IDENTITY,
+    owner   nvarchar2(255) NOT NULL,
+    name    nvarchar2(255) NOT NULL,
+    PRIMARY KEY (line_id)
+);
+CREATE TABLE LineSegment
+(
+    segment_id                                  number(10) GENERATED AS IDENTITY,
+    line_id                                     number(10) NOT NULL,
+    TrackElectrificationtrackelectrification_id number(10) NOT NULL,
+    lenght_km                                   number(10) NOT NULL,
+    track_type                                  nvarchar2(255) NOT NULL,
+    speed_limit                                 number(10) NOT NULL,
+    max_weight                                  nvarchar2(255) NOT NULL,
+    Gaugegauge_id                               number(10) NOT NULL,
+    PRIMARY KEY (segment_id)
+);
+CREATE TABLE Locomotive
+(
+    loco_id             number(10) GENERATED AS IDENTITY,
+    Operatoroperator_id number(10) NOT NULL,
+    Trainstrains_id     number(10) NOT NULL,
+    FuelTypefueltype_id number(10) NOT NULL,
+    model               nvarchar2(255) NOT NULL,
+    type                nvarchar2(255) NOT NULL,
+    power               number(10) NOT NULL,
+    weight              number(10) NOT NULL,
+    operator            number(10) NOT NULL,
+    Gaugegauge_id       number(10) NOT NULL,
+    PRIMARY KEY (loco_id)
+);
+CREATE TABLE Wagon
+(
+    wagon_id                number(10) GENERATED AS IDENTITY,
+    Operatoroperator_id     number(10) NOT NULL,
+    Freightfreight_id       number(10) NOT NULL,
+    WagonsTypewagonstype_id number(10) NOT NULL,
+    type                    nvarchar2(255) NOT NULL,
+    capacity                number(10) NOT NULL,
+    tare_weight             number(10) NOT NULL,
+    operator                number(10) NOT NULL,
+    Gaugegauge_id           number(10) NOT NULL,
+    PRIMARY KEY (wagon_id)
+);
+CREATE TABLE Station
+(
+    station_id              number(10) GENERATED AS IDENTITY,
+    Facilitiesfacilities_id number(10) NOT NULL,
+    name                    nvarchar2(255) NOT NULL,
+    location                nvarchar2(255) NOT NULL UNIQUE,
+    Facilitiestype          nvarchar2(255) NOT NULL,
+    PRIMARY KEY (station_id)
+);
+CREATE TABLE Freight
+(
+    freight_id        number(10) GENERATED AS IDENTITY,
+    departure_time    date NOT NULL,
+    arrival_time      date,
+    Trainstrains_id   number(10) NOT NULL,
+    Stationstation_id number(10) NOT NULL,
+    PRIMARY KEY (freight_id)
+);
+CREATE TABLE Terminal
+(
+    terminal_id             number(10) GENERATED AS IDENTITY,
+    Facilitiesfacilities_id number(10) NOT NULL,
+    name                    nvarchar2(255) NOT NULL,
+    location                number(10) NOT NULL UNIQUE,
+    capacity                number(10) NOT NULL,
+    Facilitiestype          nvarchar2(255) NOT NULL,
+    PRIMARY KEY (terminal_id)
+);
+CREATE TABLE Operator
+(
+    operator_id number(10) GENERATED AS IDENTITY,
+    name        number(10) NOT NULL,
+    country     nvarchar2(255) NOT NULL,
+    PRIMARY KEY (operator_id)
+);
+CREATE TABLE Facilities
+(
+    facilities_id number(10) GENERATED AS IDENTITY,
+    type          nvarchar2(255) NOT NULL,
+    PRIMARY KEY (facilities_id)
+);
+CREATE TABLE FreightYard
+(
+    freightyard_id          number(10) GENERATED AS IDENTITY,
+    Facilitiesfacilities_id number(10) NOT NULL,
+    name                    nvarchar2(255) NOT NULL,
+    location                nvarchar2(255) NOT NULL UNIQUE,
+    Facilitiestype          nvarchar2(255) NOT NULL,
+    PRIMARY KEY (freightyard_id)
+);
+CREATE TABLE Trains
+(
+    trains_id number(10) GENERATED AS IDENTITY,
+    PRIMARY KEY (trains_id)
+);
+CREATE TABLE WagonsType
+(
+    wagonstype_id number(10) GENERATED AS IDENTITY,
+    type          number(10) NOT NULL,
+    PRIMARY KEY (wagonstype_id)
+);
+CREATE TABLE FuelType
+(
+    fueltype_id number(10) GENERATED AS IDENTITY,
+    description nvarchar2(255) NOT NULL,
+    PRIMARY KEY (fueltype_id)
+);
+CREATE TABLE TrackElectrification
+(
+    trackelectrification_id number(10) GENERATED AS IDENTITY,
+    description             nvarchar2(255),
+    PRIMARY KEY (trackelectrification_id)
+);
+CREATE TABLE Gauge
+(
+    gauge_id    number(10) GENERATED AS IDENTITY,
+    width_mm    number(10) NOT NULL,
+    description nvarchar2(255) NOT NULL,
+    PRIMARY KEY (gauge_id)
+);
+CREATE TABLE Cargo
+(
+    cargo_id      number(10) GENERATED AS IDENTITY,
+    description   nvarchar2(255) NOT NULL,
+    type          nvarchar2(255) NOT NULL,
+    quantity      number(10) NOT NULL,
+    volume        number(10) NOT NULL,
+    weight        number(10) NOT NULL,
+    expiry_date   date NOT NULL,
+    Wagonwagon_id number(10) NOT NULL,
+    PRIMARY KEY (cargo_id)
+);
+ALTER TABLE LineSegment
+    ADD CONSTRAINT FKLineSegmen69130 FOREIGN KEY (line_id) REFERENCES RailwayLine (line_id);
+ALTER TABLE Locomotive
+    ADD CONSTRAINT FKLocomotive307984 FOREIGN KEY (Operatoroperator_id) REFERENCES Operator (operator_id);
+ALTER TABLE Wagon
+    ADD CONSTRAINT FKWagon734447 FOREIGN KEY (Operatoroperator_id) REFERENCES Operator (operator_id);
+ALTER TABLE Wagon
+    ADD CONSTRAINT FKWagon170127 FOREIGN KEY (Freightfreight_id) REFERENCES Freight (freight_id);
+ALTER TABLE Locomotive
+    ADD CONSTRAINT FKLocomotive242080 FOREIGN KEY (Trainstrains_id) REFERENCES Trains (trains_id);
+ALTER TABLE Wagon
+    ADD CONSTRAINT FKWagon638704 FOREIGN KEY (WagonsTypewagonstype_id) REFERENCES WagonsType (wagonstype_id);
+ALTER TABLE Locomotive
+    ADD CONSTRAINT FKLocomotive492751 FOREIGN KEY (FuelTypefueltype_id) REFERENCES FuelType (fueltype_id);
+ALTER TABLE LineSegment
+    ADD CONSTRAINT FKLineSegmen313705 FOREIGN KEY (TrackElectrificationtrackelectrification_id) REFERENCES TrackElectrification (trackelectrification_id);
+ALTER TABLE Station
+    ADD CONSTRAINT FKStation42837 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
+ALTER TABLE FreightYard
+    ADD CONSTRAINT FKFreightYar631300 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
+ALTER TABLE Terminal
+    ADD CONSTRAINT FKTerminal80279 FOREIGN KEY (Facilitiesfacilities_id) REFERENCES Facilities (facilities_id);
+ALTER TABLE Freight
+    ADD CONSTRAINT FKFreight679191 FOREIGN KEY (Stationstation_id) REFERENCES Station (station_id);
+ALTER TABLE Cargo
+    ADD CONSTRAINT FKCargo517547 FOREIGN KEY (Wagonwagon_id) REFERENCES Wagon (wagon_id);
+ALTER TABLE LineSegment
+    ADD CONSTRAINT FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
+ALTER TABLE Locomotive
+    ADD CONSTRAINT FKLocomotive149230 FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
+ALTER TABLE Wagon
+    ADD CONSTRAINT FK_Wagon_Gauge FOREIGN KEY (Gaugegauge_id) REFERENCES Gauge (gauge_id);
