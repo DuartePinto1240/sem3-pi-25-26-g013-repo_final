@@ -1,3 +1,5 @@
+package test.java.pt.ipp.isep.dei.domain;
+
 import main.java.pt.ipp.isep.dei.domain.Bay;
 import main.java.pt.ipp.isep.dei.domain.Warehouse;
 import org.junit.jupiter.api.Test;

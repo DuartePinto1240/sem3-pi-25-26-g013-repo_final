@@ -1,9 +1,9 @@
+package test.java.pt.ipp.isep.dei.domain;
+
 import main.java.pt.ipp.isep.dei.domain.Bay;
 import main.java.pt.ipp.isep.dei.domain.Box;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.util.List;
 
 public class BayTest {
 
