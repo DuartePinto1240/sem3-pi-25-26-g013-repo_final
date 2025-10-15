@@ -12,6 +12,11 @@ class Validator {
     public void validateBox(Box box) {
         // Implementar a validação da caixa aqui
     }
+
+    // Implementação do método validateItems
+    public void validateItems(Item item) {
+        // Implementar a validação do item aqui
+    }
 }
 
 
