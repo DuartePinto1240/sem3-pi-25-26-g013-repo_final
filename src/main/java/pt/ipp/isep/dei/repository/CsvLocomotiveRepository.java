@@ -1,4 +1,4 @@
-package main.java.pt.ipp.isep.dei.repository.csv;
+package main.java.pt.ipp.isep.dei.repository;
 
 import main.java.pt.ipp.isep.dei.domain.Locomotive;
 import main.java.pt.ipp.isep.dei.repository.LocomotiveRepository;
