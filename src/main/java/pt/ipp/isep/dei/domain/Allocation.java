@@ -11,8 +11,6 @@ public class Allocation {
     private int bay;
 
     // Construtor
-
-
     public Allocation(String orderId, int lineNo, String sku, double qty, double weight, String boxId, int aisle, int bay) {
         this.orderId = orderId;
         this.lineNo = lineNo;
