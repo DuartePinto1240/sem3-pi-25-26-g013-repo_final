@@ -1,0 +1,4 @@
+id,model,maxSpeedKmH,weightTons,isElectric
+LOC01,Siemens Vectron,200,87,1
+LOC02,Stadler Euro 6000,160,120,1
+LOC03,Alstom EMD Class 77,120,126,0
