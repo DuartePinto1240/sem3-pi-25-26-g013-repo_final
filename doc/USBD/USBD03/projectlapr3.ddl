@@ -10,36 +10,37 @@ CREATE TABLE RailwayLine
 );
 CREATE TABLE LineSegment
 (
-    line_segment_id number(10) GENERATED AS IDENTITY,
-    line_id         number(10) NOT NULL,
-    length_m        number(10) NOT NULL,
-    speed_limit     number(10) NOT NULL,
-    max_weight      nvarchar2(255) NOT NULL,
-    segment_order   number(5) NOT NULL,
-    track_type      varchar2(6) NOT NULL,
-    electrified     varchar2(3) NOT NULL,
+    line_segment_id NUMBER(10) GENERATED AS IDENTITY,
+    line_id         NUMBER(10) NOT NULL,
+    length_m        NUMBER(10) NOT NULL,
+    speed_limit     NUMBER(10) NOT NULL,
+    max_weight      NUMBER(10) NOT NULL,
+    segment_order   NUMBER(5)  NOT NULL,
+    track_type      VARCHAR2(6) NOT NULL,
+    electrified     VARCHAR2(3) NOT NULL,
     PRIMARY KEY (line_segment_id),
-    CONSTRAINT CHK_is_eletcrified CHECK (electrified IN ('Yes', 'No') ),
-    CONSTRAINT " CHK_track_type_valid" CHECK (track_type IN ('single', 'double') )
-    CONSTRAINT CHK_SEGMENT_ORDER_GT0 CHECK (segment_order > 0),
-    CONSTRAINT CHK_LENGTH_GT0 CHECK (length_m > 0),
-    CONSTRAINT CHK_MAXWEIGHT_GT0 CHECK (max_weight > 0),
+    CONSTRAINT CHK_is_electrified    CHECK (electrified IN ('Yes','No')),
+    CONSTRAINT CHK_track_type_valid   CHECK (track_type IN ('single','double')),
+    CONSTRAINT CHK_SEGMENT_ORDER_GT0  CHECK (segment_order > 0),
+    CONSTRAINT CHK_LENGTH_GT0         CHECK (length_m > 0),
+    CONSTRAINT CHK_MAXWEIGHT_GT0      CHECK (max_weight > 0)
 );
+
 CREATE TABLE Locomotive
 (
     loco_id        number(10) GENERATED AS IDENTITY,
-    fueltype_id    number(10) NOT NULL,
+    flueltype_id    number(10) NOT NULL,
     gauge_id       number(10) NOT NULL,
     operator_id    number(10) NOT NULL,
     name           varchar2(10) NOT NULL,
     model          nvarchar2(255) NOT NULL,
     fluel_capacity number(10),
-    "power _kn"    number(10) NOT NULL,
+    power_kn    number(10) NOT NULL,
     weight         number(10) NOT NULL,
     make           varchar2(255) NOT NULL,
     service_year   number(4) NOT NULL,
-    voltage_kv     number(10) NOT NULL,
-    frequency_hz   number(10) NOT NULL,
+    voltage_kv     varchar2(10) NOT NULL,
+    frequency_hz   varchar2(10) NOT NULL,
     PRIMARY KEY (loco_id)
 );
 CREATE TABLE Wagon
@@ -58,15 +59,16 @@ CREATE TABLE Station
 );
 CREATE TABLE Freight
 (
-    freight_id             number(10) GENERATED AS IDENTITY,
-    origin_station_id      number(10) NOT NULL,
-    destination_station_id number(10) NOT NULL,
-    train_id               number(10) NOT NULL,
-    departure_time         date NOT NULL,
-    arrival_time           date NOT NULL,
-    PRIMARY KEY (freight_id)
+    freight_id             NUMBER(10) GENERATED AS IDENTITY,
+    origin_station_id      NUMBER(10) NOT NULL,
+    destination_station_id NUMBER(10) NOT NULL,
+    train_id               NUMBER(10) NOT NULL,
+    departure_time         DATE NOT NULL,
+    arrival_time           DATE NOT NULL,
+    PRIMARY KEY (freight_id),
     CONSTRAINT CHK_FREIGHT_DATES CHECK (arrival_time >= departure_time)
 );
+
 CREATE TABLE Terminal
 (
     terminal_id number(10) GENERATED AS IDENTITY,
@@ -100,31 +102,29 @@ CREATE TABLE FreightYard
 );
 CREATE TABLE Train
 (
-    train_id number(10) GENERATED AS IDENTITY,
-    name     number(10) NOT NULL,
+    train_id NUMBER(10) GENERATED AS IDENTITY,
+    name     VARCHAR2(255) NOT NULL,
     PRIMARY KEY (train_id)
 );
 CREATE TABLE WagonType
 (
     wagontype_id number(10) GENERATED AS IDENTITY,
     type         varchar2(255) NOT NULL UNIQUE,
-    PRIMARY KEY (wagontype_id),
-    CONSTRAINT UQ_wagontype_type UNIQUE (type)
+    PRIMARY KEY (wagontype_id)
 );
-CREATE TABLE FuelType
+CREATE TABLE FluelType
 (
-    fueltype_id number(10) GENERATED AS IDENTITY,
+    flueltype_id number(10) GENERATED AS IDENTITY,
     type        varchar2(8) NOT NULL,
-    PRIMARY KEY (fueltype_id),
-    CONSTRAINT "CHK_fueltype_valid " CHECK (type IN ('Diesel', 'Electric') )
+    PRIMARY KEY (flueltype_id),
+    CONSTRAINT "CHK_flueltype_valid " CHECK (type IN ('Diesel', 'Electric') )
 );
 CREATE TABLE Gauge
 (
     gauge_id    number(10) GENERATED AS IDENTITY,
     width_mm    number(10) NOT NULL UNIQUE,
     description nvarchar2(255) NOT NULL,
-    PRIMARY KEY (gauge_id),
-    CONSTRAINT UQ_gauge_width UNIQUE (width_mm)
+    PRIMARY KEY (gauge_id)
 );
 CREATE TABLE Cargo
 (
@@ -187,8 +187,7 @@ CREATE TABLE WagonModel
     payload_t            number(10) NOT NULL,
     max_speed_loaded_kmh number(10) NOT NULL,
     max_speed_empty_kmh  number(10) NOT NULL,
-    PRIMARY KEY (wagonmodel_id),
-    CONSTRAINT "UNIQUE (name) " UNIQUE (name)
+    PRIMARY KEY (wagonmodel_id)
 );
 
 ALTER TABLE LineSegment
@@ -218,7 +217,7 @@ ALTER TABLE Freight
 ALTER TABLE Freight
     ADD CONSTRAINT FK_FREIGHT_TRAIN          FOREIGN KEY (train_id) REFERENCES Train(train_id);
 ALTER TABLE Locomotive
-    ADD CONSTRAINT FK_LOCO_FUELTYPE          FOREIGN KEY (fueltype_id) REFERENCES FuelType(fueltype_id);
+    ADD CONSTRAINT FK_LOCO_FlUELTYPE          FOREIGN KEY (flueltype_id) REFERENCES FluelType(flueltype_id);
 ALTER TABLE Locomotive
     ADD CONSTRAINT FK_LOCO_GAUGE             FOREIGN KEY (gauge_id) REFERENCES Gauge(gauge_id);
 ALTER TABLE Locomotive
