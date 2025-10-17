@@ -2,7 +2,7 @@ package main.java.pt.ipp.isep.dei;
 
 import main.java.pt.ipp.isep.dei.domain.*;
 
-import java.util.*;
+import java.util.List;
 
 public class Main {
 
@@ -44,80 +44,53 @@ public class Main {
         System.out.println("\n=== Resultados - Partial Mode ===");
         printResult(partialResult);
 
-        System.out.println("\n=== USEI03 — Picking Plans ===");
+        System.out.println("\n=== Fim da execução USEI02 ===");
 
-        // Escolher allocationsrow a usar na US03
-        System.out.println("\nDeseja usar qual conjunto de allocationsrow para o planeamento?");
-        System.out.println("1 - STRICT");
-        System.out.println("2 - PARTIAL");
+        System.out.println("\n=== USEI05 — Returns & Quarantine ===");
 
-        Scanner sc = new Scanner(System.in);
-        int choice = sc.nextInt();
-        OrderAllocator.Result chosenResult = (choice == 1) ? strictResult : partialResult;
+        // 1️⃣ Initialize core components
+        Quarantine quarantine = new Quarantine();
+        Inventory inventory = new Inventory();
+        AuditLogger logger = new AuditLogger("returns_audit_log.txt");
+        QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
 
-        List<AllocationRow> allocationsrow = chosenResult.allocationRows;
+        // 2️⃣ Create some sample returns
+        ReturnItem r1 = new ReturnItem("RET001", "SKU100", 10, "customer-remorse",
+                java.time.LocalDateTime.parse("2025-09-22T17:00:00"), java.time.LocalDateTime.parse("2025-12-01T00:00:00"));
+        ReturnItem r2 = new ReturnItem("RET002", "SKU200", 5, "damaged",
+                java.time.LocalDateTime.parse("2025-09-20T10:00:00"), null);
+        ReturnItem r3 = new ReturnItem("RET003", "SKU300", 7, "cycle-count",
+                java.time.LocalDateTime.parse("2025-09-23T08:00:00"), null);
 
-        // Converter AllocationRows em Allocations com peso
+        // 3️⃣ Add them to quarantine (latest first)
+        quarantine.add(r1);
+        quarantine.add(r2);
+        quarantine.add(r3);
 
-        List<Item> items = loader.loadItems("C:/data/wagons.csv");
+        System.out.println("Returns loaded into quarantine: " + quarantine.size());
 
-        Map<String, Double> itemWeights = new HashMap<>();
+        // 4️⃣ Process all returns
+        operator.processReturns();
 
-        for (Item item : items) {
-            itemWeights.put(item.getSku(), item.getUnitWeight());
+        // 5️⃣ Display inventory after processing
+        System.out.println("\n--- Inventory after processing ---");
+        for (var entry : inventory.getStock().entrySet()) {
+            System.out.println("SKU: " + entry.getKey());
+            for (Box box : entry.getValue()) {
+                System.out.println("   " + box);
+            }
         }
 
-        List<Allocation> allocations = new ArrayList<>();
-
-        for (AllocationRow row : allocationsrow) {
-            double unitWeight = itemWeights.getOrDefault(row.getSku(), 0.0);
-            double totalWeight = unitWeight * row.getQty();
-
-            Allocation alloc = new Allocation(
-                    row.getOrderId(),
-                    row.getLineNo(),
-                    row.getSku(),
-                    row.getQty(),
-                    totalWeight,
-                    row.getBoxId(),
-                    row.getAisle(),
-                    row.getBay()
-            );
-            allocations.add(alloc);
+        // 6️⃣ Display audit log contents
+        System.out.println("\n--- Audit Log Contents ---");
+        try {
+            java.nio.file.Files.lines(java.nio.file.Path.of("returns_audit_log.txt"))
+                    .forEach(System.out::println);
+        } catch (Exception e) {
+            System.err.println("Error reading log: " + e.getMessage());
         }
 
-
-        // Pedir capacidade máxima de um trolley
-        System.out.print("Indique a capacidade máxima (peso) de cada trolley: ");
-        double trolleyCapacity = sc.nextDouble();
-
-        // Escolher heurística de planeamento
-        System.out.println("\nEscolha a heurística de distribuição:");
-        System.out.println("1 - First Fit (FF)");
-        System.out.println("2 - First Fit Decreasing (FFD)");
-        System.out.println("3 - Best Fit Decreasing (BFD)");
-        System.out.print("Opção: ");
-        int option = sc.nextInt();
-
-        // Criar o planeador e executar a heurística selecionada
-        PickingPlanner planner = new PickingPlanner(allocations, trolleyCapacity);
-        List<Trolley> trolleys;
-
-        switch (option) {
-            case 1:
-                trolleys = planner.planFirstFit();
-                break;
-            case 2:
-                trolleys = planner.planFirstFitDecreasing();
-                break;
-            case 3:
-            default:
-                trolleys = planner.planBestFitDecreasing();
-                break;
-        }
-
-        // Mostrar resultados
-        printPickingPlans(trolleys);
+        System.out.println("\n=== Fim da execução USEI05 ===");
 
     }
 
@@ -135,21 +108,6 @@ public class Main {
             System.out.printf("Order=%s | Line=%d | SKU=%s | Qty=%d | Box=%s | Aisle=%d | Bay=%d%n",
                     row.getOrderId(), row.getLineNo(), row.getSku(), row.getQty(),
                     row.getBoxId(), row.getAisle(), row.getBay());
-        }
-    }
-
-    private static void printPickingPlans(List<Trolley> trolleys){
-        System.out.println("Total de trolleys necessários: " + trolleys.size());
-        System.out.println("------------------------------------");
-
-        for (Trolley t : trolleys) {
-            System.out.printf("Trolley %d — Utilização: %.1f%% (%.1f / %.1f)\n",
-                    t.getId(), t.getUtilization(), t.getUsedWeight(), t.getCapacity());
-            for (Allocation a : t.getAllocations()) {
-                System.out.printf("   Order=%s | SKU=%s | Qty=%d | Box=%s | Aisle=%d | Bay=%d | Weight=%.1f\n",
-                        a.getOrderId(), a.getSku(), a.getQty(), a.getBoxId(), a.getAisle(), a.getBay(), a.getWeight());
-            }
-            System.out.println();
         }
     }
 }
