@@ -2,7 +2,7 @@ package main.java.pt.ipp.isep.dei;
 
 import main.java.pt.ipp.isep.dei.domain.*;
 
-import java.util.List;
+import java.util.*;
 
 public class Main {
 
@@ -44,7 +44,81 @@ public class Main {
         System.out.println("\n=== Resultados - Partial Mode ===");
         printResult(partialResult);
 
-        System.out.println("\n=== Fim da execução USEI02 ===");
+        System.out.println("\n=== USEI03 — Picking Plans ===");
+
+        // Escolher allocationsrow a usar na US03
+        System.out.println("\nDeseja usar qual conjunto de allocationsrow para o planeamento?");
+        System.out.println("1 - STRICT");
+        System.out.println("2 - PARTIAL");
+
+        Scanner sc = new Scanner(System.in);
+        int choice = sc.nextInt();
+        OrderAllocator.Result chosenResult = (choice == 1) ? strictResult : partialResult;
+
+        List<AllocationRow> allocationsrow = chosenResult.allocationRows;
+
+        // Converter AllocationRows em Allocations com peso
+
+        List<Item> items = loader.loadItems("C:/data/wagons.csv");
+
+        Map<String, Double> itemWeights = new HashMap<>();
+
+        for (Item item : items) {
+            itemWeights.put(item.getSku(), item.getUnitWeight());
+        }
+
+        List<Allocation> allocations = new ArrayList<>();
+
+        for (AllocationRow row : allocationsrow) {
+            double unitWeight = itemWeights.getOrDefault(row.getSku(), 0.0);
+            double totalWeight = unitWeight * row.getQty();
+
+            Allocation alloc = new Allocation(
+                    row.getOrderId(),
+                    row.getLineNo(),
+                    row.getSku(),
+                    row.getQty(),
+                    totalWeight,
+                    row.getBoxId(),
+                    row.getAisle(),
+                    row.getBay()
+            );
+            allocations.add(alloc);
+        }
+
+
+        // Pedir capacidade máxima de um trolley
+        System.out.print("Indique a capacidade máxima (peso) de cada trolley: ");
+        double trolleyCapacity = sc.nextDouble();
+
+        // Escolher heurística de planeamento
+        System.out.println("\nEscolha a heurística de distribuição:");
+        System.out.println("1 - First Fit (FF)");
+        System.out.println("2 - First Fit Decreasing (FFD)");
+        System.out.println("3 - Best Fit Decreasing (BFD)");
+        System.out.print("Opção: ");
+        int option = sc.nextInt();
+
+        // Criar o planeador e executar a heurística selecionada
+        PickingPlanner planner = new PickingPlanner(allocations, trolleyCapacity);
+        List<Trolley> trolleys;
+
+        switch (option) {
+            case 1:
+                trolleys = planner.planFirstFit();
+                break;
+            case 2:
+                trolleys = planner.planFirstFitDecreasing();
+                break;
+            case 3:
+            default:
+                trolleys = planner.planBestFitDecreasing();
+                break;
+        }
+
+        // Mostrar resultados
+        printPickingPlans(trolleys);
+
     }
 
     // 🔸 Método auxiliar para imprimir resultados formatados
@@ -61,6 +135,21 @@ public class Main {
             System.out.printf("Order=%s | Line=%d | SKU=%s | Qty=%d | Box=%s | Aisle=%d | Bay=%d%n",
                     row.getOrderId(), row.getLineNo(), row.getSku(), row.getQty(),
                     row.getBoxId(), row.getAisle(), row.getBay());
+        }
+    }
+
+    private static void printPickingPlans(List<Trolley> trolleys){
+        System.out.println("Total de trolleys necessários: " + trolleys.size());
+        System.out.println("------------------------------------");
+
+        for (Trolley t : trolleys) {
+            System.out.printf("Trolley %d — Utilização: %.1f%% (%.1f / %.1f)\n",
+                    t.getId(), t.getUtilization(), t.getUsedWeight(), t.getCapacity());
+            for (Allocation a : t.getAllocations()) {
+                System.out.printf("   Order=%s | SKU=%s | Qty=%d | Box=%s | Aisle=%d | Bay=%d | Weight=%.1f\n",
+                        a.getOrderId(), a.getSku(), a.getQty(), a.getBoxId(), a.getAisle(), a.getBay(), a.getWeight());
+            }
+            System.out.println();
         }
     }
 }
