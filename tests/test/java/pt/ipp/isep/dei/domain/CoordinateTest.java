@@ -67,5 +67,15 @@ public class CoordinateTest {
         // Assert
         assertEquals(0, distance);
     }
+
+    @Test
+    void testDistanceTo_DifferentAisles_ReversedOrder() {
+        Coordinate c1 = new Coordinate(3, 4);
+        Coordinate c2 = new Coordinate(1, 2);
+
+        // Fórmula: 4 + (|3-1|*3) + 2 = 4 + 6 + 2 = 12
+        int distance = c1.distanceTo(c2);
+        assertEquals(12, distance);
+    }
 }
 
