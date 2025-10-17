@@ -29,7 +29,7 @@ CREATE TABLE LineSegment
 CREATE TABLE Locomotive
 (
     loco_id        number(10) GENERATED AS IDENTITY,
-    fueltype_id    number(10) NOT NULL,
+    flueltype_id    number(10) NOT NULL,
     gauge_id       number(10) NOT NULL,
     operator_id    number(10) NOT NULL,
     name           varchar2(10) NOT NULL,
@@ -39,8 +39,8 @@ CREATE TABLE Locomotive
     weight         number(10) NOT NULL,
     make           varchar2(255) NOT NULL,
     service_year   number(4) NOT NULL,
-    voltage_kv     number(10) NOT NULL,
-    frequency_hz   number(10) NOT NULL,
+    voltage_kv     varchar2(10) NOT NULL,
+    frequency_hz   varchar2(10) NOT NULL,
     PRIMARY KEY (loco_id)
 );
 CREATE TABLE Wagon
@@ -112,12 +112,12 @@ CREATE TABLE WagonType
     type         varchar2(255) NOT NULL UNIQUE,
     PRIMARY KEY (wagontype_id)
 );
-CREATE TABLE FuelType
+CREATE TABLE FluelType
 (
-    fueltype_id number(10) GENERATED AS IDENTITY,
+    flueltype_id number(10) GENERATED AS IDENTITY,
     type        varchar2(8) NOT NULL,
-    PRIMARY KEY (fueltype_id),
-    CONSTRAINT "CHK_fueltype_valid " CHECK (type IN ('Diesel', 'Electric') )
+    PRIMARY KEY (flueltype_id),
+    CONSTRAINT "CHK_flueltype_valid " CHECK (type IN ('Diesel', 'Electric') )
 );
 CREATE TABLE Gauge
 (
@@ -217,7 +217,7 @@ ALTER TABLE Freight
 ALTER TABLE Freight
     ADD CONSTRAINT FK_FREIGHT_TRAIN          FOREIGN KEY (train_id) REFERENCES Train(train_id);
 ALTER TABLE Locomotive
-    ADD CONSTRAINT FK_LOCO_FUELTYPE          FOREIGN KEY (fueltype_id) REFERENCES FuelType(fueltype_id);
+    ADD CONSTRAINT FK_LOCO_FlUELTYPE          FOREIGN KEY (flueltype_id) REFERENCES FluelType(flueltype_id);
 ALTER TABLE Locomotive
     ADD CONSTRAINT FK_LOCO_GAUGE             FOREIGN KEY (gauge_id) REFERENCES Gauge(gauge_id);
 ALTER TABLE Locomotive
