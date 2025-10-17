@@ -47,13 +47,4 @@ public class Trolley {
         return (usedWeight / capacity) * 100;
     }
 
-    @java.lang.Override
-    public java.lang.String toString() {
-        return "Allocation{" +
-                "id=" + id +
-                ", capacity=" + capacity +
-                ", usedWeight=" + usedWeight +
-                ", allocations=" + allocations +
-                '}';
-    }
 }

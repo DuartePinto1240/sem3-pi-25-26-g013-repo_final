@@ -45,53 +45,6 @@ public class Main {
         printResult(partialResult);
 
         System.out.println("\n=== Fim da execução USEI02 ===");
-
-        System.out.println("\n=== USEI05 — Returns & Quarantine ===");
-
-        // 1️⃣ Initialize core components
-        Quarantine quarantine = new Quarantine();
-        Inventory inventory = new Inventory();
-        AuditLogger logger = new AuditLogger("returns_audit_log.txt");
-        QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
-
-        // 2️⃣ Create some sample returns
-        ReturnItem r1 = new ReturnItem("RET001", "SKU100", 10, "customer-remorse",
-                java.time.LocalDateTime.parse("2025-09-22T17:00:00"), java.time.LocalDateTime.parse("2025-12-01T00:00:00"));
-        ReturnItem r2 = new ReturnItem("RET002", "SKU200", 5, "damaged",
-                java.time.LocalDateTime.parse("2025-09-20T10:00:00"), null);
-        ReturnItem r3 = new ReturnItem("RET003", "SKU300", 7, "cycle-count",
-                java.time.LocalDateTime.parse("2025-09-23T08:00:00"), null);
-
-        // 3️⃣ Add them to quarantine (latest first)
-        quarantine.add(r1);
-        quarantine.add(r2);
-        quarantine.add(r3);
-
-        System.out.println("Returns loaded into quarantine: " + quarantine.size());
-
-        // 4️⃣ Process all returns
-        operator.processReturns();
-
-        // 5️⃣ Display inventory after processing
-        System.out.println("\n--- Inventory after processing ---");
-        for (var entry : inventory.getStock().entrySet()) {
-            System.out.println("SKU: " + entry.getKey());
-            for (Box box : entry.getValue()) {
-                System.out.println("   " + box);
-            }
-        }
-
-        // 6️⃣ Display audit log contents
-        System.out.println("\n--- Audit Log Contents ---");
-        try {
-            java.nio.file.Files.lines(java.nio.file.Path.of("returns_audit_log.txt"))
-                    .forEach(System.out::println);
-        } catch (Exception e) {
-            System.err.println("Error reading log: " + e.getMessage());
-        }
-
-        System.out.println("\n=== Fim da execução USEI05 ===");
-
     }
 
     // 🔸 Método auxiliar para imprimir resultados formatados
