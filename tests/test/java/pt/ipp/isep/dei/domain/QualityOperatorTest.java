@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class QualityOperatorTest {
 
-    private static final String LOG_PATH = "quality_operator_log.txt";
+    private static final String LOG_PATH = "quality_operator_test_log.txt";
 
     @BeforeEach
     void cleanup() {

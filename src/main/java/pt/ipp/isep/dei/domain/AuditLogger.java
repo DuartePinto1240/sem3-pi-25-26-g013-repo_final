@@ -8,19 +8,31 @@ import java.time.format.DateTimeFormatter;
 public class AuditLogger {
 
     private final String filePath;
-    private static final DateTimeFormatter FORMATTER =
-            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
 
     public AuditLogger(String filePath) {
-        this.filePath = filePath;
+        this(filePath, false);
     }
 
-    public synchronized void log(String message) {
-        try (FileWriter fw = new FileWriter(filePath, true)) {
-            fw.write(LocalDateTime.now().format(FORMATTER) + " | " + message + System.lineSeparator());
+    public AuditLogger(String filePath, boolean overwrite) {
+        this.filePath = filePath;
+        if (overwrite) clearFile();
+    }
+
+    private void clearFile() {
+        try (FileWriter fw = new FileWriter(filePath, false)) {
+            // just open and close — clears file
         } catch (IOException e) {
-            throw new RuntimeException("Failed to write log: " + e.getMessage(), e);
+            System.err.println("⚠️ Could not clear audit log: " + e.getMessage());
+        }
+    }
+
+    public void log(String message) {
+        try (FileWriter fw = new FileWriter(filePath, true)) {
+            String timestamp = LocalDateTime.now()
+                    .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
+            fw.write(timestamp + " | " + message + System.lineSeparator());
+        } catch (IOException e) {
+            System.err.println("❌ Error writing to audit log: " + e.getMessage());
         }
     }
 }
-
