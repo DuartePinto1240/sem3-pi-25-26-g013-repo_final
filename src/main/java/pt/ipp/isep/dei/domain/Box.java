@@ -3,7 +3,7 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-public class Box {
+public class Box implements Comparable<Box> {
     private String boxId;
     private String sku;
     private int quantity;
@@ -49,6 +49,15 @@ public class Box {
                 ", expiryDate=" + expiryDate +
                 ", receivedAt=" + receivedAt +
                 '}';
+    }
+
+    @Override
+    public int compareTo(Box other) {
+        if (this.expiryDate != null && other.expiryDate != null) {
+            int cmp = this.expiryDate.compareTo(other.expiryDate);
+            if (cmp != 0) return cmp;
+        }
+        return this.receivedAt.compareTo(other.receivedAt);
     }
 }
 
