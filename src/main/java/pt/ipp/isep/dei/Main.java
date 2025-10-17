@@ -13,21 +13,21 @@ public class Main {
         CsvLoader loader = new CsvLoader();
 
         // 🔹 1. Carregar Bays (estrutura do armazém)
-        List<Bay> bays = loader.loadBays("C:/data/bays.csv");
+        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
         Warehouse warehouse = new Warehouse("W1");
         for (Bay b : bays) warehouse.addBay(b);
         System.out.println("Warehouse carregado com " + bays.size() + " bays.");
 
         // 🔹 2. Carregar e descarregar Wagons (USEI01)
-        List<Wagon> wagons = loader.loadWagons("C:/data/wagons.csv");
+        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
         WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
         System.out.println("Wagons descarregados: " + wagons.size());
 
         // 🔹 3. Carregar ordens e respetivas linhas dos CSVs
         List<Order> orders = loader.loadOrders(
-                "C:/data/orders.csv",
-                "C:/data/order_lines.csv"
+                "train_station_dataset_v2/train_station_dataset/orders.csv",
+                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
         );
         System.out.println("Ordens carregadas: " + orders.size());
 
@@ -48,32 +48,39 @@ public class Main {
 
         System.out.println("\n=== USEI05 — Returns & Quarantine ===");
 
-        // 1️⃣ Initialize core components
+        // 1️⃣ Load items (needed to validate SKUs)
+        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
+        System.out.println("Items loaded: " + items.size());
+
+        // 2️⃣ Load returns from CSV
+        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
+        System.out.println("Returns loaded: " + returns.size());
+
+        // 3️⃣ Initialize quarantine, inventory, and logger
         Quarantine quarantine = new Quarantine();
         Inventory inventory = new Inventory();
         AuditLogger logger = new AuditLogger("returns_audit_log.txt");
         QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
 
-        // 2️⃣ Create some sample returns
-        ReturnItem r1 = new ReturnItem("RET001", "SKU100", 10, "customer-remorse",
-                java.time.LocalDateTime.parse("2025-09-22T17:00:00"), java.time.LocalDateTime.parse("2025-12-01T00:00:00"));
-        ReturnItem r2 = new ReturnItem("RET002", "SKU200", 5, "damaged",
-                java.time.LocalDateTime.parse("2025-09-20T10:00:00"), null);
-        ReturnItem r3 = new ReturnItem("RET003", "SKU300", 7, "cycle-count",
-                java.time.LocalDateTime.parse("2025-09-23T08:00:00"), null);
+        // 4️⃣ Validate and add returns to quarantine
+        for (ReturnItem r : returns) {
+            // Optional validation: ensure SKU exists in items list
+            boolean validSku = items.stream()
+                    .anyMatch(i -> i.getSku().equalsIgnoreCase(r.getSku()));
+            if (!validSku) {
+                System.err.println("⚠️ Unknown SKU in returns.csv: " + r.getSku() +
+                        " (returnId=" + r.getReturnId() + ")");
+                continue; // skip invalid
+            }
+            quarantine.add(r);
+        }
+        System.out.println("Valid returns loaded into quarantine: " + quarantine.size());
 
-        // 3️⃣ Add them to quarantine (latest first)
-        quarantine.add(r1);
-        quarantine.add(r2);
-        quarantine.add(r3);
-
-        System.out.println("Returns loaded into quarantine: " + quarantine.size());
-
-        // 4️⃣ Process all returns
+        // 5️⃣ Process all returns (restock/discard)
         operator.processReturns();
 
-        // 5️⃣ Display inventory after processing
-        System.out.println("\n--- Inventory after processing ---");
+        // 6️⃣ Print resulting inventory contents
+        System.out.println("\n--- Inventory After Processing ---");
         for (var entry : inventory.getStock().entrySet()) {
             System.out.println("SKU: " + entry.getKey());
             for (Box box : entry.getValue()) {
@@ -81,16 +88,17 @@ public class Main {
             }
         }
 
-        // 6️⃣ Display audit log contents
-        System.out.println("\n--- Audit Log Contents ---");
+        // 7️⃣ Print audit log file contents
+        System.out.println("\n--- Audit Log (returns_audit_log.txt) ---");
         try {
             java.nio.file.Files.lines(java.nio.file.Path.of("returns_audit_log.txt"))
                     .forEach(System.out::println);
         } catch (Exception e) {
-            System.err.println("Error reading log: " + e.getMessage());
+            System.err.println("❌ Error reading log file: " + e.getMessage());
         }
 
         System.out.println("\n=== Fim da execução USEI05 ===");
+
 
     }
 
