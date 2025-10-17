@@ -42,7 +42,7 @@ public class Box implements Comparable<Box> {
 
     @Override
     public String toString() {
-        return "main.java.pt.ipp.isep.dei.domain.Box{" +
+        return "Box{" +
                 "boxId='" + boxId + '\'' +
                 ", sku='" + sku + '\'' +
                 ", quantity=" + quantity +
