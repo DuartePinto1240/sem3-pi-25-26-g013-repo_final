@@ -54,20 +54,6 @@ public class Allocation {
     public int getBay() {
         return bay;
     }
-
-    @java.lang.Override
-    public java.lang.String toString() {
-        return "Allocation{" +
-                "orderId='" + orderId + '\'' +
-                ", lineNo=" + lineNo +
-                ", sku='" + sku + '\'' +
-                ", qty=" + qty +
-                ", weight=" + weight +
-                ", boxId='" + boxId + '\'' +
-                ", aisle=" + aisle +
-                ", bay=" + bay +
-                '}';
-    }
 }
 
 

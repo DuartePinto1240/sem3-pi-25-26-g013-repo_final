@@ -148,6 +148,32 @@ public class CsvLoader {
         }
         return map;
     }
+
+    public List<ReturnItem> loadReturns(String path) {
+        List<ReturnItem> list = new ArrayList<>();
+        try (var br = new java.io.BufferedReader(new java.io.FileReader(path))) {
+            String header = br.readLine(); // skip header
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] f = line.split(",");
+                if (f.length < 6) continue;
+                String returnId = f[0].trim();
+                String sku = f[1].trim();
+                int qty = Integer.parseInt(f[2].trim());
+                String reason = f[3].trim();
+                java.time.LocalDateTime timestamp = java.time.LocalDateTime.parse(f[4].trim());
+                java.time.LocalDateTime expiry = null;
+                if (!f[5].trim().isEmpty()) {
+                    try { expiry = java.time.LocalDate.parse(f[5].trim()).atStartOfDay(); } catch (Exception ignored) {}
+                }
+                list.add(new ReturnItem(returnId, sku, qty, reason, timestamp, expiry));
+            }
+        } catch (Exception e) {
+            System.err.println("❌ Error loading returns.csv: " + e.getMessage());
+        }
+        return list;
+    }
+
 }
 
 

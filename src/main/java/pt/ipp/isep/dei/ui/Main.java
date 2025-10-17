@@ -3,9 +3,9 @@ package main.java.pt.ipp.isep.dei.ui;
 import main.java.pt.ipp.isep.dei.repository.LocomotiveRepository;
 import main.java.pt.ipp.isep.dei.repository.RailwayLineRepository;
 import main.java.pt.ipp.isep.dei.repository.StationRepository;
-import main.java.pt.ipp.isep.dei.repository.csv.CsvLocomotiveRepository;
-import main.java.pt.ipp.isep.dei.repository.csv.CsvRailwayLineRepository;
-import main.java.pt.ipp.isep.dei.repository.csv.CsvStationRepository;
+import main.java.pt.ipp.isep.dei.repository.CsvLocomotiveRepository;
+import main.java.pt.ipp.isep.dei.repository.CsvRailwayLineRepository;
+import main.java.pt.ipp.isep.dei.repository.CsvStationRepository;
 import main.java.pt.ipp.isep.dei.service.TrafficDispatcherService;
 import main.java.pt.ipp.isep.dei.ui.MainUI;
 
