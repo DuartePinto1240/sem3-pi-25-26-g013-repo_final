@@ -10,7 +10,7 @@ public class PickStopTest {
     // 🔹 Helper para criar um PickStop completo e válido
     private PickStop createPickStop(String sku, int aisle, int bay) {
         Coordinate coordinate = new Coordinate(aisle, bay);
-        Allocation allocation = new Allocation("ORD001", 1, sku, 10.0, 5.0, "BOX001", aisle, bay);
+        Allocation allocation = new Allocation("ORD001", 1, sku, 10, 5.0, "BOX001", aisle, bay);
         return new PickStop(coordinate, allocation);
     }
 
@@ -18,7 +18,7 @@ public class PickStopTest {
     public void testConstructorAndGetters() {
         // Arrange
         Coordinate coord = new Coordinate(2, 5);
-        Allocation alloc = new Allocation("ORD1", 1, "SKU123", 20.0, 15.0, "BOX9", 2, 5);
+        Allocation alloc = new Allocation("ORD1", 1, "SKU123", 20, 15.0, "BOX9", 2, 5);
 
         // Act
         PickStop stop = new PickStop(coord, alloc);
@@ -49,7 +49,7 @@ public class PickStopTest {
     public void testToStringMatchesExpectedFormat() {
         // Arrange
         Coordinate coord = new Coordinate(1, 2);
-        Allocation alloc = new Allocation("ORD2", 2, "SKU55", 5.0, 3.0, "BOX2", 1, 2);
+        Allocation alloc = new Allocation("ORD2", 2, "SKU55", 5, 3.0, "BOX2", 1, 2);
         PickStop stop = new PickStop(coord, alloc);
 
         // Act
@@ -77,7 +77,7 @@ public class PickStopTest {
     @Test
     public void testNullCoordinateOrAllocationThrowsException() {
         Coordinate coord = new Coordinate(1, 1);
-        Allocation alloc = new Allocation("ORDX", 1, "SKU_X", 5.0, 2.0, "BOX_X", 1, 1);
+        Allocation alloc = new Allocation("ORDX", 1, "SKU_X", 5, 2.0, "BOX_X", 1, 1);
 
         // Coordinate null
         assertThrows(NullPointerException.class, () -> {
