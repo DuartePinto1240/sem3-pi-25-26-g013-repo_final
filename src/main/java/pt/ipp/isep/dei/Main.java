@@ -159,7 +159,7 @@ public class Main {
         // 3️⃣ Initialize quarantine, inventory, and logger
         Quarantine quarantine = new Quarantine();
         Inventory inventory = new Inventory();
-        AuditLogger logger = new AuditLogger("returns_audit_log.txt");
+        AuditLogger logger = new AuditLogger("returns_audit_log.txt", true);
         QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
 
         // 4️⃣ Validate and add returns to quarantine

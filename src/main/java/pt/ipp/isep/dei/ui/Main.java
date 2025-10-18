@@ -12,11 +12,14 @@ import main.java.pt.ipp.isep.dei.ui.MainUI;
 public class Main {
     public static void main(String[] args) {
         try {
-            // Caminhos para os ficheiros CSV na pasta 'resources'
-            final String STATIONS_FILE = "/stations.csv";
-            final String LOCOMOTIVES_FILE = "/locomotives.csv";
-            final String LINES_FILE = "/railway_lines.csv";
-            final String SEGMENTS_FILE = "/line_segments.csv";
+            // Caminho para a pasta que contém os ficheiros CSV
+            final String CSV_FOLDER = "csv_data/";
+
+            // Caminhos relativos para os ficheiros CSV, a partir da raiz do projeto
+            final String STATIONS_FILE = CSV_FOLDER + "stations.csv";
+            final String LOCOMOTIVES_FILE = CSV_FOLDER + "locomotives.csv";
+            final String LINES_FILE = CSV_FOLDER + "railway_lines.csv";
+            final String SEGMENTS_FILE = CSV_FOLDER + "line_segments.csv";
 
             // Injeção de Dependências com a Versão CSV
             StationRepository stationRepo = new CsvStationRepository(STATIONS_FILE);
@@ -32,7 +35,7 @@ public class Main {
 
         } catch (Exception e) {
             System.err.println("ERRO CRÍTICO AO INICIAR A APLICAÇÃO: Não foi possível carregar os dados.");
-            System.err.println("Verifique se os ficheiros CSV existem na pasta 'resources' e se o formato está correto.");
+            System.err.println("Verifique se a pasta 'csv_data' e os ficheiros existem na raiz do projeto.");
             e.printStackTrace();
         }
     }
