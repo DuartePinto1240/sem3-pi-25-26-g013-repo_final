@@ -12,33 +12,33 @@ public class Main {
 
         CsvLoader loader = new CsvLoader();
 
-        // 🔹 1. Carregar Bays (estrutura do armazém)
-        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
+        // Carregar Bays (estrutura do armazém)
+        List<Bay> bays = loader.loadBays("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/bays.csv");
         Warehouse warehouse = new Warehouse("W1");
         for (Bay b : bays) warehouse.addBay(b);
         System.out.println("Warehouse carregado com " + bays.size() + " bays.");
 
-        // 🔹 2. Carregar e descarregar Wagons (USEI01)
+        // Carregar e descarregar Wagons (USEI01)
         List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
         WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
         System.out.println("Wagons descarregados: " + wagons.size());
 
-        // 🔹 3. Carregar ordens e respetivas linhas dos CSVs
+        // Carregar ordens e respetivas linhas dos CSVs
         List<Order> orders = loader.loadOrders(
                 "train_station_dataset_v2/train_station_dataset/orders.csv",
                 "train_station_dataset_v2/train_station_dataset/order_lines.csv"
         );
         System.out.println("Ordens carregadas: " + orders.size());
 
-        // 🔹 4. Executar USEI02 (modo STRICTo)
+        // Executar USEI02 (modo STRICTo)
         OrderAllocator allocator = new OrderAllocator();
         OrderAllocator.Result strictResult = allocator.allocateOrders(orders, warehouse, false);
 
         System.out.println("\n=== Resultados - Strict Mode ===");
         printResult(strictResult);
 
-        // 🔹 5. Executar USEI02 (modo PARTIAL)
+        // Executar USEI02 (modo PARTIAL)
         OrderAllocator.Result partialResult = allocator.allocateOrders(orders, warehouse, true);
 
         System.out.println("\n=== Resultados - Partial Mode ===");
@@ -85,7 +85,6 @@ public class Main {
             allocations.add(alloc);
         }
 
-
         // Pedir capacidade máxima de um trolley
         System.out.print("Indique a capacidade máxima (peso) de cada trolley: ");
         double trolleyCapacity = sc.nextDouble();
@@ -99,25 +98,57 @@ public class Main {
         int option = sc.nextInt();
 
         // Criar o planeador e executar a heurística selecionada
-        PickingPlanner planner = new PickingPlanner(allocations, trolleyCapacity);
+        PickingPlanner pickingPlanner = new PickingPlanner(allocations, trolleyCapacity);
         List<Trolley> trolleys;
 
         switch (option) {
             case 1:
-                trolleys = planner.planFirstFit();
+                trolleys = pickingPlanner.planFirstFit();
                 break;
             case 2:
-                trolleys = planner.planFirstFitDecreasing();
+                trolleys = pickingPlanner.planFirstFitDecreasing();
                 break;
             case 3:
             default:
-                trolleys = planner.planBestFitDecreasing();
+                trolleys = pickingPlanner.planBestFitDecreasing();
                 break;
         }
 
         // Mostrar resultados
         printPickingPlans(trolleys);
 
+        System.out.println("\n=== USEI04 — Pick Path Sequencing ===");
+
+        // Recolher todas as allocations dos trolleys
+        List<Allocation> allAllocations = new ArrayList<>();
+        for (Trolley t : trolleys) {
+            allAllocations.addAll(t.getAllocations());
+        }
+
+        // Fundir baias duplicadas
+        Map<String, PickStop> mergedMap = new HashMap<>();
+        for (Allocation alloc : allAllocations) {
+            String key = alloc.getAisle() + ":" + alloc.getBay();
+            Coordinate coord = new Coordinate(alloc.getAisle(), alloc.getBay());
+            if (!mergedMap.containsKey(key)) {
+                mergedMap.put(key, new PickStop(coord, alloc));
+            } else {
+                PickStop existing = mergedMap.get(key);
+                existing.getAllocation().setQty(
+                        existing.getAllocation().getQty() + alloc.getQty()
+                );
+            }
+        }
+        List<PickStop> mergedStops = new ArrayList<>(mergedMap.values());
+
+        // Executar as duas estratégias
+        PickPathPlanner pickPathPlanner = new PickPathPlanner();
+
+        PickPath deterministic = pickPathPlanner.planDeterministicSweep(mergedStops);
+        PickPath nearest = pickPathPlanner.planNearestNeighbour(mergedStops);
+
+        // Mostrar resultados
+        printPickingPathPlans(deterministic,nearest);
 
         System.out.println("\n=== USEI05 — Returns & Quarantine ===");
 
@@ -167,8 +198,6 @@ public class Main {
         }
 
         System.out.println("\n=== Fim da execução USEI05 ===");
-
-
     }
 
     // 🔸 Método auxiliar para imprimir resultados formatados
@@ -202,6 +231,23 @@ public class Main {
             System.out.println();
         }
     }
+
+    private static void printPickingPathPlans ( PickPath deterministic, PickPath nearest){
+        System.out.println("\nEstratégia A — Deterministic Sweep");
+        System.out.print("Caminho: (0,0)");
+        for (PickStop s : deterministic.getSequence()) {
+            System.out.print(" -> (" + s.getCoordinate().getAisle() + "," + s.getCoordinate().getBay() + ")");
+        }
+        System.out.printf("\nDistância total: %.1f\n", deterministic.getTotalDistance());
+
+        System.out.println("\nEstratégia B — Nearest Neighbour");
+        System.out.print("Caminho: (0,0)");
+        for (PickStop s : nearest.getSequence()) {
+            System.out.print(" -> (" + s.getCoordinate().getAisle() + "," + s.getCoordinate().getBay() + ")");
+        }
+        System.out.printf("\nDistância total: %.1f\n", nearest.getTotalDistance());
+    }
+
 }
 
 

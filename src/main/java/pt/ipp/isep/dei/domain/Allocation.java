@@ -54,6 +54,10 @@ public class Allocation {
     public int getBay() {
         return bay;
     }
+
+    public void setQty(double qty) {
+        this.qty = qty;
+    }
 }
 
 
