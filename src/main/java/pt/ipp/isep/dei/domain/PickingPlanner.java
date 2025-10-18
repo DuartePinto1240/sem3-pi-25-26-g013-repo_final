@@ -29,6 +29,16 @@ public class PickingPlanner {
         int nextId = 1;
 
         for (Allocation alloc : allocations) {
+
+            // verifica se a allocation excede a capacidade total
+            if (alloc.getWeight() > trolleyCapacity) {
+                System.out.printf(
+                        "⚠️ Allocation %s (%.1f kg) excede capacidade total do trolley (%.1f kg) — ignorada.%n",
+                        alloc.getSku(), alloc.getWeight(), trolleyCapacity
+                );
+                continue;
+            }
+
             boolean placed = false;
             for (Trolley t : trolleys) {
                 if (t.canFit(alloc.getWeight())) {
@@ -61,6 +71,15 @@ public class PickingPlanner {
         int nextId = 1;
 
         for (Allocation alloc : sorted) {
+            // verifica se a allocation excede a capacidade total
+            if (alloc.getWeight() > trolleyCapacity) {
+                System.out.printf(
+                        "⚠️ Allocation %s (%.1f kg) excede capacidade total do trolley (%.1f kg) — ignorada.%n",
+                        alloc.getSku(), alloc.getWeight(), trolleyCapacity
+                );
+                continue;
+            }
+
             Trolley bestFit = null;
             double minRemaining = Double.MAX_VALUE;
             for (Trolley t : trolleys) {
