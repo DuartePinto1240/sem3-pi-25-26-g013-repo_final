@@ -13,21 +13,21 @@ public class Main {
         CsvLoader loader = new CsvLoader();
 
         // Carregar Bays (estrutura do armazém)
-        List<Bay> bays = loader.loadBays("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/bays.csv");
+        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
         Warehouse warehouse = new Warehouse("W1");
         for (Bay b : bays) warehouse.addBay(b);
         System.out.println("Warehouse carregado com " + bays.size() + " bays.");
 
         // Carregar e descarregar Wagons (USEI01)
-        List<Wagon> wagons = loader.loadWagons("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/wagons.csv");
+        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
         WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
         System.out.println("Wagons descarregados: " + wagons.size());
 
         // Carregar ordens e respetivas linhas dos CSVs
         List<Order> orders = loader.loadOrders(
-                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/orders.csv",
-                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/order_lines.csv"
+                "train_station_dataset_v2/train_station_dataset/orders.csv",
+                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
         );
         System.out.println("Ordens carregadas: " + orders.size());
 
@@ -58,7 +58,7 @@ public class Main {
         List<AllocationRow> allocationsrow = chosenResult.allocationRows;
 
         // Converter AllocationRows em Allocations com peso
-        List<Item> items = loader.loadItems("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/items.csv");
+        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
 
         Map<String, Double> itemWeights = new HashMap<>();
 
@@ -153,7 +153,7 @@ public class Main {
         System.out.println("\n=== USEI05 — Returns & Quarantine ===");
 
         // 2️⃣ Load returns from CSV
-        List<ReturnItem> returns = loader.loadReturns("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/returns.csv");
+        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
         System.out.println("Returns loaded: " + returns.size());
 
         // 3️⃣ Initialize quarantine, inventory, and logger
@@ -196,8 +196,6 @@ public class Main {
         } catch (Exception e) {
             System.err.println("❌ Error reading log file: " + e.getMessage());
         }
-
-        System.out.println("\n=== Fim da execução USEI05 ===");
     }
 
     // 🔸 Método auxiliar para imprimir resultados formatados
@@ -238,14 +236,14 @@ public class Main {
         for (PickStop s : deterministic.getSequence()) {
             System.out.print(" -> (" + s.getCoordinate().getAisle() + "," + s.getCoordinate().getBay() + ")");
         }
-        System.out.printf("\nDistância total: %.1f\n", deterministic.getTotalDistance());
+        System.out.printf("\nDistância total: %.0f\n", deterministic.getTotalDistance());
 
         System.out.println("\nEstratégia B — Nearest Neighbour");
         System.out.print("Caminho: (0,0)");
         for (PickStop s : nearest.getSequence()) {
             System.out.print(" -> (" + s.getCoordinate().getAisle() + "," + s.getCoordinate().getBay() + ")");
         }
-        System.out.printf("\nDistância total: %.1f\n", nearest.getTotalDistance());
+        System.out.printf("\nDistância total: %.0f\n", nearest.getTotalDistance());
     }
 
 }

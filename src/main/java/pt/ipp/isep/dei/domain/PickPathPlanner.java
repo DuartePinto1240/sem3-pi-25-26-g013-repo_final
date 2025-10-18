@@ -9,7 +9,10 @@ public class PickPathPlanner {
     //estratégia A
     public PickPath planDeterministicSweep (List<PickStop> stops) {
         List<PickStop> ordered = new ArrayList<>(stops);
-        ordered.sort(Comparator.comparingInt(s -> s.getCoordinate().getAisle()));
+        Comparator<PickStop> comparator = Comparator
+                .comparingInt((PickStop s) -> s.getCoordinate().getAisle())
+                .thenComparingInt(s -> s.getCoordinate().getBay());
+        ordered.sort(comparator);
         double total = calculateTotalDistance(ordered);
         return new PickPath(ordered, total);
     }
