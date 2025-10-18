@@ -1,0 +1,4 @@
+lineId,sequenceNumber,originStationId,destinationStationId,distanceKm,maxSpeedKmH,isElectrified
+LN,1,ST01,ST03,195.4,220,1
+LN,2,ST03,ST02,107.6,220,1
+LB,1,ST02,ST04,47.2,120,1

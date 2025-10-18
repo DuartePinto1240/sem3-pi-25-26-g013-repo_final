@@ -25,7 +25,7 @@ public class MainUI {
      */
     public void run() {
         while (true) {
-            System.out.println("### Menu Principal - Logística Sobre Carris ###");
+
             System.out.println("1. Calcular tempo de viagem estimado");
             System.out.println("0. Sair");
             System.out.print("Escolha uma opção: ");
