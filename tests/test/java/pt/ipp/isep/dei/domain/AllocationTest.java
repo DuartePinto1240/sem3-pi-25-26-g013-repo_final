@@ -15,7 +15,7 @@ public class AllocationTest {
         String orderId = "ORD0001";
         int lineNo = 2;
         String sku = "SKU0005";
-        double qty = 25.0;
+        int qty = 25;
         double weight = 120.5;
         String boxId = "BOX099";
         int aisle = 3;
@@ -38,7 +38,7 @@ public class AllocationTest {
     @Test
     public void testToStringContainsAllFields() {
         // Arrange
-        Allocation alloc = new Allocation("ORD002", 1, "SKU0010", 10.5, 50.0, "BOX123", 4, 8);
+        Allocation alloc = new Allocation("ORD002", 1, "SKU0010", 10, 50.0, "BOX123", 4, 8);
 
         // Act
         String text = alloc.toString();
@@ -54,7 +54,7 @@ public class AllocationTest {
     @Test
     public void testNegativeValuesAllowedButConsistent() {
         // Arrange
-        Allocation alloc = new Allocation("ORD999", 1, "SKU999", -5.0, -10.0, "BOXNEG", 1, 1);
+        Allocation alloc = new Allocation("ORD999", 1, "SKU999", -5, -10.0, "BOXNEG", 1, 1);
 
         // Assert
         assertEquals(-5.0, alloc.getQty());

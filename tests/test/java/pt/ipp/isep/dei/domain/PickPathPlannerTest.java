@@ -84,7 +84,7 @@ public class PickPathPlannerTest {
     private List<PickStop> toPickStops(List<FakePickStop> fakes) {
         return (List<PickStop>) (List<?>) fakes;
     }
-    
+
     @Test
     void testPlanDeterministicSweep_WithEmptyList() {
         PickPathPlanner planner = new PickPathPlanner();
