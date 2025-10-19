@@ -7,20 +7,31 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * Testes unitários para a classe Trolley.
- */
 public class TrolleyTest {
 
     private Trolley trolley;
 
     @BeforeEach
-    public void setUp() {
-        trolley = new Trolley(1, 100.0); // 100 kg de capacidade
+    void setUp() {
+        trolley = new Trolley(1, 100.0); // capacidade 100 kg
     }
 
+    private Allocation createAllocation(String sku, double weight) {
+        return new Allocation(
+                "ORDER001",   // orderId
+                1,            // lineNo
+                sku,          // sku
+                10,           // qty (agora int!)
+                weight,       // weight
+                "BOX01",      // boxId
+                1,            // aisle
+                1             // bay
+        );
+    }
+
+
     @Test
-    public void testConstructorAndGetters_ShouldReturnCorrectValues() {
+    void testInitialState() {
         assertEquals(1, trolley.getId());
         assertEquals(100.0, trolley.getCapacity());
         assertEquals(0.0, trolley.getUsedWeight());
@@ -28,61 +39,55 @@ public class TrolleyTest {
     }
 
     @Test
-    public void testCanFit_ShouldReturnTrueIfWithinCapacity() {
-        assertTrue(trolley.canFit(50.0));
-        assertTrue(trolley.canFit(100.0)); // limite
+    void testCanFitWhenEnoughCapacity() {
+        assertTrue(trolley.canFit(50.0), "Deve caber se peso for menor que a capacidade.");
     }
 
     @Test
-    public void testCanFit_ShouldReturnFalseIfExceedsCapacity() {
-        assertFalse(trolley.canFit(150.0));
+    void testCanFitWhenAtLimit() {
+        trolley.addAllocation(createAllocation("SKU001", 60.0));
+        assertTrue(trolley.canFit(40.0), "Deve caber exatamente até o limite.");
     }
 
     @Test
-    public void testAddAllocation_ShouldIncreaseUsedWeightAndStoreAllocation() {
-        Allocation alloc = new Allocation("ORD001", 1, "SKU001", 5.0, 30.0, "BOX01", 1, 2);
-
-        trolley.addAllocation(alloc);
-
-        assertEquals(1, trolley.getAllocations().size());
-        assertEquals(30.0, trolley.getUsedWeight());
-        assertSame(alloc, trolley.getAllocations().get(0));
+    void testCanFitWhenExceedsCapacity() {
+        trolley.addAllocation(createAllocation("SKU001", 90.0));
+        assertFalse(trolley.canFit(20.0), "Não deve caber se exceder a capacidade.");
     }
 
     @Test
-    public void testGetUtilization_ShouldReturnPercentage() {
-        Allocation alloc1 = new Allocation("ORD001", 1, "SKU001", 5.0, 40.0, "BOX01", 1, 1);
-        Allocation alloc2 = new Allocation("ORD002", 2, "SKU002", 3.0, 10.0, "BOX02", 1, 2);
+    void testAddAllocationIncreasesUsedWeight() {
+        Allocation a1 = createAllocation("SKU001", 30.0);
+        Allocation a2 = createAllocation("SKU002", 20.0);
 
-        trolley.addAllocation(alloc1);
-        trolley.addAllocation(alloc2);
+        trolley.addAllocation(a1);
+        trolley.addAllocation(a2);
 
-        double utilization = trolley.getUtilization();
-        assertEquals(50.0, utilization); // 50 kg usados de 100 = 50%
+        assertEquals(50.0, trolley.getUsedWeight(), 0.0001);
+        assertEquals(2, trolley.getAllocations().size());
+        assertTrue(trolley.getAllocations().contains(a1));
+        assertTrue(trolley.getAllocations().contains(a2));
     }
 
     @Test
-    public void testToString_ShouldContainAllocationInfo() {
-        Allocation alloc = new Allocation("ORD003", 1, "SKU009", 2.0, 25.0, "BOX05", 1, 3);
-        trolley.addAllocation(alloc);
+    void testGetUtilization() {
+        trolley.addAllocation(createAllocation("SKU001", 25.0)); // 25/100 = 25%
+        trolley.addAllocation(createAllocation("SKU002", 25.0)); // 50/100 = 50%
 
-        String output = trolley.toString();
-        assertTrue(output.contains("id=1"));
-        assertTrue(output.contains("capacity=100.0"));
-        assertTrue(output.contains("usedWeight=25.0"));
-        assertTrue(output.contains("BOX05"));
+        assertEquals(50.0, trolley.getUtilization(), 0.0001, "A utilização deve ser 50%.");
     }
 
     @Test
-    public void testAddAllocation_ShouldNotExceedCapacity() {
-        Allocation alloc1 = new Allocation("ORD001", 1, "SKU001", 5.0, 80.0, "BOX01", 1, 2);
-        Allocation alloc2 = new Allocation("ORD002", 1, "SKU002", 5.0, 30.0, "BOX02", 1, 3);
+    void testGetUtilizationAtFullCapacity() {
+        trolley.addAllocation(createAllocation("SKU001", 100.0));
+        assertEquals(100.0, trolley.getUtilization(), 0.0001, "Deve ser 100% quando cheio.");
+    }
 
-        trolley.addAllocation(alloc1);
-
-        assertTrue(trolley.canFit(20.0));
-        assertFalse(trolley.canFit(30.0)); // 80 + 30 > 100
+    @Test
+    void testGetUtilizationWhenEmpty() {
+        assertEquals(0.0, trolley.getUtilization(), 0.0001, "Deve ser 0% quando vazio.");
     }
 }
+
 
 

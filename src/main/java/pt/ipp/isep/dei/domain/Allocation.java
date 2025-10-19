@@ -4,14 +4,14 @@ public class Allocation {
     private String orderId;
     private int lineNo;
     private String sku;
-    private double qty;
+    private int qty;
     private double weight;
     private String boxId;
     private int aisle;
     private int bay;
 
     // Construtor
-    public Allocation(String orderId, int lineNo, String sku, double qty, double weight, String boxId, int aisle, int bay) {
+    public Allocation(String orderId, int lineNo, String sku, int qty, double weight, String boxId, int aisle, int bay) {
         this.orderId = orderId;
         this.lineNo = lineNo;
         this.sku = sku;
@@ -35,7 +35,7 @@ public class Allocation {
         return sku;
     }
 
-    public double getQty() {
+    public int getQty() {
         return qty;
     }
 
@@ -53,6 +53,10 @@ public class Allocation {
 
     public int getBay() {
         return bay;
+    }
+
+    public void setQty(int qty) {
+        this.qty = qty;
     }
 }
 
