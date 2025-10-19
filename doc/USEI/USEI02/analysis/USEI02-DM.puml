@@ -1,0 +1,111 @@
+@startuml
+' https://plantuml.com/class-diagram
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+package "Order Management" {
+
+    class Order {
+        +orderId
+        +dueDate
+        +priority
+        +lines
+    }
+
+    class OrderLine {
+        +lineNo
+        +SKU
+        +requestedQty
+        +allocatedQty
+        +status  ' ELIGIBLE | PARTIAL | UNDISPATCHABLE
+    }
+
+    class Allocation {
+        +orderId
+        +lineNo
+        +sku
+        +qty
+        +boxId
+        +aisle
+        +bay
+    }
+
+    class SKU {
+        +skuCode
+        +name
+        +category
+        +unit
+        +volume
+        +unitWeight
+    }
+
+    class Box {
+        +boxId
+        +sku
+        +qtyAvailable
+        +expiryDate
+        +receivedAt
+        +aisle
+        +bay
+    }
+
+    class Bay {
+        +bayId
+        +boxes
+    }
+
+    class Warehouse {
+        +warehouseId
+        +aisles
+    }
+
+    class AllocationEngine {
+        +allocateOrders()
+        +verifyEligibility()
+    }
+
+    class WarehousePlanner {
+        +planDispatch()
+    }
+
+}
+
+' --- Relationships ---
+Order "1" --> "1..*" OrderLine : contains >
+OrderLine "1" --> "0..*" Allocation : results in >
+Allocation "*" --> "1" Box : consumes from >
+Box "*" --> "1" SKU : refers to >
+Bay "1" --> "0..*" Box : stores >
+Warehouse "1" --> "1..*" Bay : manages >
+
+WarehousePlanner "1" --> "1" AllocationEngine : uses >
+AllocationEngine "1" --> "1" Warehouse : accesses >
+
+' --- Behavioral notes ---
+note right of AllocationEngine
+FEFO/FIFO allocation:
+1. expiryDate ASC (null last)
+2. receivedAt ASC
+3. boxId ASC
+
+Order processing order:
+priority ASC,
+dueDate ASC,
+orderId ASC.
+Within order: lineNo ASC.
+end note
+
+note bottom of OrderLine
+status:
+- ELIGIBLE: full qty allocated
+- PARTIAL: partially allocated
+- UNDISPATCHABLE: no stock
+end note
+
+@enduml
+
