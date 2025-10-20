@@ -32,7 +32,7 @@ public class TravelSection {
 
     @Override
     public String toString() {
-        return String.format("%s -> %s | Dist: %.1f km | Vel: %.1f km/h | Tempo: %.2f min",
+        return String.format("%s -> %s | Dist: %.1f km | Velocidade: %.1f km/h | Tempo: %.2f min",
                 segment.getOrigin().getName(),
                 segment.getDestination().getName(),
                 segment.getDistanceKm(),
