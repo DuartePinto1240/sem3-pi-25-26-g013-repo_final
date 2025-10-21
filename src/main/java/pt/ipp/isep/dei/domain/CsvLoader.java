@@ -155,17 +155,28 @@ public class CsvLoader {
             String header = br.readLine(); // skip header
             String line;
             while ((line = br.readLine()) != null) {
-                String[] f = line.split(",");
+                if (line.isBlank()) continue;
+
+                String[] f = line.split(",", -1);
                 if (f.length < 6) continue;
+
                 String returnId = f[0].trim();
                 String sku = f[1].trim();
                 int qty = Integer.parseInt(f[2].trim());
                 String reason = f[3].trim();
                 java.time.LocalDateTime timestamp = java.time.LocalDateTime.parse(f[4].trim());
+
+                // Handle empty expiry date safely
                 java.time.LocalDateTime expiry = null;
-                if (!f[5].trim().isEmpty()) {
-                    try { expiry = java.time.LocalDate.parse(f[5].trim()).atStartOfDay(); } catch (Exception ignored) {}
+                String expiryRaw = f[5].trim();
+                if (!expiryRaw.isEmpty()) {
+                    try {
+                        expiry = java.time.LocalDate.parse(expiryRaw).atStartOfDay();
+                    } catch (Exception e) {
+                        System.err.println("⚠️ Invalid expiry date for " + returnId + ": " + expiryRaw);
+                    }
                 }
+
                 list.add(new ReturnItem(returnId, sku, qty, reason, timestamp, expiry));
             }
         } catch (Exception e) {
@@ -173,6 +184,7 @@ public class CsvLoader {
         }
         return list;
     }
+
 
 }
 
