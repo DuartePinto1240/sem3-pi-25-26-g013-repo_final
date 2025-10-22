@@ -8,8 +8,25 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Utility class for reading data from CSV files.
+ * This class provides a static method to read a CSV file and return its content
+ * as a list of string arrays, where each array represents a row.
+ */
 public class CsvReaderUtil {
 
+    /**
+     * Reads a CSV file from a given path, skipping the header row.
+     * <p>
+     * This method reads all lines from the specified file, splits each line by commas
+     * to get individual values, and returns a list of string arrays. Empty lines are ignored.
+     *
+     * @param filePath The path to the CSV file to be read.
+     * @return A {@link List} of {@code String[]} where each array represents a row
+     * of the CSV file. Returns an empty list if the file is empty (besides the header).
+     * @throws RuntimeException if the file is not found at the specified path or if an
+     * I/O error occurs during the reading process.
+     */
     public static List<String[]> readCsvFile(String filePath) {
         List<String[]> records = new ArrayList<>();
 
