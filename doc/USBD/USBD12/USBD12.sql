@@ -1,24 +1,17 @@
-WITH params AS (
-    SELECT
-        'Medway'                               AS operator_short,      -- <== operador
-        'Container wagon (max 40'' HC)'        AS wagon_type,          -- <== tipo (texto exato)
-        1668                                   AS gauge_width_mm       -- <== bitola (mm)
-    FROM dual
-)
 SELECT
+    op.short_name    AS operator_short,
+    wt.type          AS wagon_type,
+    g.width_mm       AS gauge_mm,
     w.wagon_id,
-    o.short_name      AS operator,
-    wt.type           AS wagon_type,
-    g.width_mm        AS gauge_width_mm,
-    wm.wagonmodel_id,
-    wm.name           AS wagon_model,
+    wm.name          AS model_name,
     w.service_year
-FROM params p
-         JOIN Operator    o  ON o.short_name      = p.operator_short
-         JOIN Wagon       w  ON w.operator_id     = o.operator_id
-         JOIN WagonModel  wm ON wm.wagonmodel_id  = w.wagonmodel_id
-         JOIN WagonType   wt ON wt.wagontype_id   = wm.wagontype_id
-         JOIN Gauge       g  ON g.gauge_id        = wm.gauge_id
-WHERE wt.type = p.wagon_type
-  AND g.width_mm = p.gauge_width_mm
+FROM Wagon w
+         INNER JOIN WagonModel wm ON wm.wagonmodel_id = w.wagonmodel_id
+         INNER JOIN WagonType  wt ON wt.wagontype_id  = wm.wagontype_id
+         INNER JOIN Gauge       g ON g.gauge_id       = wm.gauge_id
+         INNER JOIN Operator   op ON op.operator_id   = w.operator_id
+WHERE (op.short_name = 'Medway' OR op.name = 'Medway')  -- <== EDIT
+  AND wt.type       = 'Cereal wagon'                    -- <== EDIT
+  AND g.width_mm    = 1668                              -- <== EDIT
 ORDER BY w.wagon_id;
+
