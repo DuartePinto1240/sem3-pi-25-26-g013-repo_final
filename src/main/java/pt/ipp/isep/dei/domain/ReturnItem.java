@@ -15,8 +15,6 @@ public class ReturnItem implements Comparable<ReturnItem> {
 
     public ReturnItem(String returnId, String sku, int quantity, String reason,
                       LocalDateTime timestamp, LocalDateTime expiryDate) {
-        if (quantity <= 0)
-            throw new IllegalArgumentException("Quantity must be positive.");
         if (returnId == null || sku == null || reason == null || timestamp == null)
             throw new IllegalArgumentException("Invalid null field.");
 

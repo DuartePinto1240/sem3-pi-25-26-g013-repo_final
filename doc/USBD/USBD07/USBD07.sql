@@ -1,10 +1,6 @@
-WITH params AS (
-    SELECT 'IP' AS owner_short FROM dual   -- <== altera aqui o short_name do owner
-)
 SELECT
-    ow.short_name        AS owner,
-    rl.line_id,
-    rl.name              AS line_name,
+    o.name          AS owner_name,
+    rl.name         AS line_name,
     ls.line_segment_id,
     ls.segment_order,
     ls.length_m,
@@ -12,8 +8,8 @@ SELECT
     ls.max_weight,
     ls.track_type,
     ls.electrified
-FROM params p
-         JOIN Owner        ow ON ow.short_name = p.owner_short
-         JOIN RailwayLine  rl ON rl.owner_id   = ow.owner_id
-         JOIN LineSegment  ls ON ls.line_id    = rl.line_id
-ORDER BY rl.line_id, ls.segment_order;
+FROM LineSegment ls
+         INNER JOIN RailwayLine rl ON rl.line_id = ls.line_id
+         INNER JOIN Owner o       ON o.owner_id  = rl.owner_id
+WHERE o.short_name = 'IP'  -- <== EDIT
+ORDER BY rl.name, ls.segment_order;

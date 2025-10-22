@@ -8,28 +8,49 @@ public class Main {
 
     public static void main(String[] args) {
 
-        System.out.println("=== USEI02 — Order Eligibility & Allocation ===");
+        System.out.println("=== LEITURA E VALIDAÇÃO DOS FICHEIROS ===\n");
 
         CsvLoader loader = new CsvLoader();
+        Validator validator = new Validator();
+
+        // Carregar todos os CSVs
+        List<Bay> bays = loader.loadBays("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/bays.csv");
+        List<Wagon> wagons = loader.loadWagons("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/wagons.csv");
+        List<Order> orders = loader.loadOrders(
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/orders.csv",
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/order_lines.csv"
+        );
+        List<Item> items = loader.loadItems("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/items.csv");
+        List<ReturnItem> returns = loader.loadReturns("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/returns.csv");
+
+        // Validar
+        boolean valid =
+                validator.validateItems(items) &
+                        validator.validateBays(bays) &
+                        validator.validateWagons(wagons, items) &
+                        validator.validateOrders(orders, items) &
+                        validator.validateReturns(returns, items);
+
+        if (!valid) {
+            System.err.println("Erros detetados durante a validação. Execução terminada.");
+            return;
+        }
+
+        System.out.println("Todos os ficheiros carregados e validados com sucesso.");
+        System.out.printf("Bays: %d | Wagons: %d | Orders: %d | Items: %d | Returns: %d\n",
+                bays.size(), wagons.size(), orders.size(), items.size(), returns.size());
+        System.out.println();
+
+        System.out.println("=== USEI02 — Order Eligibility & Allocation ===");
 
         // Carregar Bays (estrutura do armazém)
-        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
         Warehouse warehouse = new Warehouse("W1");
         for (Bay b : bays) warehouse.addBay(b);
         System.out.println("Warehouse carregado com " + bays.size() + " bays.");
 
         // Carregar e descarregar Wagons (USEI01)
-        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
         WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
-        System.out.println("Wagons descarregados: " + wagons.size());
-
-        // Carregar ordens e respetivas linhas dos CSVs
-        List<Order> orders = loader.loadOrders(
-                "train_station_dataset_v2/train_station_dataset/orders.csv",
-                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
-        );
-        System.out.println("Ordens carregadas: " + orders.size());
 
         // Executar USEI02 (modo STRICTo)
         OrderAllocator allocator = new OrderAllocator();
@@ -58,8 +79,6 @@ public class Main {
         List<AllocationRow> allocationsrow = chosenResult.allocationRows;
 
         // Converter AllocationRows em Allocations com peso
-        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
-
         Map<String, Double> itemWeights = new HashMap<>();
 
         for (Item item : items) {
@@ -152,17 +171,13 @@ public class Main {
 
         System.out.println("\n=== USEI05 — Returns & Quarantine ===");
 
-        // 2️⃣ Load returns from CSV
-        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
-        System.out.println("Returns loaded: " + returns.size());
-
-        // 3️⃣ Initialize quarantine, inventory, and logger
+        // Initialize quarantine, inventory, and logger
         Quarantine quarantine = new Quarantine();
         Inventory inventory = new Inventory();
         AuditLogger logger = new AuditLogger("returns_audit_log.txt", true);
         QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
 
-        // 4️⃣ Validate and add returns to quarantine
+        // Validate and add returns to quarantine
         for (ReturnItem r : returns) {
             // Optional validation: ensure SKU exists in items list
             boolean validSku = items.stream()
@@ -176,10 +191,10 @@ public class Main {
         }
         System.out.println("Valid returns loaded into quarantine: " + quarantine.size());
 
-        // 5️⃣ Process all returns (restock/discard)
+        // Process all returns (restock/discard)
         operator.processReturns();
 
-        // 6️⃣ Print resulting inventory contents
+        // Print resulting inventory contents
         System.out.println("\n--- Inventory After Processing ---");
         for (var entry : inventory.getStock().entrySet()) {
             System.out.println("SKU: " + entry.getKey());
@@ -188,7 +203,7 @@ public class Main {
             }
         }
 
-        // 7️⃣ Print audit log file contents
+        // Print audit log file contents
         System.out.println("\n--- Audit Log (returns_audit_log.txt) ---");
         try {
             java.nio.file.Files.lines(java.nio.file.Path.of("returns_audit_log.txt"))
@@ -198,7 +213,7 @@ public class Main {
         }
     }
 
-    // 🔸 Método auxiliar para imprimir resultados formatados
+    // Método auxiliar para imprimir resultados formatados
     private static void printResult(OrderAllocator.Result result) {
         System.out.println("\n--- Line Statuses ---");
         for (LineStatus status : result.lineStatuses) {
