@@ -9,14 +9,36 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Repository for {@link Locomotive} entities that loads data from a CSV file.
+ * This class is responsible for reading locomotive data from a specified CSV file
+ * and providing access to that data.
+ */
 public class CsvLocomotiveRepository implements LocomotiveRepository {
 
+    /**
+     * A map to store the locomotives, with the locomotive ID as the key.
+     */
     private final Map<String, Locomotive> locomotives = new HashMap<>();
 
+    /**
+     * Constructs a CsvLocomotiveRepository and initializes it by loading data
+     * from the given CSV file path.
+     *
+     * @param filePath The path to the CSV file containing locomotive data.
+     */
     public CsvLocomotiveRepository(String filePath) {
         loadLocomotives(filePath);
     }
 
+    /**
+     * Loads locomotive data from a CSV file into the repository.
+     * Each row in the CSV is expected to represent a locomotive.
+     * The method handles rows with incomplete data by creating a locomotive
+     * with default values.
+     *
+     * @param filePath The path to the CSV file.
+     */
     private void loadLocomotives(String filePath) {
         List<String[]> records = CsvReaderUtil.readCsvFile(filePath);
         for (String[] record : records) {
@@ -41,11 +63,23 @@ public class CsvLocomotiveRepository implements LocomotiveRepository {
         }
     }
 
+    /**
+     * Finds a locomotive by its unique identifier.
+     *
+     * @param id The unique ID of the locomotive to find.
+     * @return The {@link Locomotive} object if found, otherwise {@code null}.
+     */
     @Override
     public Locomotive findById(String id) {
         return locomotives.get(id);
     }
 
+    /**
+     * Retrieves all locomotives stored in the repository.
+     *
+     * @return A {@link List} containing all {@link Locomotive} objects.
+     * The list will be empty if no locomotives are loaded.
+     */
     @Override
     public List<Locomotive> findAll() {
         return new ArrayList<>(locomotives.values());
