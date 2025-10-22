@@ -4,10 +4,26 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+/**
+ * Planeador de percurso de picking dentro do armazém.
+ * <p>
+ * Fornece duas estratégias para gerar uma sequência de PickStops:
+ * </p>
+ * <ul>
+ *     <li><b>Deterministic Sweep:</b> ordena por corredor (aisle) e depois por bay.</li>
+ *     <li><b>Nearest Neighbour:</b> escolhe sempre a paragem mais próxima do ponto atual, iniciando na entrada (0,0).</li>
+ * </ul>
+ */
 public class PickPathPlanner {
 
-    //estratégia A
-    public PickPath planDeterministicSweep (List<PickStop> stops) {
+    /**
+     * Gera um percurso determinístico (estratégia A) ordenando primeiro pelo corredor (aisle)
+     * e depois pelo bay de cada PickStop.
+     *
+     * @param stops lista de PickStops a serem visitados
+     * @return PickPath contendo a sequência ordenada e a distância total
+     */
+    public PickPath planDeterministicSweep(List<PickStop> stops) {
         List<PickStop> ordered = new ArrayList<>(stops);
         Comparator<PickStop> comparator = Comparator
                 .comparingInt((PickStop s) -> s.getCoordinate().getAisle())
@@ -17,8 +33,14 @@ public class PickPathPlanner {
         return new PickPath(ordered, total);
     }
 
-    //estratégia B
-    public PickPath planNearestNeighbour ( List<PickStop> stops){
+    /**
+     * Gera um percurso usando a estratégia do vizinho mais próximo (Nearest Neighbour).
+     * Começa na coordenada de entrada (0,0) e a cada passo escolhe o PickStop mais próximo.
+     *
+     * @param stops lista de PickStops a serem visitados
+     * @return PickPath contendo a sequência ordenada e a distância total
+     */
+    public PickPath planNearestNeighbour(List<PickStop> stops) {
         List<PickStop> remaining = new ArrayList<>(stops);
         List<PickStop> ordered = new ArrayList<>();
         Coordinate current = new Coordinate(0,0);
@@ -45,6 +67,12 @@ public class PickPathPlanner {
         return new PickPath(ordered, total);
     }
 
+    /**
+     * Calcula a distância total do percurso, iniciando da coordenada de entrada (0,0).
+     *
+     * @param sequence sequência de PickStops
+     * @return distância total do percurso
+     */
     private int calculateTotalDistance(List<PickStop> sequence) {
         int total = 0;
         Coordinate current = new Coordinate(0,0);
@@ -55,3 +83,4 @@ public class PickPathPlanner {
         return total;
     }
 }
+

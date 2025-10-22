@@ -3,12 +3,35 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.util.*;
 import java.util.stream.Collectors;
 
+/**
+ * Responsible for allocating orders to available boxes in the warehouse.
+ * <p>
+ * Allocation follows FEFO/FIFO principles and can be performed in strict or partial mode:
+ * <ul>
+ *     <li>Strict mode: lines must be fully allocated to be dispatched (modePartial = false)</li>
+ *     <li>Partial mode: lines can be partially allocated if not enough stock (modePartial = true)</li>
+ * </ul>
+ * </p>
+ */
 public class OrderAllocator {
 
+    /**
+     * Represents the result of an order allocation.
+     * Contains the status of each order line and the actual allocation rows.
+     */
     public static class Result {
+        /** List of statuses for each order line. */
         public final List<LineStatus> lineStatuses;
+
+        /** List of allocation rows describing how quantities were taken from boxes. */
         public final List<AllocationRow> allocationRows;
 
+        /**
+         * Constructs a new allocation result.
+         *
+         * @param lineStatuses   list of line statuses
+         * @param allocationRows list of allocation rows
+         */
         public Result(List<LineStatus> lineStatuses, List<AllocationRow> allocationRows) {
             this.lineStatuses = lineStatuses;
             this.allocationRows = allocationRows;
@@ -16,40 +39,40 @@ public class OrderAllocator {
     }
 
     /**
-     * modePartial = false -> strict mode (default)
-     * modePartial = true -> allow partial line allocations
+     * Allocates orders to boxes in the warehouse.
+     *
+     * @param orders      list of orders to allocate
+     * @param warehouse   the warehouse containing bays and boxes
+     * @param modePartial if true, allows partial line allocations; if false, strict full allocation is required
+     * @return a {@link Result} object containing line statuses and allocation rows
      */
     public Result allocateOrders(List<Order> orders, Warehouse warehouse, boolean modePartial) {
-        // 1) Preparar mapa boxId -> Bay (para obter aisle/bay ao devolver alocação)
+        // 1) Prepare mapping of boxId -> Bay and remaining quantities
         Map<String, Bay> boxToBay = new HashMap<>();
-        Map<String, Integer> remainingPerBox = new HashMap<>(); // planning quantities
+        Map<String, Integer> remainingPerBox = new HashMap<>();
 
         for (Bay bay : warehouse.getBays().values()) {
             for (Box b : bay.getStoredBoxes()) {
                 boxToBay.put(b.getBoxId(), bay);
-                // Se houver duplicados de boxId entre bays, assume único; último sobrescreve (não deve ocorrer).
                 remainingPerBox.put(b.getBoxId(), b.getQuantity());
             }
         }
 
-        // 2) Lista de boxes por SKU — usaremos sempre a ordem FEFO definida:
-        // FEFO comparator: expiryDate null last, expiryDate asc, receivedAt asc, boxId asc
+        // 2) Prepare FEFO-sorted boxes per SKU
         Comparator<Box> fefoComparator = Comparator
                 .comparing((Box b) -> b.getExpiryDate(), Comparator.nullsLast(Comparator.naturalOrder()))
                 .thenComparing(Box::getReceivedAt)
                 .thenComparing(Box::getBoxId);
 
-        // Helper: get all boxes for SKU sorted FEFO
         Map<String, List<Box>> skuToBoxesSorted = new HashMap<>();
         for (Bay bay : warehouse.getBays().values()) {
             for (Box b : bay.getStoredBoxes()) {
                 skuToBoxesSorted.computeIfAbsent(b.getSku(), k -> new ArrayList<>()).add(b);
             }
         }
-        // sort lists
         skuToBoxesSorted.values().forEach(list -> list.sort(fefoComparator));
 
-        // 3) Ordenar orders (priority ASC, dueDate ASC, orderId ASC)
+        // 3) Sort orders: priority ASC, dueDate ASC, orderId ASC
         List<Order> sortedOrders = new ArrayList<>(orders);
         sortedOrders.sort(Comparator
                 .comparingInt(Order::getPriority)
@@ -59,9 +82,8 @@ public class OrderAllocator {
         List<LineStatus> statuses = new ArrayList<>();
         List<AllocationRow> allocations = new ArrayList<>();
 
-        // 4) Processar cada order e suas linhas
+        // 4) Process each order and line
         for (Order order : sortedOrders) {
-            // lines should be in lineNo ASC (assume order.getLines() may be already in input order, but let's ensure)
             List<OrderLine> lines = new ArrayList<>(order.getLines());
             lines.sort(Comparator.comparingInt(OrderLine::getLineNo));
 
@@ -70,11 +92,9 @@ public class OrderAllocator {
                 int remaining = line.getQtyRequested();
                 int allocatedForLine = 0;
 
-                // Prepare temporary list to record allocations for this line (to rollback if strict and not full)
                 List<AllocationRow> lineAllocations = new ArrayList<>();
-                Map<String, Integer> boxUsageThisLine = new HashMap<>(); // boxId -> usedQty
+                Map<String, Integer> boxUsageThisLine = new HashMap<>();
 
-                // Walk boxes in FEFO order for this SKU
                 List<Box> candidateBoxes = skuToBoxesSorted.getOrDefault(sku, Collections.emptyList());
 
                 for (Box box : candidateBoxes) {
@@ -86,45 +106,35 @@ public class OrderAllocator {
                     int take = Math.min(remaining, avail);
                     if (take <= 0) continue;
 
-                    // record
                     Bay bay = boxToBay.get(boxId);
-                    if (bay == null) {
-                        // defensive: skip if bay not found
-                        continue;
-                    }
+                    if (bay == null) continue;
 
-                    // apply allocation to planning map
                     remainingPerBox.put(boxId, avail - take);
                     boxUsageThisLine.put(boxId, boxUsageThisLine.getOrDefault(boxId, 0) + take);
 
-                    // record allocation row
                     AllocationRow ar = new AllocationRow(order.getOrderId(), line.getLineNo(), sku, take, boxId, bay.getAisle(), bay.getBay());
                     lineAllocations.add(ar);
 
                     remaining -= take;
                     allocatedForLine += take;
-                } // end walk boxes
+                }
 
-                // determine status based on modePartial
-                if (!modePartial) { // strict
+                // Determine status
+                if (!modePartial) {
                     if (allocatedForLine == line.getQtyRequested()) {
-                        // eligible - keep allocations
                         statuses.add(new LineStatus(order.getOrderId(), line.getLineNo(), sku, line.getQtyRequested(), allocatedForLine, LineStatusEnum.ELIGIBLE));
                         allocations.addAll(lineAllocations);
                     } else {
-                        // UNDISPATCHABLE - rollback usage for this line (return qty to remainingPerBox)
                         for (Map.Entry<String,Integer> e : boxUsageThisLine.entrySet()) {
                             String boxId = e.getKey();
                             int used = e.getValue();
                             remainingPerBox.put(boxId, remainingPerBox.getOrDefault(boxId, 0) + used);
                         }
                         statuses.add(new LineStatus(order.getOrderId(), line.getLineNo(), sku, line.getQtyRequested(), 0, LineStatusEnum.UNDISPATCHABLE));
-                        // do not add allocations
                     }
-                } else { // partial mode allowed
+                } else {
                     if (allocatedForLine == 0) {
                         statuses.add(new LineStatus(order.getOrderId(), line.getLineNo(), sku, line.getQtyRequested(), 0, LineStatusEnum.UNDISPATCHABLE));
-                        // nothing to keep
                     } else if (allocatedForLine < line.getQtyRequested()) {
                         statuses.add(new LineStatus(order.getOrderId(), line.getLineNo(), sku, line.getQtyRequested(), allocatedForLine, LineStatusEnum.PARTIAL));
                         allocations.addAll(lineAllocations);
@@ -133,8 +143,8 @@ public class OrderAllocator {
                         allocations.addAll(lineAllocations);
                     }
                 }
-            } // end each line
-        } // end each order
+            }
+        }
 
         return new Result(statuses, allocations);
     }
