@@ -8,20 +8,20 @@ public class Main {
 
     public static void main(String[] args) {
 
-        System.out.println("=== LEITURA E VALIDAÇÃO DOS FICHEIROS ===");
+        System.out.println("=== LEITURA E VALIDAÇÃO DOS FICHEIROS ===\n");
 
         CsvLoader loader = new CsvLoader();
         Validator validator = new Validator();
 
         // Carregar todos os CSVs
-        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
-        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
+        List<Bay> bays = loader.loadBays("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/bays.csv");
+        List<Wagon> wagons = loader.loadWagons("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/wagons.csv");
         List<Order> orders = loader.loadOrders(
-                "train_station_dataset_v2/train_station_dataset/orders.csv",
-                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/orders.csv",
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/order_lines.csv"
         );
-        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
-        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
+        List<Item> items = loader.loadItems("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/items.csv");
+        List<ReturnItem> returns = loader.loadReturns("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/returns.csv");
 
         // Validar
         boolean valid =
@@ -36,9 +36,10 @@ public class Main {
             return;
         }
 
-        System.out.println("Todos os ficheiros carregados e validados com sucesso.\n");
-        System.out.printf("Bays: %d | Wagons: %d | Orders: %d | Items: %d | Returns: %d%n",
+        System.out.println("Todos os ficheiros carregados e validados com sucesso.");
+        System.out.printf("Bays: %d | Wagons: %d | Orders: %d | Items: %d | Returns: %d\n",
                 bays.size(), wagons.size(), orders.size(), items.size(), returns.size());
+        System.out.println();
 
         System.out.println("=== USEI02 — Order Eligibility & Allocation ===");
 
