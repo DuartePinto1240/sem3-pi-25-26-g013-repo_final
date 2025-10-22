@@ -4,7 +4,27 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+/**
+ * Classe responsável por validar entidades do domínio do armazém.
+ * <p>
+ * Valida {@link Item}, {@link Bay}, {@link Wagon}, {@link Order} e {@link ReturnItem} garantindo consistência de dados.
+ * </p>
+ */
 public class Validator {
+
+    /**
+     * Valida uma lista de itens.
+     * <p>
+     * Critérios de validação:
+     * <ul>
+     *     <li>SKU não nulo ou vazio</li>
+     *     <li>UnitWeight e Volume não negativos</li>
+     *     <li>Não existirem SKUs duplicados</li>
+     * </ul>
+     *
+     * @param items lista de {@link Item} a validar
+     * @return {@code true} se todos os itens forem válidos, {@code false} caso contrário
+     */
     public boolean validateItems(List<Item> items) {
         boolean valid = true;
         Set<String> seenSkus = new HashSet<>();
@@ -26,6 +46,18 @@ public class Validator {
         return valid;
     }
 
+    /**
+     * Valida uma lista de bays.
+     * <p>
+     * Critérios de validação:
+     * <ul>
+     *     <li>Aisle, Bay e CapacityBoxes devem ser positivos</li>
+     *     <li>Não existir duplicação de bays no mesmo corredor</li>
+     * </ul>
+     *
+     * @param bays lista de {@link Bay} a validar
+     * @return {@code true} se todos os bays forem válidos, {@code false} caso contrário
+     */
     public boolean validateBays(List<Bay> bays) {
         boolean valid = true;
         Set<String> seen = new HashSet<>();
@@ -46,9 +78,24 @@ public class Validator {
         return valid;
     }
 
+    /**
+     * Valida uma lista de wagons.
+     * <p>
+     * Critérios de validação:
+     * <ul>
+     *     <li>Wagons não podem estar vazios</li>
+     *     <li>Boxes devem ter SKU válido</li>
+     *     <li>Quantidade positiva</li>
+     *     <li>ReceivedAt definido</li>
+     *     <li>BoxId único em todos os wagons</li>
+     * </ul>
+     *
+     * @param wagons lista de {@link Wagon} a validar
+     * @param validItems lista de {@link Item} válidos para referência de SKU
+     * @return {@code true} se todos os wagons forem válidos, {@code false} caso contrário
+     */
     public boolean validateWagons(List<Wagon> wagons, List<Item> validItems) {
         boolean valid = true;
-
         Set<String> validSkus = new HashSet<>();
         for (Item i : validItems) validSkus.add(i.getSku());
 
@@ -87,6 +134,20 @@ public class Validator {
         return valid;
     }
 
+    /**
+     * Valida uma lista de orders.
+     * <p>
+     * Critérios de validação:
+     * <ul>
+     *     <li>DueDate definido</li>
+     *     <li>Linhas contêm SKU válido</li>
+     *     <li>Quantidade solicitada positiva</li>
+     * </ul>
+     *
+     * @param orders lista de {@link Order} a validar
+     * @param validItems lista de {@link Item} válidos para referência de SKU
+     * @return {@code true} se todas as orders forem válidas, {@code false} caso contrário
+     */
     public boolean validateOrders(List<Order> orders, List<Item> validItems) {
         boolean valid = true;
         Set<String> validSkus = new HashSet<>();
@@ -111,6 +172,19 @@ public class Validator {
         return valid;
     }
 
+    /**
+     * Valida uma lista de retornos de mercadoria.
+     * <p>
+     * Critérios de validação:
+     * <ul>
+     *     <li>SKU válido</li>
+     *     <li>Quantidade positiva</li>
+     * </ul>
+     *
+     * @param returns lista de {@link ReturnItem} a validar
+     * @param validItems lista de {@link Item} válidos para referência de SKU
+     * @return {@code true} se todos os retornos forem válidos, {@code false} caso contrário
+     */
     public boolean validateReturns(List<ReturnItem> returns, List<Item> validItems) {
         boolean valid = true;
         Set<String> validSkus = new HashSet<>();
@@ -129,5 +203,6 @@ public class Validator {
         return valid;
     }
 }
+
 
 
