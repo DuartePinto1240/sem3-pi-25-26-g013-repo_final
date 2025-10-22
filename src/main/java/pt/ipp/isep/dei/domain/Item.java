@@ -1,7 +1,7 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Represents an item or product type identified by a unique SKU (Stock Keeping Unit).
+ * Represents an item or product type identified by a unique **SKU** (Stock Keeping Unit).
  * <p>
  * Each {@code Item} defines static metadata such as name, category, unit of measure,
  * volume, and weight per unit. Actual stock quantities are represented separately
@@ -94,6 +94,3 @@ public class Item {
                 '}';
     }
 }
-
-
-

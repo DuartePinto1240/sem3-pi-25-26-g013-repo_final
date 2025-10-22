@@ -3,42 +3,42 @@ package main.java.pt.ipp.isep.dei.domain;
 import main.java.pt.ipp.isep.dei.domain.LineSegment;
 
 /**
- * Representa uma secção de viagem (trajeto) ao longo de um {@link LineSegment}.
+ * Represents a travel section (journey) along a {@link LineSegment}.
  * <p>
- * Esta classe atua como um Data Transfer Object (DTO), armazenando os resultados
- * do cálculo de velocidade e tempo de viagem para um segmento ferroviário específico.
+ * This class acts as a Data Transfer Object (DTO), storing the results
+ * of speed and travel time calculation for a specific railway segment.
  * </p>
  *
  * <p>
- * Cada {@code TravelSection} contém:
+ * Each {@code TravelSection} contains:
  * <ul>
- *     <li>O segmento de linha ferroviária percorrido;</li>
- *     <li>A velocidade efetiva usada (em km/h);</li>
- *     <li>O tempo de viagem correspondente (em minutos).</li>
+ * <li>The railway line segment traveled;</li>
+ * <li>The effective speed used (in km/h);</li>
+ * <li>The corresponding travel time (in minutes).</li>
  * </ul>
  * </p>
  *
  * <p>
- * Esta classe é imutável.
+ * This class is immutable.
  * </p>
  */
 public class TravelSection {
 
-    /** Segmento de linha ferroviária associado a esta secção. */
+    /** Railway line segment associated with this section. */
     private final LineSegment segment;
 
-    /** Velocidade efetiva usada na viagem, em km/h. */
+    /** Effective speed used in the journey, in km/h. */
     private final double effectiveSpeedKmH;
 
-    /** Tempo necessário para percorrer o segmento, em minutos. */
+    /** Time required to travel the segment, in minutes. */
     private final double sectionTimeMinutes;
 
     /**
-     * Cria uma nova instância de {@code TravelSection}.
+     * Creates a new instance of {@code TravelSection}.
      *
-     * @param segment o segmento ferroviário correspondente (não deve ser nulo)
-     * @param effectiveSpeedKmH a velocidade efetiva de viagem, em km/h
-     * @param sectionTimeMinutes o tempo total de viagem, em minutos
+     * @param segment the corresponding railway segment (must not be null)
+     * @param effectiveSpeedKmH the effective travel speed, in km/h
+     * @param sectionTimeMinutes the total travel time, in minutes
      */
     public TravelSection(LineSegment segment, double effectiveSpeedKmH, double sectionTimeMinutes) {
         this.segment = segment;
@@ -47,39 +47,39 @@ public class TravelSection {
     }
 
     /**
-     * Obtém o segmento ferroviário associado a esta secção.
+     * Gets the railway segment associated with this section.
      *
-     * @return o {@link LineSegment} correspondente
+     * @return the corresponding {@link LineSegment}
      */
     public LineSegment getSegment() {
         return segment;
     }
 
     /**
-     * Obtém a velocidade efetiva usada durante o percurso.
+     * Gets the effective speed used during the journey.
      *
-     * @return velocidade em km/h
+     * @return speed in km/h
      */
     public double getEffectiveSpeedKmH() {
         return effectiveSpeedKmH;
     }
 
     /**
-     * Obtém o tempo total necessário para percorrer o segmento.
+     * Gets the total time required to travel the segment.
      *
-     * @return tempo de viagem em minutos
+     * @return travel time in minutes
      */
     public double getSectionTimeMinutes() {
         return sectionTimeMinutes;
     }
 
     /**
-     * Gera uma representação textual detalhada da secção de viagem.
+     * Generates a detailed textual representation of the travel section.
      * <p>
-     * Inclui origem, destino, distância, velocidade e tempo total.
+     * Includes origin, destination, distance, speed, and total time.
      * </p>
      *
-     * @return string formatada com os detalhes da viagem
+     * @return formatted string with travel details
      */
     @Override
     public String toString() {

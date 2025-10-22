@@ -3,24 +3,24 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.util.List;
 
 /**
- * Representa um percurso de picking dentro do armazém.
+ * Represents a picking path within the warehouse.
  * <p>
- * Contém a sequência de paragens (PickStops) e a distância total do percurso.
+ * Contains the sequence of stops (PickStops) and the total distance of the path.
  * </p>
  */
 public class PickPath {
 
-    /** Sequência de paragens do percurso de picking. */
+    /** Sequence of stops in the picking path. */
     private List<PickStop> sequence;
 
-    /** Distância total do percurso (em unidades compatíveis com a métrica de distância usada). */
+    /** Total distance of the path (in units compatible with the distance metric used). */
     private double totalDistance;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param sequence      lista de PickStops representando a sequência do percurso
-     * @param totalDistance distância total do percurso
+     * @param sequence      list of PickStops representing the path sequence
+     * @param totalDistance total distance of the path
      */
     public PickPath(List<PickStop> sequence, double totalDistance) {
         this.sequence = sequence;
@@ -28,27 +28,27 @@ public class PickPath {
     }
 
     /**
-     * Retorna a sequência de PickStops.
+     * Returns the sequence of PickStops.
      *
-     * @return lista de PickStops
+     * @return list of PickStops
      */
     public List<PickStop> getSequence() {
         return sequence;
     }
 
     /**
-     * Retorna a distância total do percurso.
+     * Returns the total distance of the path.
      *
-     * @return distância total
+     * @return total distance
      */
     public double getTotalDistance() {
         return totalDistance;
     }
 
     /**
-     * Retorna uma representação textual do percurso, incluindo cada PickStop e a distância total.
+     * Returns a textual representation of the path, including each PickStop and the total distance.
      *
-     * @return string descritiva do percurso
+     * @return a formatted string describing the path
      */
     @Override
     public String toString() {
@@ -59,4 +59,3 @@ public class PickPath {
         return sb.toString();
     }
 }
-

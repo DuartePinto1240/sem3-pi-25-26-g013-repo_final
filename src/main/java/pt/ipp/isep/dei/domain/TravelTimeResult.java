@@ -3,39 +3,39 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.util.List;
 
 /**
- * Representa o resultado completo da simulação de tempo de viagem de uma locomotiva
- * ao longo de uma determinada {@link RailwayLine}.
+ * Represents the complete result of a locomotive travel time simulation
+ * along a given {@link RailwayLine}.
  * <p>
- * Esta classe agrega os resultados de todas as secções de viagem
- * ({@link TravelSection}), o tempo total estimado e a locomotiva utilizada.
+ * This class aggregates the results of all travel sections
+ * ({@link TravelSection}), the total estimated time, and the locomotive used.
  * </p>
  *
  * <p>
- * É imutável e destina-se a ser usada apenas para consulta e visualização
- * dos resultados da simulação.
+ * It is immutable and intended to be used only for querying and visualizing
+ * the simulation results.
  * </p>
  */
 public class TravelTimeResult {
 
-    /** Lista das secções de viagem (cada uma correspondente a um segmento da linha). */
+    /** List of travel sections (each corresponding to a segment of the line). */
     private final List<TravelSection> travelSections;
 
-    /** Tempo total estimado para percorrer a linha completa, em minutos. */
+    /** Total estimated time to traverse the complete line, in minutes. */
     private final double totalTimeMinutes;
 
-    /** Locomotiva usada na simulação de viagem. */
+    /** Locomotive used in the travel simulation. */
     private final Locomotive locomotive;
 
-    /** Linha ferroviária percorrida pela locomotiva. */
+    /** Railway line traversed by the locomotive. */
     private final RailwayLine line;
 
     /**
-     * Cria uma nova instância de {@code TravelTimeResult}.
+     * Creates a new instance of {@code TravelTimeResult}.
      *
-     * @param travelSections lista das secções de viagem (não deve ser nula)
-     * @param totalTimeMinutes tempo total estimado, em minutos
-     * @param locomotive locomotiva utilizada na viagem
-     * @param line linha ferroviária percorrida
+     * @param travelSections list of travel sections (must not be null)
+     * @param totalTimeMinutes total estimated time, in minutes
+     * @param locomotive the locomotive used in the journey
+     * @param line the railway line traversed
      */
     public TravelTimeResult(List<TravelSection> travelSections, double totalTimeMinutes,
                             Locomotive locomotive, RailwayLine line) {
@@ -46,14 +46,14 @@ public class TravelTimeResult {
     }
 
     /**
-     * Imprime no terminal um resumo formatado do resultado da simulação de viagem.
+     * Prints a formatted summary of the travel simulation result to the console.
      * <p>
-     * Inclui:
+     * Includes:
      * <ul>
-     *     <li>Estação de origem e destino;</li>
-     *     <li>Modelo da locomotiva utilizada;</li>
-     *     <li>Tempo total estimado (em horas e minutos);</li>
-     *     <li>Detalhes individuais de cada secção percorrida.</li>
+     * <li>Origin and destination station;</li>
+     * <li>Model of the locomotive used;</li>
+     * <li>Total estimated time (in hours and minutes);</li>
+     * <li>Individual details of each section traversed.</li>
      * </ul>
      * </p>
      */

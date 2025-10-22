@@ -4,24 +4,24 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Representa um armazém que contém múltiplos {@link Bay}.
+ * Represents a warehouse that contains multiple {@link Bay}s.
  * <p>
- * Cada {@code Warehouse} possui um identificador único e mantém um mapa de bays,
- * onde cada bay é identificado pela combinação de ID do armazém, corredor (aisle) e bay number.
+ * Each {@code Warehouse} has a unique identifier and maintains a map of bays,
+ * where each bay is identified by the combination of warehouse ID, aisle number, and bay number.
  * </p>
  */
 public class Warehouse {
 
-    /** Identificador único do armazém. */
+    /** Unique identifier of the warehouse. */
     private String id;
 
-    /** Mapa de bays, com chave no formato "warehouseId-aisle-bay". */
+    /** Map of bays, with the key in the format "warehouseId-aisle-bay". */
     private Map<String, Bay> bays;
 
     /**
-     * Constrói um armazém vazio com o ID fornecido.
+     * Constructs an empty warehouse with the provided ID.
      *
-     * @param id identificador único do armazém
+     * @param id unique identifier of the warehouse
      */
     public Warehouse(String id) {
         this.id = id;
@@ -29,12 +29,12 @@ public class Warehouse {
     }
 
     /**
-     * Adiciona um bay ao armazém.
+     * Adds a bay to the warehouse.
      * <p>
-     * A chave usada no mapa interno é construída concatenando o ID do armazém, corredor e número do bay.
+     * The key used in the internal map is constructed by concatenating the warehouse ID, aisle, and bay number.
      * </p>
      *
-     * @param bay bay a ser adicionado ao armazém
+     * @param bay the bay to be added to the warehouse
      */
     public void addBay(Bay bay) {
         String key = bay.getWarehouseId() + "-" + bay.getAisle() + "-" + bay.getBay();
@@ -42,12 +42,12 @@ public class Warehouse {
     }
 
     /**
-     * Obtém um bay específico do armazém.
+     * Gets a specific bay from the warehouse.
      *
-     * @param warehouseId ID do armazém
-     * @param aisle número do corredor
-     * @param bay número do bay
-     * @return o {@link Bay} correspondente, ou {@code null} se não existir
+     * @param warehouseId ID of the warehouse
+     * @param aisle aisle number
+     * @param bay bay number
+     * @return the corresponding {@link Bay}, or {@code null} if it does not exist
      */
     public Bay getBay(String warehouseId, int aisle, int bay) {
         String key = warehouseId + "-" + aisle + "-" + bay;
@@ -55,18 +55,18 @@ public class Warehouse {
     }
 
     /**
-     * Retorna todos os bays do armazém.
+     * Returns all bays in the warehouse.
      *
-     * @return mapa imutável de bays
+     * @return map of bays
      */
     public Map<String, Bay> getBays() {
         return bays;
     }
 
     /**
-     * Representação textual do armazém, incluindo seu ID e os bays que contém.
+     * Textual representation of the warehouse, including its ID and the bays it contains.
      *
-     * @return string no formato {@code Warehouse{id='ID', bays={...}}}
+     * @return string in the format {@code Warehouse{id='ID', bays={...}}}
      */
     @Override
     public String toString() {
@@ -76,7 +76,4 @@ public class Warehouse {
                 '}';
     }
 }
-
-
-
 

@@ -6,36 +6,36 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Classe responsável por registar eventos ou ações num ficheiro de auditoria (log).
+ * Responsible for recording events or actions to an audit log file.
  *
- * <p>O {@code AuditLogger} permite criar registos cronológicos com timestamp
- * para acompanhar eventos relevantes, como operações do utilizador, falhas do sistema,
- * ou outras ações críticas.</p>
+ * <p>The {@code AuditLogger} allows the creation of chronological entries with timestamps
+ * to track relevant events, such as user operations, system failures,
+ * or other critical actions.</p>
  *
- * <p>Cada linha do log contém um carimbo temporal no formato
- * {@code yyyy-MM-dd HH:mm}, seguido de uma mensagem descritiva.</p>
+ * <p>Each log line contains a timestamp in the format {@code yyyy-MM-dd HH:mm},
+ * followed by a descriptive message.</p>
  */
 public class AuditLogger {
 
-    /** Caminho do ficheiro onde os logs serão guardados. */
+    /** Path to the file where logs will be stored. */
     private final String filePath;
 
     /**
-     * Constrói um {@code AuditLogger} que escreve no ficheiro especificado.
-     * O ficheiro existente, caso exista, é preservado (modo append).
+     * Constructs an {@code AuditLogger} that writes to the specified file.
+     * The existing file, if present, is preserved (append mode).
      *
-     * @param filePath caminho completo para o ficheiro de log
+     * @param filePath full path to the log file
      */
     public AuditLogger(String filePath) {
         this(filePath, false);
     }
 
     /**
-     * Constrói um {@code AuditLogger} com a opção de sobrescrever o ficheiro existente.
+     * Constructs an {@code AuditLogger} with the option to overwrite the existing file.
      *
-     * @param filePath  caminho completo para o ficheiro de log
-     * @param overwrite se {@code true}, o ficheiro é limpo ao iniciar;
-     *                  se {@code false}, os registos são acrescentados ao ficheiro existente
+     * @param filePath  full path to the log file
+     * @param overwrite if {@code true}, the file is cleared on startup;
+     *                  if {@code false}, new entries are appended to the existing file
      */
     public AuditLogger(String filePath, boolean overwrite) {
         this.filePath = filePath;
@@ -43,22 +43,22 @@ public class AuditLogger {
     }
 
     /**
-     * Limpa o conteúdo do ficheiro de log, caso exista.
-     * Este método é chamado automaticamente apenas se a opção {@code overwrite}
-     * for ativada no construtor.
+     * Clears the content of the log file if it exists.
+     * This method is automatically called only if the {@code overwrite} option
+     * is enabled in the constructor.
      */
     private void clearFile() {
         try (FileWriter fw = new FileWriter(filePath, false)) {
-            // apenas abre e fecha — apaga o conteúdo existente
+            // just opens and closes — clears existing content
         } catch (IOException e) {
             System.err.println("⚠️ Could not clear audit log: " + e.getMessage());
         }
     }
 
     /**
-     * Regista uma nova entrada no ficheiro de log, com data e hora atuais.
+     * Records a new entry in the log file with the current date and time.
      *
-     * @param message mensagem a ser registada no log
+     * @param message message to be recorded in the log
      */
     public void log(String message) {
         try (FileWriter fw = new FileWriter(filePath, true)) {

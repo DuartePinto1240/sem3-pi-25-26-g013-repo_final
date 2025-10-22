@@ -4,28 +4,28 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Representa uma linha ferroviária composta por vários segmentos consecutivos.
+ * Represents a railway line composed of several consecutive segments.
  * <p>
- * Uma {@code RailwayLine} possui uma estação de início, uma estação final
- * e uma lista de {@link LineSegment} que descrevem o percurso.
+ * A {@code RailwayLine} has a starting station, an ending station,
+ * and a list of {@link LineSegment}s that describe the route.
  * </p>
  */
 public class RailwayLine {
 
-    /** Estação de início da linha ferroviária. */
+    /** The starting station of the railway line. */
     private final Station startStation;
 
-    /** Estação final da linha ferroviária. */
+    /** The ending station of the railway line. */
     private final Station endStation;
 
-    /** Lista de segmentos que compõem a linha ferroviária. */
+    /** List of segments that compose the railway line. */
     private final List<LineSegment> segments;
 
     /**
-     * Cria uma RailwayLine a partir de uma lista de segmentos consecutivos.
+     * Creates a RailwayLine from a list of consecutive segments.
      *
-     * @param segments lista de {@link LineSegment}, não pode ser null ou vazia
-     * @throws IllegalArgumentException se a lista for null ou vazia
+     * @param segments list of {@link LineSegment}s, cannot be null or empty
+     * @throws IllegalArgumentException if the list is null or empty
      */
     public RailwayLine(List<LineSegment> segments) {
         if (segments == null || segments.isEmpty()) {
@@ -37,30 +37,30 @@ public class RailwayLine {
     }
 
     /**
-     * Retorna a estação de início da linha ferroviária.
+     * Returns the starting station of the railway line.
      *
-     * @return estação inicial
+     * @return the starting station
      */
     public Station getStartStation() {
         return startStation;
     }
 
     /**
-     * Retorna a estação final da linha ferroviária.
+     * Returns the ending station of the railway line.
      *
-     * @return estação final
+     * @return the ending station
      */
     public Station getEndStation() {
         return endStation;
     }
 
     /**
-     * Retorna a lista de segmentos que compõem a linha ferroviária.
+     * Returns the list of segments that compose the railway line.
      * <p>
-     * A lista retornada é imutável.
+     * The returned list is immutable.
      * </p>
      *
-     * @return lista imutável de {@link LineSegment}
+     * @return an immutable list of {@link LineSegment}s
      */
     public List<LineSegment> getSegments() {
         return Collections.unmodifiableList(segments);

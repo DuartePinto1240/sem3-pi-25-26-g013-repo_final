@@ -5,35 +5,35 @@ import java.util.Deque;
 import java.util.List;
 
 /**
- * Representa a quarentena de itens devolvidos.
+ * Represents the quarantine for returned items.
  * <p>
- * Itens devolvidos são armazenados temporariamente nesta estrutura antes de serem
- * processados pelo {@link QualityOperator}. Os itens são processados em ordem
- * de chegada (LIFO - last in, first out) por padrão.
+ * Returned items are temporarily stored in this structure before being
+ * processed by the {@link QualityOperator}. Items are processed in a
+ * Last-In, First-Out (**LIFO**) order by default.
  * </p>
  */
 public class Quarantine {
 
-    /** Pilha interna que mantém os itens devolvidos. */
+    /** Internal stack that holds the returned items. */
     private final Deque<ReturnItem> stack = new ArrayDeque<>();
 
     /**
-     * Adiciona um item à quarentena.
+     * Adds an item to the quarantine.
      *
-     * @param item item devolvido a ser adicionado
+     * @param item the returned item to be added
      */
     public void add(ReturnItem item) {
         stack.push(item);
     }
 
     /**
-     * Adiciona uma lista de itens à quarentena.
+     * Adds a list of items to the quarantine.
      * <p>
-     * Os itens são ordenados por timestamp decrescente antes de serem adicionados,
-     * garantindo que os mais recentes sejam processados primeiro.
+     * The items are sorted by descending timestamp before being added,
+     * ensuring that the most recent ones are processed first (LIFO order).
      * </p>
      *
-     * @param items lista de itens a adicionar
+     * @param items list of items to add
      */
     public void addAll(List<ReturnItem> items) {
         items.stream()
@@ -42,30 +42,29 @@ public class Quarantine {
     }
 
     /**
-     * Remove e retorna o próximo item da quarentena.
+     * Removes and returns the next item from the quarantine.
      *
-     * @return item devolvido mais recente, ou null se estiver vazia
+     * @return the most recent returned item, or null if empty
      */
     public ReturnItem next() {
         return stack.poll();
     }
 
     /**
-     * Verifica se a quarentena está vazia.
+     * Checks if the quarantine is empty.
      *
-     * @return true se não houver itens, false caso contrário
+     * @return true if there are no items, false otherwise
      */
     public boolean isEmpty() {
         return stack.isEmpty();
     }
 
     /**
-     * Retorna o número de itens atualmente na quarentena.
+     * Returns the number of items currently in the quarantine.
      *
-     * @return quantidade de itens na quarentena
+     * @return quantity of items in quarantine
      */
     public int size() {
         return stack.size();
     }
 }
-
