@@ -32,6 +32,10 @@ public class Bay {
         return bay;
     }
 
+    public int getCapacityBoxes() {
+        return capacityBoxes;
+    }
+
     public boolean canStoreBox(Box box) {
         return storedBoxes.size() < capacityBoxes; // Verifica se o bay tem capacidade
     }
