@@ -9,49 +9,22 @@ import org.junit.jupiter.api.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class PickingPlannerTest {
-    // Classe auxiliar simples para simular Allocation
-    static class FakeAllocation {
-        private final double weight;
-        private final String name;
-
-        FakeAllocation(double weight, String name) {
-            this.weight = weight;
-            this.name = name;
-        }
-
-        public double getWeight() {
-            return weight;
-        }
-
-        @Override
-        public String toString() {
-            return name + "(" + weight + ")";
-        }
-    }
-
-    private List<Allocation> toAllocations(List<FakeAllocation> fakeList) {
-        // Adapta para List<Allocation> via cast forçado (só para os testes)
-        @SuppressWarnings("unchecked")
-        List<Allocation> list = (List<Allocation>)(List<?>)fakeList;
-        return list;
-    }
 
     private PickingPlanner planner;
 
     @BeforeEach
     void setUp() {
-        List<FakeAllocation> allocs = List.of(
-                new FakeAllocation(40, "A1"),
-                new FakeAllocation(30, "A2"),
-                new FakeAllocation(50, "A3"),
-                new FakeAllocation(20, "A4")
-        );
-        planner = new PickingPlanner(toAllocations(allocs), 70.0);
+        // Criar allocations reais
+        Allocation a1 = new Allocation("O1", 1, "A1", 1, 40.0, "B1", 0, 0);
+        Allocation a2 = new Allocation("O2", 1, "A2", 1, 30.0, "B2", 0, 0);
+        Allocation a3 = new Allocation("O3", 1, "A3", 1, 50.0, "B3", 0, 0);
+        Allocation a4 = new Allocation("O4", 1, "A4", 1, 20.0, "B4", 0, 0);
+
+        List<Allocation> allocations = List.of(a1, a2, a3, a4);
+        planner = new PickingPlanner(allocations, 70.0);
     }
 
     @Test
@@ -66,14 +39,14 @@ public class PickingPlannerTest {
         List<Trolley> firstFit = planner.planFirstFit();
         int trolleysFirstFit = firstFit.size();
 
-        // Novo planner para comparação justa
-        List<FakeAllocation> allocs = List.of(
-                new FakeAllocation(40, "A1"),
-                new FakeAllocation(30, "A2"),
-                new FakeAllocation(50, "A3"),
-                new FakeAllocation(20, "A4")
-        );
-        PickingPlanner bestFitPlanner = new PickingPlanner(toAllocations(allocs), 70.0);
+        // Criar novo planner para comparação justa
+        Allocation a1 = new Allocation("O1", 1, "A1", 1, 40.0, "B1", 0, 0);
+        Allocation a2 = new Allocation("O2", 1, "A2", 1, 30.0, "B2", 0, 0);
+        Allocation a3 = new Allocation("O3", 1, "A3", 1, 50.0, "B3", 0, 0);
+        Allocation a4 = new Allocation("O4", 1, "A4", 1, 20.0, "B4", 0, 0);
+
+        List<Allocation> allocations = List.of(a1, a2, a3, a4);
+        PickingPlanner bestFitPlanner = new PickingPlanner(allocations, 70.0);
         List<Trolley> bestFit = bestFitPlanner.planBestFitDecreasing();
 
         int trolleysBestFit = bestFit.size();
@@ -95,11 +68,12 @@ public class PickingPlannerTest {
 
     @Test
     void testSingleAllocation_FitsInOneTrolley() {
-        List<FakeAllocation> allocs = List.of(new FakeAllocation(20, "A1"));
-        PickingPlanner singlePlanner = new PickingPlanner(toAllocations(allocs), 50.0);
+        Allocation singleAlloc = new Allocation("O1", 1, "A1", 1, 20.0, "B1", 0, 0);
+        PickingPlanner singlePlanner = new PickingPlanner(List.of(singleAlloc), 50.0);
 
         List<Trolley> result = singlePlanner.planFirstFit();
         assertEquals(1, result.size());
         assertEquals(20.0, result.get(0).getUsedWeight());
     }
 }
+

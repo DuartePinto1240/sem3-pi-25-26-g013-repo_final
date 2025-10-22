@@ -29,12 +29,21 @@ public class QualityOperator {
     }
 
     private void restock(ReturnItem item) {
-        Box newBox = new Box("RET-" + item.getReturnId(), item.getSku(),
-                item.getQuantity(), LocalDate.now(), item.getExpiryDate());
+        LocalDate expiry = (item.getExpiryDate() != null)
+                ? item.getExpiryDate().toLocalDate()
+                : null;
+
+        Box newBox = new Box("RET-" + item.getReturnId(),
+                item.getSku(),
+                item.getQuantity(),
+                expiry,
+                java.time.LocalDateTime.now());
+
         inventory.addBox(newBox);
         logger.log(String.format("returnId=%s | sku=%s | action=Restocked | qty=%d",
                 item.getReturnId(), item.getSku(), item.getQuantity()));
     }
+
 
     private void discard(ReturnItem item) {
         logger.log(String.format("returnId=%s | sku=%s | action=Discarded | qty=%d",

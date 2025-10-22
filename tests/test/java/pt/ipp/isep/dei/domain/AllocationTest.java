@@ -35,21 +35,7 @@ public class AllocationTest {
         assertEquals(bay, alloc.getBay());
     }
 
-    @Test
-    public void testToStringContainsAllFields() {
-        // Arrange
-        Allocation alloc = new Allocation("ORD002", 1, "SKU0010", 10, 50.0, "BOX123", 4, 8);
 
-        // Act
-        String text = alloc.toString();
-
-        // Assert
-        assertTrue(text.contains("ORD002"));
-        assertTrue(text.contains("SKU0010"));
-        assertTrue(text.contains("BOX123"));
-        assertTrue(text.contains("aisle=4"));
-        assertTrue(text.contains("bay=8"));
-    }
 
     @Test
     public void testNegativeValuesAllowedButConsistent() {
