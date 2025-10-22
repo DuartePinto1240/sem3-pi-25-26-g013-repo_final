@@ -1,6 +1,5 @@
 package main.java.pt.ipp.isep.dei.domain;
 
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,18 +8,37 @@ import java.time.LocalDateTime;
 import java.util.*;
 
 /**
- * Loader genérico para todos os CSVs usados nas USEI01 e USEI02.
- * Suporta delimitadores ',' e ';' automaticamente.
+ * Classe utilitária responsável por carregar ficheiros CSV contendo dados de entidades do domínio
+ * (como {@link Item}, {@link Bay}, {@link Wagon}, {@link Order}, {@link OrderLine} e {@link ReturnItem}).
+ *
+ * <p>É usada nas funcionalidades USEI01 e USEI02, oferecendo suporte automático aos delimitadores
+ * {@code ','} e {@code ';'}. O delimitador é detetado automaticamente com base na primeira linha do ficheiro.</p>
+ *
+ * <p>Cada método devolve uma lista de objetos de domínio ou, no caso das linhas de encomenda,
+ * um mapa que associa IDs de encomenda às suas respetivas linhas.</p>
  */
 public class CsvLoader {
 
-    // Detecta se o delimitador é ';' ou ','
+    /**
+     * Deteta o delimitador usado num ficheiro CSV com base na primeira linha (header).
+     * Caso o header contenha ponto e vírgula ({@code ;}), assume-se esse como delimitador.
+     * Caso contrário, é usado o delimitador vírgula ({@code ,}).
+     *
+     * @param headerLine linha de cabeçalho do ficheiro CSV
+     * @return o delimitador identificado ({@code ","} ou {@code ";"})
+     */
     private String detectDelimiter(String headerLine) {
         if (headerLine.contains(";")) return ";";
         else return ",";
     }
 
-    // 🔹 Carrega Items (metadados dos SKUs)
+    /**
+     * Carrega uma lista de {@link Item}s a partir de um ficheiro CSV.
+     * <p>Esperado formato: {@code sku;description;category;type;weight;width}</p>
+     *
+     * @param filePath caminho do ficheiro CSV
+     * @return lista de {@link Item}s carregados
+     */
     public List<Item> loadItems(String filePath) {
         List<Item> items = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -43,7 +61,13 @@ public class CsvLoader {
         return items;
     }
 
-    // 🔹 Carrega Bays (estrutura do armazém)
+    /**
+     * Carrega uma lista de {@link Bay}s a partir de um ficheiro CSV.
+     * <p>Esperado formato: {@code warehouseId;aisle;bay;capacityBoxes}</p>
+     *
+     * @param filePath caminho do ficheiro CSV
+     * @return lista de {@link Bay}s carregados
+     */
     public List<Bay> loadBays(String filePath) {
         List<Bay> bays = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -66,7 +90,14 @@ public class CsvLoader {
         return bays;
     }
 
-    // 🔹 Carrega Wagons e suas Boxes
+    /**
+     * Carrega uma lista de {@link Wagon}s e as suas respetivas {@link Box}es a partir de um ficheiro CSV.
+     * <p>Esperado formato: {@code wagonId;boxId;sku;quantity;expiryDate;receivedAt}</p>
+     * <p>Os {@link Wagon}s são agrupados com base no seu ID.</p>
+     *
+     * @param filePath caminho do ficheiro CSV
+     * @return lista de {@link Wagon}s com as {@link Box}es associadas
+     */
     public List<Wagon> loadWagons(String filePath) {
         Map<String, Wagon> wagonMap = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -97,7 +128,13 @@ public class CsvLoader {
         return new ArrayList<>(wagonMap.values());
     }
 
-    // 🔹 Carrega Orders (cabeçalho)
+    /**
+     * Carrega uma lista de {@link Order}s (encomendas), associando-as às suas respetivas {@link OrderLine}s.
+     *
+     * @param ordersPath      caminho do ficheiro CSV com cabeçalhos de encomenda
+     * @param orderLinesPath  caminho do ficheiro CSV com as linhas de encomenda
+     * @return lista de {@link Order}s completas com as suas {@link OrderLine}s
+     */
     public List<Order> loadOrders(String ordersPath, String orderLinesPath) {
         List<Order> orders = new ArrayList<>();
         Map<String, List<OrderLine>> orderLinesMap = loadOrderLines(orderLinesPath);
@@ -123,7 +160,13 @@ public class CsvLoader {
         return orders;
     }
 
-    // 🔹 Carrega OrderLines (linhas das encomendas)
+    /**
+     * Carrega as linhas de encomenda ({@link OrderLine}) e organiza-as num mapa
+     * associando cada ID de encomenda às suas linhas correspondentes.
+     *
+     * @param filePath caminho do ficheiro CSV com linhas de encomenda
+     * @return mapa de {@code orderId -> lista de OrderLine}
+     */
     private Map<String, List<OrderLine>> loadOrderLines(String filePath) {
         Map<String, List<OrderLine>> map = new HashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -149,10 +192,17 @@ public class CsvLoader {
         return map;
     }
 
+    /**
+     * Carrega uma lista de {@link ReturnItem}s (devoluções de produtos) a partir de um ficheiro CSV.
+     * <p>Formato esperado: {@code returnId,sku,qty,reason,timestamp,expiryDate}</p>
+     *
+     * @param path caminho do ficheiro CSV de devoluções
+     * @return lista de {@link ReturnItem}s carregados
+     */
     public List<ReturnItem> loadReturns(String path) {
         List<ReturnItem> list = new ArrayList<>();
         try (var br = new java.io.BufferedReader(new java.io.FileReader(path))) {
-            String header = br.readLine(); // skip header
+            String header = br.readLine(); // ignora o cabeçalho
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.isBlank()) continue;
@@ -166,7 +216,7 @@ public class CsvLoader {
                 String reason = f[3].trim();
                 java.time.LocalDateTime timestamp = java.time.LocalDateTime.parse(f[4].trim());
 
-                // Handle empty expiry date safely
+                // Lidar com data de validade opcional
                 java.time.LocalDateTime expiry = null;
                 String expiryRaw = f[5].trim();
                 if (!expiryRaw.isEmpty()) {
@@ -184,9 +234,8 @@ public class CsvLoader {
         }
         return list;
     }
-
-
 }
+
 
 
 
