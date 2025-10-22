@@ -6,23 +6,36 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link LineSegment}.
+ * <p>
+ * These tests cover constructor validation, getters, toString formatting,
+ * and behavior for electrification, distance, and max speed.
+ * </p>
+ */
 public class LineSegmentTest {
 
-    // 🔹 Helper simples para criar estações falsas (mock-like)
+    /**
+     * Helper method to create mock Station objects for testing.
+     *
+     * @param name the name of the station
+     * @return a Station instance with dummy coordinates
+     */
     private Station createStation(String name) {
         return new Station(name, "City_" + name, 0, 0);
     }
 
+    /**
+     * Verifies that constructor initializes fields correctly
+     * and getters return the expected values.
+     */
     @Test
     public void testConstructorAndGetters() {
-        // Arrange
         Station s1 = createStation("A");
         Station s2 = createStation("B");
 
-        // Act
         LineSegment segment = new LineSegment(s1, s2, 12.5, 120.0, true);
 
-        // Assert
         assertEquals(s1, segment.getOrigin());
         assertEquals(s2, segment.getDestination());
         assertEquals(12.5, segment.getDistanceKm());
@@ -30,27 +43,29 @@ public class LineSegmentTest {
         assertTrue(segment.isElectrified());
     }
 
+    /**
+     * Ensures that the {@link LineSegment#toString()} method
+     * contains origin, destination, distance, speed, and electrification info.
+     */
     @Test
     public void testToStringFormat() {
-        // Arrange
         Station origin = createStation("Lisboa");
         Station destination = createStation("Porto");
         LineSegment seg = new LineSegment(origin, destination, 313.0, 200.0, true);
 
-        // Act
         String text = seg.toString();
         System.out.println("toString() => " + text);
 
-        // Assert
         assertTrue(text.contains("Lisboa"));
         assertTrue(text.contains("Porto"));
-        assertTrue(text.contains("km"));            // menos específico, mas robusto
+        assertTrue(text.contains("km"));
         assertTrue(text.contains("200"));
         assertTrue(text.contains("electrified=true"));
     }
 
-
-    // 🔸 Validação de argumentos nulos
+    /**
+     * Verifies that constructor throws exception when origin or destination is null.
+     */
     @Test
     public void testConstructorRejectsNullStations() {
         Station s1 = createStation("Valid");
@@ -64,7 +79,9 @@ public class LineSegmentTest {
         assertTrue(ex2.getMessage().contains("Destination"));
     }
 
-    // 🔸 Validação de distância
+    /**
+     * Verifies that constructor throws exception for non-positive distance.
+     */
     @Test
     public void testConstructorRejectsNonPositiveDistance() {
         Station s1 = createStation("A");
@@ -75,7 +92,9 @@ public class LineSegmentTest {
         assertTrue(ex.getMessage().contains("Distance"));
     }
 
-    // 🔸 Validação de velocidade máxima
+    /**
+     * Verifies that constructor throws exception for non-positive max speed.
+     */
     @Test
     public void testConstructorRejectsNonPositiveSpeed() {
         Station s1 = createStation("A");
@@ -86,6 +105,9 @@ public class LineSegmentTest {
         assertTrue(ex.getMessage().contains("Max Speed"));
     }
 
+    /**
+     * Ensures that the isElectrified flag works when false.
+     */
     @Test
     public void testElectrifiedFalse() {
         Station s1 = createStation("X");
@@ -95,4 +117,3 @@ public class LineSegmentTest {
         assertFalse(segment.isElectrified());
     }
 }
-

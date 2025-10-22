@@ -7,8 +7,19 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link Inventory}.
+ * <p>
+ * These tests verify adding boxes to the inventory, checking SKU existence,
+ * and ensuring boxes are sorted by FEFO (First Expired, First Out) order.
+ * </p>
+ */
 class InventoryTest {
 
+    /**
+     * Verifies that adding a box to the inventory allows the SKU to be found
+     * and the box can be retrieved.
+     */
     @Test
     void testAddBoxAndContainsSku() {
         Inventory inv = new Inventory();
@@ -19,6 +30,9 @@ class InventoryTest {
         assertEquals(1, inv.getBoxes("SKU1").size());
     }
 
+    /**
+     * Verifies that boxes for the same SKU are sorted by FEFO (earliest expiry first).
+     */
     @Test
     void testBoxesAreSortedByFEFO() {
         Inventory inv = new Inventory();
@@ -31,3 +45,4 @@ class InventoryTest {
                 "Box with earlier expiry should be first (FEFO)");
     }
 }
+

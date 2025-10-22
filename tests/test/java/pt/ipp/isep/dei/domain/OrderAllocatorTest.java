@@ -10,18 +10,34 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link OrderAllocator}.
+ * <p>
+ * These tests cover different allocation scenarios including:
+ * <ul>
+ *     <li>Strict mode: full allocation required, otherwise order is undispatchable.</li>
+ *     <li>Partial mode: allows partial allocation if full quantity is not available.</li>
+ *     <li>FEFO (First-Expire-First-Out) box selection.</li>
+ *     <li>Order processing priority based on due date, priority, and order ID.</li>
+ * </ul>
+ * </p>
+ */
 public class OrderAllocatorTest {
 
     private Warehouse warehouse;
     private Bay bay1, bay2;
 
+    /**
+     * Sets up a warehouse with two bays and boxes before each test.
+     * Boxes are arranged to test FEFO allocation.
+     */
     @BeforeEach
     public void setup() {
         warehouse = new Warehouse("W1");
         bay1 = new Bay("W1", 1, 1, 10);
         bay2 = new Bay("W1", 1, 2, 10);
 
-        // FEFO: Box1 expira mais cedo, Box2 expira depois
+        // FEFO: Box1 expires earlier than Box2
         Box box1 = new Box("BOX001", "SKU001", 10, LocalDate.of(2025, 6, 1), LocalDateTime.of(2025, 5, 1, 10, 0));
         Box box2 = new Box("BOX002", "SKU001", 20, LocalDate.of(2025, 12, 1), LocalDateTime.of(2025, 5, 2, 10, 0));
 
@@ -31,9 +47,12 @@ public class OrderAllocatorTest {
         warehouse.addBay(bay2);
     }
 
+    /**
+     * Tests strict allocation mode when enough stock is available.
+     */
     @Test
     public void testStrictMode_FullEligible() {
-        OrderLine line = new OrderLine(1, "SKU001", 10); // requer 10
+        OrderLine line = new OrderLine(1, "SKU001", 10); // requires 10
         Order order = new Order("ORD01", 1, LocalDate.of(2025, 10, 10), List.of(line));
 
         OrderAllocator allocator = new OrderAllocator();
@@ -47,9 +66,13 @@ public class OrderAllocatorTest {
         assertEquals("BOX001", result.allocationRows.get(0).getBoxId());
     }
 
+    /**
+     * Tests strict allocation mode when there is insufficient stock.
+     * The order should be marked as undispatchable.
+     */
     @Test
     public void testStrictMode_InsufficientStock_Undispatchable() {
-        OrderLine line = new OrderLine(1, "SKU001", 50); // requer mais do que há
+        OrderLine line = new OrderLine(1, "SKU001", 50); // requires more than available
         Order order = new Order("ORD02", 1, LocalDate.of(2025, 10, 10), List.of(line));
 
         OrderAllocator allocator = new OrderAllocator();
@@ -60,36 +83,40 @@ public class OrderAllocatorTest {
         assertTrue(result.allocationRows.isEmpty()); // rollback
     }
 
+    /**
+     * Tests partial allocation mode where partial quantities can be allocated
+     * and FEFO box selection is respected.
+     */
     @Test
     public void testPartialMode_PartialAllocationAllowed() {
-        // Configurar o armazém
         Warehouse warehouse = new Warehouse("W1");
-        Bay bay1 = new Bay("W1", 1, 1, 100); // Capacidade suficiente
+        Bay bay1 = new Bay("W1", 1, 1, 100);
         Box box1 = new Box("BOX001", "SKU001", 15, LocalDate.of(2025, 6, 30), LocalDateTime.of(2025, 6, 1, 10, 0));
         Box box2 = new Box("BOX002", "SKU001", 10, LocalDate.of(2025, 12, 31), LocalDateTime.of(2025, 6, 2, 10, 0));
         bay1.addBox(box1);
         bay1.addBox(box2);
         warehouse.addBay(bay1);
 
-        // Configurar a ordem
-        OrderLine line = new OrderLine(1, "SKU001", 25); // Requer 25 unidades
+        OrderLine line = new OrderLine(1, "SKU001", 25);
         Order order = new Order("ORD03", 1, LocalDate.of(2025, 10, 10), List.of(line));
 
         OrderAllocator allocator = new OrderAllocator();
-        OrderAllocator.Result result = allocator.allocateOrders(List.of(order), warehouse, true); // Modo parcial
+        OrderAllocator.Result result = allocator.allocateOrders(List.of(order), warehouse, true); // partial mode
 
-        // Verificar resultados
         LineStatus status = result.lineStatuses.get(0);
-        assertEquals(LineStatusEnum.ELIGIBLE, status.getStatus()); // Corrigido: ELIGIBLE, pois allocatedQty == requestedQty
+        assertEquals(LineStatusEnum.ELIGIBLE, status.getStatus());
         assertEquals(25, status.getRequestedQty());
         assertEquals(25, status.getAllocatedQty());
-        assertEquals(2, result.allocationRows.size()); // Duas caixas usadas (15 + 10)
-        assertEquals("BOX001", result.allocationRows.get(0).getBoxId()); // FEFO: BOX001 expira antes
+        assertEquals(2, result.allocationRows.size()); // two boxes used
+        assertEquals("BOX001", result.allocationRows.get(0).getBoxId()); // FEFO
     }
 
+    /**
+     * Tests that orders are processed in correct priority:
+     * ascending due date, then priority, then order ID.
+     */
     @Test
     public void testOrderProcessingPriorityDueDateOrderId() {
-        // três orders com diferentes prioridades e dueDates
         Order o1 = new Order("ORD03", 2, LocalDate.of(2025, 10, 10), List.of(new OrderLine(1, "SKU001", 5)));
         Order o2 = new Order("ORD01", 1, LocalDate.of(2025, 10, 11), List.of(new OrderLine(1, "SKU001", 5)));
         Order o3 = new Order("ORD02", 1, LocalDate.of(2025, 10, 9), List.of(new OrderLine(1, "SKU001", 5)));
@@ -97,7 +124,6 @@ public class OrderAllocatorTest {
         OrderAllocator allocator = new OrderAllocator();
         OrderAllocator.Result result = allocator.allocateOrders(List.of(o1, o2, o3), warehouse, true);
 
-        // a ordem deve seguir: prioridade asc, depois dueDate asc, depois orderId asc
         List<String> processedOrderIds = result.lineStatuses.stream()
                 .map(LineStatus::getOrderId)
                 .toList();
@@ -105,4 +131,3 @@ public class OrderAllocatorTest {
         assertEquals(List.of("ORD02", "ORD01", "ORD03"), processedOrderIds);
     }
 }
-

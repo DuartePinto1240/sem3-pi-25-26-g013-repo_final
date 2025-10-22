@@ -6,8 +6,22 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link Quarantine}.
+ * <p>
+ * These tests verify the behavior of the Quarantine class, ensuring that returned items
+ * are processed in a Last-In-First-Out (LIFO) order and that the isEmpty() method reflects
+ * the current state of the quarantine correctly.
+ * </p>
+ */
 class QuarantineTest {
 
+    /**
+     * Tests that items added to the quarantine are returned in LIFO order.
+     * <p>
+     * The newest added item should be returned first by {@link Quarantine#next()}.
+     * </p>
+     */
     @Test
     void testAddAndNextFollowLifoOrder() {
         Quarantine quarantine = new Quarantine();
@@ -24,6 +38,9 @@ class QuarantineTest {
         assertFalse(quarantine.isEmpty());
     }
 
+    /**
+     * Tests that {@link Quarantine#isEmpty()} returns true after all items have been processed.
+     */
     @Test
     void testIsEmptyAfterProcessing() {
         Quarantine quarantine = new Quarantine();

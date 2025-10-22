@@ -7,15 +7,36 @@ import java.nio.file.Files;
 import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link QualityOperator}.
+ * <p>
+ * These tests verify the behavior of the QualityOperator when processing returned items
+ * from quarantine, ensuring that items are correctly restocked or discarded based on
+ * their conditions, and that the audit log records these operations.
+ * </p>
+ */
 class QualityOperatorTest {
 
     private static final String LOG_PATH = "quality_operator_test_log.txt";
 
+    /**
+     * Cleans up the log file before each test to ensure isolation.
+     */
     @BeforeEach
     void cleanup() {
         new File(LOG_PATH).delete();
     }
 
+    /**
+     * Tests that the QualityOperator correctly processes returns.
+     * <ul>
+     *     <li>Items eligible for restocking are added to the inventory.</li>
+     *     <li>Items marked for discard are not added to the inventory.</li>
+     *     <li>The audit log records both restock and discard operations.</li>
+     * </ul>
+     *
+     * @throws Exception if file I/O fails.
+     */
     @Test
     void testProcessReturnsRestocksAndDiscardsCorrectly() throws Exception {
         Quarantine quarantine = new Quarantine();
