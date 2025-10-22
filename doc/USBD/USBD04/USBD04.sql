@@ -177,70 +177,70 @@ VALUES (1903, 4882.0);
 -- Wagons (IDENTITY ALWAYS) — wagon_id via DEFAULT; operator_id=1; model_ids explicit
 -- Regmms 32 94 356 3 — 1987 (16 unidades)
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563077, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563078, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563079, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563080, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563081, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563082, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563083, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563084, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563085, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563086, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563087, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563088, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563089, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563090, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563091, 1, 1104, 1987);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1104, 1987);
+VALUES (3563092, 1, 1104, 1987);
 
 -- Tadgs 32 94 082 3 — 1990 (4 unidades)
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1245, 1990);
+VALUES (0823045, 1, 1245, 1990);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1245, 1990);
+VALUES (0823046, 1, 1245, 1990);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1245, 1990);
+VALUES (0823047, 1, 1245, 1990);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1245, 1990);
+VALUES (0823048, 1, 1245, 1990);
 
 -- Gabs 81 94 181 1 — 1977 (6 unidades)
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741001, 1, 1325, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741002, 1, 1325, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741003, 1, 1325, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741004, 1, 1325, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741005, 1, 1325, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1325, 1977);
+VALUES (0741006, 1, 1325, 1977);
 
 -- Tdgs 41 94 074 1 — 1977 (5 unidades)
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1278, 1977);
+VALUES (1811010, 1, 1278, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1278, 1977);
+VALUES (1811011, 1, 1278, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1278, 1977);
+VALUES (1811012, 1, 1278, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1278, 1977);
+VALUES (1811013, 1, 1278, 1977);
 INSERT INTO Wagon (wagon_id, operator_id, wagonmodel_id, service_year)
-VALUES (DEFAULT, 1, 1278, 1977);
+VALUES (1811014, 1, 1278, 1977);

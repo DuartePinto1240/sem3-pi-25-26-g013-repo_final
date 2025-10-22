@@ -10,7 +10,7 @@ FROM Wagon w
          INNER JOIN WagonType  wt ON wt.wagontype_id  = wm.wagontype_id
          INNER JOIN Gauge       g ON g.gauge_id       = wm.gauge_id
          INNER JOIN Operator   op ON op.operator_id   = w.operator_id
-WHERE (op.short_name = 'Medway' OR op.name = 'Medway')  -- <== EDIT
+WHERE (op.short_name = 'Medway')  -- <== EDIT
   AND wt.type       = 'Cereal wagon'                    -- <== EDIT
   AND g.width_mm    = 1668                              -- <== EDIT
 ORDER BY w.wagon_id;
