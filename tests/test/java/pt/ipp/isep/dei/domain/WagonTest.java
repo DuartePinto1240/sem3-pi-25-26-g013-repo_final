@@ -10,8 +10,21 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for the {@link Wagon} class.
+ * <p>
+ * These tests verify the correct behavior of the {@code Wagon} class, including
+ * its constructors, box management (adding boxes and maintaining order),
+ * and textual representation.
+ * </p>
+ */
 public class WagonTest {
 
+    /**
+     * Verifies that the constructor initializes an empty {@link Wagon} correctly
+     * when no boxes are provided.
+     * The wagon should have a valid ID and an empty box list.
+     */
     @Test
     public void testConstructorWithEmptyList() {
         // Arrange
@@ -23,6 +36,10 @@ public class WagonTest {
         assertTrue(wagon.getBoxes().isEmpty());
     }
 
+    /**
+     * Verifies that the {@link Wagon} constructor correctly stores
+     * the provided list of {@link Box} objects.
+     */
     @Test
     public void testConstructorWithBoxesList() {
         // Arrange
@@ -40,6 +57,10 @@ public class WagonTest {
         assertTrue(wagon.getBoxes().contains(box2));
     }
 
+    /**
+     * Ensures that adding a {@link Box} to a {@link Wagon}
+     * increases the number of boxes in the list.
+     */
     @Test
     public void testAddBoxIncreasesListSize() {
         // Arrange
@@ -54,6 +75,9 @@ public class WagonTest {
         assertEquals(box, wagon.getBoxes().get(0));
     }
 
+    /**
+     * Verifies that boxes are stored in the same order they were added to the {@link Wagon}.
+     */
     @Test
     public void testAddMultipleBoxesMaintainsOrder() {
         // Arrange
@@ -71,6 +95,10 @@ public class WagonTest {
         assertEquals(box2, wagon.getBoxes().get(1));
     }
 
+    /**
+     * Tests that the {@link Wagon#toString()} method includes
+     * relevant details such as the wagon ID and the number of boxes.
+     */
     @Test
     public void testToStringContainsImportantInfo() {
         // Arrange
@@ -86,4 +114,3 @@ public class WagonTest {
         assertTrue(text.contains("boxes=1"));
     }
 }
-

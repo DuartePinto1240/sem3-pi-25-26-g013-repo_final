@@ -1,25 +1,25 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Representa uma coordenada dentro de um armazém, composta por um corredor ({@code aisle})
- * e uma posição ({@code bay}) dentro desse corredor.
+ * Represents a coordinate within a warehouse, consisting of an aisle ({@code aisle})
+ * and a position ({@code bay}) within that aisle.
  *
- * <p>Esta classe é usada para calcular distâncias entre posições de armazenamento no
- * armazém, com base numa métrica específica usada em logística e picking.</p>
+ * <p>This class is used to calculate distances between storage locations in the
+ * warehouse, based on a specific logistics and picking metric.</p>
  */
 public class Coordinate {
 
-    /** Número do corredor (aisle) onde a posição se encontra. */
+    /** The aisle number where the position is located. */
     private int aisle;
 
-    /** Número da posição (bay) dentro do corredor. */
+    /** The bay number within the aisle. */
     private int bay;
 
     /**
-     * Cria uma nova coordenada de armazém.
+     * Creates a new warehouse coordinate.
      *
-     * @param aisle número do corredor
-     * @param bay   número da posição dentro do corredor
+     * @param aisle the aisle number
+     * @param bay   the position (bay) number within the aisle
      */
     public Coordinate(int aisle, int bay) {
         this.aisle = aisle;
@@ -27,40 +27,40 @@ public class Coordinate {
     }
 
     /**
-     * Obtém o número do corredor (aisle).
+     * Returns the aisle number.
      *
-     * @return o número do corredor
+     * @return the aisle number
      */
     public int getAisle() {
         return aisle;
     }
 
     /**
-     * Obtém o número da posição (bay).
+     * Returns the bay number within the aisle.
      *
-     * @return o número da posição dentro do corredor
+     * @return the bay number
      */
     public int getBay() {
         return bay;
     }
 
     /**
-     * Calcula a distância entre esta coordenada e outra, com base num modelo de custo
-     * logístico específico do armazém.
+     * Calculates the distance between this coordinate and another,
+     * based on a warehouse-specific logistics cost model.
      *
-     * <p>A regra de cálculo é a seguinte:</p>
+     * <p>The distance is calculated as follows:</p>
      * <ul>
-     *   <li>Se ambas as coordenadas estão no mesmo corredor ({@code aisle}),
-     *       a distância é a diferença absoluta entre os {@code bay}.</li>
-     *   <li>Se estão em corredores diferentes, a distância é calculada como:
+     *   <li>If both coordinates are in the same aisle, the distance is the absolute difference
+     *       between their bay numbers.</li>
+     *   <li>If they are in different aisles, the distance is calculated as:
      *       {@code this.bay + |this.aisle - other.aisle| * 3 + other.bay}</li>
      * </ul>
      *
-     * <p>Este modelo reflete um custo adicional para mudar de corredor,
-     * assumindo um custo fixo de 3 unidades por transição de corredor.</p>
+     * <p>This model accounts for an additional cost of changing aisles,
+     * assuming a fixed cost of 3 units per aisle transition.</p>
      *
-     * @param other a outra coordenada a comparar
-     * @return a distância entre as duas posições, segundo a métrica definida
+     * @param other the other coordinate to compare with
+     * @return the distance between the two positions according to the defined metric
      */
     public int distanceTo(Coordinate other) {
         if (this.aisle == other.aisle)
@@ -70,9 +70,9 @@ public class Coordinate {
     }
 
     /**
-     * Retorna uma representação textual da coordenada no formato {@code (aisle,bay)}.
+     * Returns a string representation of the coordinate in the format {@code (aisle,bay)}.
      *
-     * @return uma string representando a coordenada
+     * @return a string representing the coordinate
      */
     @Override
     public String toString() {

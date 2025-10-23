@@ -4,45 +4,45 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
- * Representa uma caixa (Box) armazenada num armazém, associada a um determinado produto (SKU).
+ * Represents a storage box in a warehouse, associated with a specific product (SKU).
  *
- * <p>Cada caixa contém uma quantidade específica do produto, podendo ou não ter uma
- * data de validade (dependendo de ser perecível ou não). O momento de receção
- * é registado através de {@code receivedAt}.</p>
+ * <p>Each box contains a specific quantity of a product, and may or may not have
+ * an expiration date (depending on whether it is perishable). The moment of reception
+ * is recorded using {@code receivedAt}.</p>
  *
- * <p>Implementa a interface {@link Comparable}, permitindo ordenar caixas com base
- * nos princípios de FEFO (First Expired, First Out) e FIFO (First In, First Out):</p>
+ * <p>This class implements {@link Comparable}, allowing boxes to be ordered
+ * according to FEFO (First Expired, First Out) and FIFO (First In, First Out) principles:</p>
  * <ul>
- *   <li>Caixas com data de validade anterior são priorizadas (FEFO).</li>
- *   <li>Entre caixas sem validade (não perecíveis), as mais antigas são priorizadas (FIFO).</li>
- *   <li>Caixas perecíveis são sempre priorizadas em relação às não perecíveis.</li>
+ *   <li>Boxes with earlier expiration dates are prioritized (FEFO).</li>
+ *   <li>Among non-perishable boxes, older boxes are prioritized (FIFO).</li>
+ *   <li>Perishable boxes are always prioritized over non-perishable boxes.</li>
  * </ul>
  */
 public class Box implements Comparable<Box> {
 
-    /** Identificador único da caixa. */
+    /** Unique identifier of the box. */
     private String boxId;
 
-    /** Código SKU (Stock Keeping Unit) do produto armazenado. */
+    /** SKU (Stock Keeping Unit) code of the stored product. */
     private String sku;
 
-    /** Quantidade de unidades do produto dentro da caixa. */
+    /** Quantity of product units inside the box. */
     private int quantity;
 
-    /** Data de validade do produto, ou {@code null} se não for perecível. */
+    /** Expiration date of the product, or {@code null} if not perishable. */
     private LocalDate expiryDate;
 
-    /** Data e hora em que a caixa foi recebida no armazém. */
+    /** Date and time when the box was received in the warehouse. */
     private LocalDateTime receivedAt;
 
     /**
-     * Constrói uma nova instância de {@code Box}.
+     * Constructs a new {@code Box} instance.
      *
-     * @param boxId        identificador único da caixa
-     * @param sku          código SKU do produto
-     * @param quantity     quantidade de unidades do produto
-     * @param expiryDate   data de validade (ou {@code null} se o produto não for perecível)
-     * @param receivedAt   data e hora de receção da caixa
+     * @param boxId      unique identifier of the box
+     * @param sku        SKU code of the product
+     * @param quantity   quantity of product units in the box
+     * @param expiryDate expiration date (or {@code null} if the product is non-perishable)
+     * @param receivedAt date and time the box was received
      */
     public Box(String boxId, String sku, int quantity, LocalDate expiryDate, LocalDateTime receivedAt) {
         this.boxId = boxId;
@@ -52,55 +52,35 @@ public class Box implements Comparable<Box> {
         this.receivedAt = receivedAt;
     }
 
-    /**
-     * Obtém o identificador da caixa.
-     *
-     * @return o ID da caixa
-     */
+    /** @return the unique box identifier. */
     public String getBoxId() {
         return boxId;
     }
 
-    /**
-     * Obtém o código SKU do produto.
-     *
-     * @return o código SKU
-     */
+    /** @return the SKU code of the product. */
     public String getSku() {
         return sku;
     }
 
-    /**
-     * Obtém a quantidade de unidades do produto na caixa.
-     *
-     * @return a quantidade
-     */
+    /** @return the quantity of units in the box. */
     public int getQuantity() {
         return quantity;
     }
 
-    /**
-     * Obtém a data de validade da caixa.
-     *
-     * @return a data de validade, ou {@code null} se o produto não for perecível
-     */
+    /** @return the expiration date, or {@code null} if the product is non-perishable. */
     public LocalDate getExpiryDate() {
         return expiryDate;
     }
 
-    /**
-     * Obtém a data e hora em que a caixa foi recebida.
-     *
-     * @return a data e hora de receção
-     */
+    /** @return the date and time the box was received. */
     public LocalDateTime getReceivedAt() {
         return receivedAt;
     }
 
     /**
-     * Retorna uma representação textual da caixa, incluindo todos os seus atributos principais.
+     * Returns a string representation of the box, including all key attributes.
      *
-     * @return uma string representando a caixa
+     * @return string representation of the box
      */
     @Override
     public String toString() {
@@ -114,38 +94,34 @@ public class Box implements Comparable<Box> {
     }
 
     /**
-     * Compara esta caixa com outra, seguindo a lógica combinada de FEFO (First Expired, First Out)
-     * e FIFO (First In, First Out).
+     * Compares this box with another, using a combined FEFO (First Expired, First Out)
+     * and FIFO (First In, First Out) strategy.
      *
      * <ul>
-     *   <li>Caixas com data de validade mais próxima são consideradas menores.</li>
-     *   <li>Caixas perecíveis são priorizadas em relação às não perecíveis.</li>
-     *   <li>Se ambas forem não perecíveis ou tiverem a mesma validade, a mais antiga (recebida antes) é priorizada.</li>
+     *   <li>Boxes with earlier expiration dates are considered smaller.</li>
+     *   <li>Perishable boxes are prioritized over non-perishable boxes.</li>
+     *   <li>If both boxes are non-perishable or have the same expiration date,
+     *       the older (received first) box is prioritized.</li>
      * </ul>
      *
-     * @param other a outra caixa a comparar
-     * @return um número negativo se esta caixa tiver prioridade,
-     *         zero se forem equivalentes,
-     *         ou positivo se a outra tiver prioridade
+     * @param other the other box to compare with
+     * @return negative if this box has higher priority, zero if equal, positive if the other box has higher priority
      */
     @Override
     public int compareTo(Box other) {
-        // --- FEFO: produtos perecíveis com validade mais próxima são prioritários
+        // FEFO: perishable products with earlier expiry dates have higher priority
         if (this.expiryDate != null && other.expiryDate != null) {
             int cmp = this.expiryDate.compareTo(other.expiryDate);
             if (cmp != 0) return cmp;
         }
-        // --- Produtos perecíveis antes dos não perecíveis
+        // Perishable boxes before non-perishable
         else if (this.expiryDate != null) {
-            return -1; // esta caixa tem validade → prioridade
+            return -1; // this box is perishable → priority
         } else if (other.expiryDate != null) {
-            return 1;  // a outra tem validade → prioridade
+            return 1;  // other box is perishable → priority
         }
 
-        // --- FIFO: fallback quando ambas têm mesma validade ou não são perecíveis
+        // FIFO fallback when both have same expiry or are non-perishable
         return this.receivedAt.compareTo(other.receivedAt);
     }
 }
-
-
-

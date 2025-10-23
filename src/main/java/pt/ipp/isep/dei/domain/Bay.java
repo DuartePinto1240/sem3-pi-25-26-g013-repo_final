@@ -4,11 +4,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representa um "Bay" (local de armazenamento) dentro de um armazém.
- * <p>
- * Cada bay pertence a um warehouse, tem um corredor (aisle), um número de bay,
- * uma capacidade máxima de caixas, e mantém uma lista das caixas armazenadas.
- * </p>
+ * Represents a storage bay within a warehouse.
+ *
+ * <p>Each bay belongs to a warehouse, has an aisle number, a bay number,
+ * a maximum capacity of boxes, and maintains a list of stored boxes.</p>
  */
 public class Bay {
 
@@ -19,12 +18,12 @@ public class Bay {
     private List<Box> storedBoxes;
 
     /**
-     * Construtor de um Bay.
+     * Constructs a new Bay.
      *
-     * @param warehouseId ID do armazém ao qual este bay pertence
-     * @param aisle número do corredor
-     * @param bay número do bay dentro do corredor
-     * @param capacityBoxes capacidade máxima de caixas que este bay pode armazenar
+     * @param warehouseId   ID of the warehouse this bay belongs to
+     * @param aisle         aisle number
+     * @param bay           bay number within the aisle
+     * @param capacityBoxes maximum number of boxes this bay can store
      */
     public Bay(String warehouseId, int aisle, int bay, int capacityBoxes) {
         this.warehouseId = warehouseId;
@@ -35,55 +34,55 @@ public class Bay {
     }
 
     /**
-     * Retorna o ID do armazém ao qual este bay pertence.
+     * Returns the ID of the warehouse this bay belongs to.
      *
-     * @return ID do armazém
+     * @return warehouse ID
      */
     public String getWarehouseId() {
         return warehouseId;
     }
 
     /**
-     * Retorna o número do corredor (aisle) do bay.
+     * Returns the aisle number of the bay.
      *
-     * @return número do corredor
+     * @return aisle number
      */
     public int getAisle() {
         return aisle;
     }
 
     /**
-     * Retorna o número do bay dentro do corredor.
+     * Returns the bay number within the aisle.
      *
-     * @return número do bay
+     * @return bay number
      */
     public int getBay() {
         return bay;
     }
 
     /**
-     * Retorna a capacidade máxima de caixas deste bay.
+     * Returns the maximum box capacity of this bay.
      *
-     * @return capacidade máxima de caixas
+     * @return maximum number of boxes
      */
     public int getCapacityBoxes() {
         return capacityBoxes;
     }
 
     /**
-     * Verifica se é possível armazenar uma nova caixa neste bay.
+     * Checks if a new box can be stored in this bay.
      *
-     * @param box caixa a ser armazenada
-     * @return {@code true} se houver espaço disponível, {@code false} caso contrário
+     * @param box box to be stored
+     * @return {@code true} if space is available, {@code false} otherwise
      */
     public boolean canStoreBox(Box box) {
         return storedBoxes.size() < capacityBoxes;
     }
 
     /**
-     * Adiciona uma caixa ao bay, caso haja espaço disponível.
+     * Adds a box to this bay if space is available.
      *
-     * @param box caixa a adicionar
+     * @param box box to add
      */
     public void addBox(Box box) {
         if (canStoreBox(box)) {
@@ -92,17 +91,23 @@ public class Bay {
     }
 
     /**
-     * Retorna a lista de caixas armazenadas neste bay.
+     * Returns the list of boxes currently stored in this bay.
      *
-     * @return lista de {@link Box} armazenadas
+     * @return list of {@link Box} objects
      */
     public List<Box> getStoredBoxes() {
         return storedBoxes;
     }
 
+    /**
+     * Returns a string representation of this bay, including warehouse ID, aisle,
+     * bay number, and maximum capacity.
+     *
+     * @return string representation of the bay
+     */
     @Override
     public String toString() {
-        return "main.java.pt.ipp.isep.dei.domain.Bay{" +
+        return "Bay{" +
                 "warehouseId='" + warehouseId + '\'' +
                 ", aisle=" + aisle +
                 ", bay=" + bay +
@@ -110,7 +115,3 @@ public class Bay {
                 '}';
     }
 }
-
-
-
-

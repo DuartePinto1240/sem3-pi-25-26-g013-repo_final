@@ -5,8 +5,19 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link ReturnItem}.
+ * <p>
+ * These tests verify the behavior of the ReturnItem class, including proper initialization,
+ * validation of quantity, and the correct ordering based on timestamp.
+ * </p>
+ */
 class ReturnItemTest {
 
+    /**
+     * Tests that a ReturnItem can be created with valid parameters
+     * and that its getters return the expected values.
+     */
     @Test
     void testValidReturnItem() {
         ReturnItem item = new ReturnItem(
@@ -19,6 +30,10 @@ class ReturnItemTest {
         assertEquals("customer-remorse", item.getReason());
     }
 
+    /**
+     * Tests that creating a ReturnItem with a negative quantity
+     * throws an IllegalArgumentException.
+     */
     @Test
     void testInvalidQuantityThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
@@ -27,6 +42,10 @@ class ReturnItemTest {
         );
     }
 
+    /**
+     * Tests that {@link ReturnItem#compareTo(ReturnItem)} orders items
+     * in descending order of timestamp, so newer items come first.
+     */
     @Test
     void testCompareToDescendingByTimestamp() {
         ReturnItem newer = new ReturnItem("RET003", "SKU1", 1, "cycle-count",

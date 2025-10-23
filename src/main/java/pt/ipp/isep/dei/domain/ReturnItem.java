@@ -3,46 +3,46 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.time.LocalDateTime;
 
 /**
- * Representa um item retornado ao armazém.
+ * Represents an item returned to the warehouse.
  * <p>
- * Cada {@code ReturnItem} possui um identificador único, SKU, quantidade,
- * motivo do retorno, timestamp do retorno e, opcionalmente, uma data de validade.
+ * Each {@code ReturnItem} has a unique identifier, SKU, quantity,
+ * reason for return, return timestamp, and, optionally, an expiry date.
  * </p>
  * <p>
- * Esta classe implementa {@link Comparable} para ordenar itens por timestamp
- * decrescente (mais recentes primeiro) e, em caso de empate, pelo {@code returnId}.
+ * This class implements {@link Comparable} to sort items by descending timestamp
+ * (most recent first) and, in case of a tie, by {@code returnId}.
  * </p>
  */
 public class ReturnItem implements Comparable<ReturnItem> {
 
-    /** Identificador único do retorno. */
+    /** Unique identifier of the return. */
     private final String returnId;
 
-    /** SKU do item retornado. */
+    /** SKU of the returned item. */
     private final String sku;
 
-    /** Quantidade do item retornado. Deve ser positiva. */
+    /** Quantity of the returned item. Must be positive. */
     private final int quantity;
 
-    /** Motivo do retorno (ex.: "customer-remorse"). */
+    /** Reason for the return (e.g., "customer-remorse"). */
     private final String reason;
 
-    /** Timestamp do retorno. */
+    /** Timestamp of the return. */
     private final LocalDateTime timestamp;
 
-    /** Data de validade do item, se aplicável; pode ser null. */
+    /** Expiry date of the item, if applicable; can be null. */
     private final LocalDateTime expiryDate;
 
     /**
-     * Constrói um ReturnItem.
+     * Constructs a ReturnItem.
      *
-     * @param returnId identificador único do retorno, não pode ser null
-     * @param sku SKU do item, não pode ser null
-     * @param quantity quantidade do item, deve ser positiva
-     * @param reason motivo do retorno, não pode ser null
-     * @param timestamp data e hora do retorno, não pode ser null
-     * @param expiryDate data de validade do item retornado, pode ser null
-     * @throws IllegalArgumentException se quantity ≤ 0 ou algum campo obrigatório for null
+     * @param returnId unique identifier of the return, cannot be null
+     * @param sku SKU of the item, cannot be null
+     * @param quantity quantity of the item, must be positive
+     * @param reason reason for the return, cannot be null
+     * @param timestamp date and time of the return, cannot be null
+     * @param expiryDate expiry date of the returned item, can be null
+     * @throws IllegalArgumentException if quantity ≤ 0 or any mandatory field is null
      */
     public ReturnItem(String returnId, String sku, int quantity, String reason,
                       LocalDateTime timestamp, LocalDateTime expiryDate) {
@@ -59,33 +59,33 @@ public class ReturnItem implements Comparable<ReturnItem> {
         this.expiryDate = expiryDate;
     }
 
-    /** @return identificador único do retorno */
+    /** @return the unique identifier of the return */
     public String getReturnId() { return returnId; }
 
-    /** @return SKU do item retornado */
+    /** @return the SKU of the returned item */
     public String getSku() { return sku; }
 
-    /** @return quantidade do item retornado */
+    /** @return the quantity of the returned item */
     public int getQuantity() { return quantity; }
 
-    /** @return motivo do retorno */
+    /** @return the reason for the return */
     public String getReason() { return reason; }
 
-    /** @return timestamp do retorno */
+    /** @return the timestamp of the return */
     public LocalDateTime getTimestamp() { return timestamp; }
 
-    /** @return data de validade do item, ou null se não aplicável */
+    /** @return the item's expiry date, or null if not applicable */
     public LocalDateTime getExpiryDate() { return expiryDate; }
 
     /**
-     * Compara dois ReturnItems para ordenação.
+     * Compares two ReturnItems for sorting.
      * <p>
-     * Ordem decrescente por timestamp (mais recentes primeiro). Se o timestamp for igual,
-     * ordena por {@code returnId} ascendente.
+     * Descending order by timestamp (most recent first). If the timestamp is equal,
+     * it sorts by ascending {@code returnId}.
      * </p>
      *
-     * @param other outro ReturnItem a comparar
-     * @return valor de comparação
+     * @param other the other ReturnItem to compare
+     * @return comparison value
      */
     @Override
     public int compareTo(ReturnItem other) {

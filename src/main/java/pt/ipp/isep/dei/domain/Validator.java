@@ -5,25 +5,25 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Classe responsável por validar entidades do domínio do armazém.
+ * Class responsible for validating warehouse domain entities.
  * <p>
- * Valida {@link Item}, {@link Bay}, {@link Wagon}, {@link Order} e {@link ReturnItem} garantindo consistência de dados.
+ * Validates {@link Item}, {@link Bay}, {@link Wagon}, {@link Order}, and {@link ReturnItem} ensuring data consistency.
  * </p>
  */
 public class Validator {
 
     /**
-     * Valida uma lista de itens.
+     * Validates a list of items.
      * <p>
-     * Critérios de validação:
+     * Validation criteria:
      * <ul>
-     *     <li>SKU não nulo ou vazio</li>
-     *     <li>UnitWeight e Volume não negativos</li>
-     *     <li>Não existirem SKUs duplicados</li>
+     * <li>SKU is not null or empty</li>
+     * <li>UnitWeight and Volume are non-negative</li>
+     * <li>No duplicate SKUs exist</li>
      * </ul>
      *
-     * @param items lista de {@link Item} a validar
-     * @return {@code true} se todos os itens forem válidos, {@code false} caso contrário
+     * @param items list of {@link Item}s to validate
+     * @return {@code true} if all items are valid, {@code false} otherwise
      */
     public boolean validateItems(List<Item> items) {
         boolean valid = true;
@@ -47,16 +47,16 @@ public class Validator {
     }
 
     /**
-     * Valida uma lista de bays.
+     * Validates a list of bays.
      * <p>
-     * Critérios de validação:
+     * Validation criteria:
      * <ul>
-     *     <li>Aisle, Bay e CapacityBoxes devem ser positivos</li>
-     *     <li>Não existir duplicação de bays no mesmo corredor</li>
+     * <li>Aisle, Bay, and CapacityBoxes must be positive</li>
+     * <li>No duplication of bays within the same aisle</li>
      * </ul>
      *
-     * @param bays lista de {@link Bay} a validar
-     * @return {@code true} se todos os bays forem válidos, {@code false} caso contrário
+     * @param bays list of {@link Bay}s to validate
+     * @return {@code true} if all bays are valid, {@code false} otherwise
      */
     public boolean validateBays(List<Bay> bays) {
         boolean valid = true;
@@ -79,20 +79,20 @@ public class Validator {
     }
 
     /**
-     * Valida uma lista de wagons.
+     * Validates a list of wagons.
      * <p>
-     * Critérios de validação:
+     * Validation criteria:
      * <ul>
-     *     <li>Wagons não podem estar vazios</li>
-     *     <li>Boxes devem ter SKU válido</li>
-     *     <li>Quantidade positiva</li>
-     *     <li>ReceivedAt definido</li>
-     *     <li>BoxId único em todos os wagons</li>
+     * <li>Wagons must not be empty</li>
+     * <li>Boxes must have a valid SKU</li>
+     * <li>Positive quantity</li>
+     * <li>ReceivedAt defined</li>
+     * <li>BoxId unique across all wagons</li>
      * </ul>
      *
-     * @param wagons lista de {@link Wagon} a validar
-     * @param validItems lista de {@link Item} válidos para referência de SKU
-     * @return {@code true} se todos os wagons forem válidos, {@code false} caso contrário
+     * @param wagons list of {@link Wagon}s to validate
+     * @param validItems list of valid {@link Item}s for SKU reference
+     * @return {@code true} if all wagons are valid, {@code false} otherwise
      */
     public boolean validateWagons(List<Wagon> wagons, List<Item> validItems) {
         boolean valid = true;
@@ -135,18 +135,18 @@ public class Validator {
     }
 
     /**
-     * Valida uma lista de orders.
+     * Validates a list of orders.
      * <p>
-     * Critérios de validação:
+     * Validation criteria:
      * <ul>
-     *     <li>DueDate definido</li>
-     *     <li>Linhas contêm SKU válido</li>
-     *     <li>Quantidade solicitada positiva</li>
+     * <li>DueDate defined</li>
+     * <li>Lines contain a valid SKU</li>
+     * <li>Requested quantity is positive</li>
      * </ul>
      *
-     * @param orders lista de {@link Order} a validar
-     * @param validItems lista de {@link Item} válidos para referência de SKU
-     * @return {@code true} se todas as orders forem válidas, {@code false} caso contrário
+     * @param orders list of {@link Order}s to validate
+     * @param validItems list of valid {@link Item}s for SKU reference
+     * @return {@code true} if all orders are valid, {@code false} otherwise
      */
     public boolean validateOrders(List<Order> orders, List<Item> validItems) {
         boolean valid = true;
@@ -173,17 +173,17 @@ public class Validator {
     }
 
     /**
-     * Valida uma lista de retornos de mercadoria.
+     * Validates a list of merchandise returns.
      * <p>
-     * Critérios de validação:
+     * Validation criteria:
      * <ul>
-     *     <li>SKU válido</li>
-     *     <li>Quantidade positiva</li>
+     * <li>Valid SKU</li>
+     * <li>Positive quantity</li>
      * </ul>
      *
-     * @param returns lista de {@link ReturnItem} a validar
-     * @param validItems lista de {@link Item} válidos para referência de SKU
-     * @return {@code true} se todos os retornos forem válidos, {@code false} caso contrário
+     * @param returns list of {@link ReturnItem}s to validate
+     * @param validItems list of valid {@link Item}s for SKU reference
+     * @return {@code true} if all returns are valid, {@code false} otherwise
      */
     public boolean validateReturns(List<ReturnItem> returns, List<Item> validItems) {
         boolean valid = true;
@@ -203,6 +203,3 @@ public class Validator {
         return valid;
     }
 }
-
-
-

@@ -4,23 +4,23 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representa um vagão que transporta várias caixas ({@link Box}).
+ * Represents a wagon that transports multiple boxes ({@link Box}).
  * <p>
- * Cada {@code Wagon} possui um identificador único e mantém uma lista de caixas.
+ * Each {@code Wagon} has a unique identifier and maintains a list of boxes.
  * </p>
  */
 public class Wagon {
 
-    /** Identificador único do vagão. */
+    /** Unique identifier of the wagon. */
     private String wagonId;
 
-    /** Lista de caixas contidas neste vagão. */
+    /** List of boxes contained in this wagon. */
     private List<Box> boxes;
 
     /**
-     * Constrói um {@code Wagon} vazio com um identificador específico.
+     * Constructs an empty {@code Wagon} with a specific identifier.
      *
-     * @param wagonId identificador único do vagão
+     * @param wagonId unique identifier of the wagon
      */
     public Wagon(String wagonId) {
         this.wagonId = wagonId;
@@ -28,10 +28,10 @@ public class Wagon {
     }
 
     /**
-     * Constrói um {@code Wagon} com um identificador e uma lista de caixas inicial.
+     * Constructs a {@code Wagon} with an identifier and an initial list of boxes.
      *
-     * @param wagonId identificador único do vagão
-     * @param boxes lista de caixas a serem inicialmente adicionadas ao vagão
+     * @param wagonId unique identifier of the wagon
+     * @param boxes list of boxes to be initially added to the wagon
      */
     public Wagon(String wagonId, List<Box> boxes) {
         this.wagonId = wagonId;
@@ -39,36 +39,36 @@ public class Wagon {
     }
 
     /**
-     * Adiciona uma nova caixa ao vagão.
+     * Adds a new box to the wagon.
      *
-     * @param box a caixa a ser adicionada
+     * @param box the box to be added
      */
     public void addBox(Box box) {
         boxes.add(box);
     }
 
     /**
-     * Obtém o identificador do vagão.
+     * Gets the identifier of the wagon.
      *
-     * @return o ID do vagão
+     * @return the wagon ID
      */
     public String getWagonId() {
         return wagonId;
     }
 
     /**
-     * Retorna a lista de caixas atualmente contidas no vagão.
+     * Returns the list of boxes currently contained in the wagon.
      *
-     * @return lista de objetos {@link Box}
+     * @return list of {@link Box} objects
      */
     public List<Box> getBoxes() {
         return boxes;
     }
 
     /**
-     * Representação textual do vagão, incluindo seu ID e a quantidade de caixas.
+     * Textual representation of the wagon, including its ID and the number of boxes.
      *
-     * @return string no formato {@code Wagon{wagonId='ID', boxes=N}}
+     * @return string in the format {@code Wagon{wagonId='ID', boxes=N}}
      */
     @Override
     public String toString() {
@@ -78,7 +78,3 @@ public class Wagon {
                 '}';
     }
 }
-
-
-
-

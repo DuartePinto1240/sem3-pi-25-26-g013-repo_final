@@ -6,31 +6,56 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Map;
 
+/**
+ * Class responsible for unloading wagons and allocating the boxes
+ * into the appropriate bays in the warehouse, following
+ * FEFO (First-Expired-First-Out) or FIFO (First-In-First-Out) principles.
+ */
 public class WagonUnloader {
     private Warehouse warehouse;
 
-    // Construtor
+    /**
+     * Constructor.
+     *
+     * @param warehouse the warehouse where the boxes will be stored.
+     */
     public WagonUnloader(Warehouse warehouse) {
         this.warehouse = warehouse;
     }
 
-    // Método para descarregar os vagões e alocar as caixas nos bays
+    /**
+     * Unloads the wagons and allocates the boxes into the bays.
+     * <p>
+     * Decides the storage strategy (FEFO/FIFO) based on whether the product is perishable.
+     * </p>
+     *
+     * @param wagons list of {@link Wagon}s to unload
+     */
     public void unload(List<Wagon> wagons) {
         for (Wagon wagon : wagons) {
             for (Box box : wagon.getBoxes()) {
-                // Verifica se o produto é perecível (tem data de expiração)
+                // Checks if the product is perishable (has an expiration date)
                 if (box.getExpiryDate() != null) {
-                    // Ordena a caixa usando FEFO (First-Expired-First-Out) - produtos perecíveis
+                    // Sort the box using FEFO (First-Expired-First-Out) - perishable goods
                     placeBoxInBay(box, true);  // FEFO
                 } else {
-                    // Ordena a caixa usando FIFO (First-In-First-Out) - produtos não perecíveis
+                    // Sort the box using FIFO (First-In-First-Out) - non-perishable goods
                     placeBoxInBay(box, false); // FIFO
                 }
             }
         }
     }
 
-    // Método que realiza a alocação da caixa no armazém, respeitando FEFO ou FIFO
+    /**
+     * Performs the allocation of the box into the warehouse bay, respecting FEFO or FIFO.
+     * <p>
+     * The box is added to the first bay that can store it. After adding, the bay's
+     * stored boxes are sorted according to the required strategy.
+     * </p>
+     *
+     * @param box the box to be placed
+     * @param isPerishable {@code true} if the box is perishable (FEFO required), {@code false} otherwise (FIFO required)
+     */
     private void placeBoxInBay(Box box, boolean isPerishable) {
         Map<String, Bay> bays = warehouse.getBays();
 
@@ -40,8 +65,8 @@ public class WagonUnloader {
                 @Override
                 public int compare(Box b1, Box b2) {
                     if (b1.getExpiryDate() == null && b2.getExpiryDate() == null) return 0;
-                    if (b1.getExpiryDate() == null) return 1; // Não perecível vai depois
-                    if (b2.getExpiryDate() == null) return -1; // Não perecível vai depois
+                    if (b1.getExpiryDate() == null) return 1; // Non-perishable goes after
+                    if (b2.getExpiryDate() == null) return -1; // Non-perishable goes after
                     return b1.getExpiryDate().compareTo(b2.getExpiryDate());
                 }
             };
@@ -58,7 +83,7 @@ public class WagonUnloader {
             if (bay.canStoreBox(box)) {
                 bay.addBox(box);
 
-                // Ordenar APÓS adicionar, apenas neste bay
+                // Sort AFTER adding, only in this bay
                 Collections.sort(bay.getStoredBoxes(), comparator);
 
                 System.out.println("Box " + box.getBoxId() + " alocada no Bay " + bay.getBay() + " do Warehouse " + bay.getWarehouseId());
@@ -66,13 +91,7 @@ public class WagonUnloader {
             }
         }
 
-        // Se não houver bay com capacidade suficiente
+        // If no bay has sufficient capacity
         System.out.println("Não há capacidade suficiente para armazenar a Box " + box.getBoxId());
     }
-
-
-
-
 }
-
-

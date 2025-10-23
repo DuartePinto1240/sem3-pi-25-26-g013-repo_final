@@ -1,48 +1,50 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Representa uma alocação de um artigo (SKU) a um local específico do armazém,
- * associada a uma determinada linha de encomenda.
- * Contém informação sobre a localização física (corredor e baía),
- * o peso, a quantidade e o identificador da caixa onde o artigo está armazenado.
+ * Represents an allocation of a product (SKU) to a specific warehouse location,
+ * associated with a specific order line.
+ * <p>
+ * Contains information about physical location (aisle and bay),
+ * total weight, quantity, and the box identifier where the product is stored.
+ * </p>
  */
 public class Allocation {
 
-    /** Identificador da encomenda associada. */
+    /** Identifier of the associated order. */
     private String orderId;
 
-    /** Número da linha dentro da encomenda. */
+    /** Line number within the order. */
     private int lineNo;
 
-    /** Identificador único do produto (SKU). */
+    /** Unique product identifier (SKU). */
     private String sku;
 
-    /** Quantidade de unidades deste SKU alocadas. */
+    /** Quantity of units of this SKU allocated. */
     private int qty;
 
-    /** Peso total (em quilogramas) desta alocação. */
+    /** Total weight (in kilograms) of this allocation. */
     private double weight;
 
-    /** Identificador da caixa onde o SKU está armazenado. */
+    /** Identifier of the box where the SKU is stored. */
     private String boxId;
 
-    /** Número do corredor (aisle) onde o SKU está localizado. */
+    /** Aisle number where the SKU is located. */
     private int aisle;
 
-    /** Número da baía (bay) dentro do corredor. */
+    /** Bay number within the aisle. */
     private int bay;
 
     /**
-     * Constrói uma nova instância de {@code Allocation}.
+     * Constructs a new {@code Allocation} instance.
      *
-     * @param orderId Identificador da encomenda
-     * @param lineNo  Número da linha dentro da encomenda
-     * @param sku     Código do produto (SKU)
-     * @param qty     Quantidade de unidades
-     * @param weight  Peso total da alocação (em kg)
-     * @param boxId   Identificador da caixa
-     * @param aisle   Corredor onde o produto está localizado
-     * @param bay     Baía dentro do corredor
+     * @param orderId Identifier of the order
+     * @param lineNo  Line number within the order
+     * @param sku     Product SKU code
+     * @param qty     Quantity of units
+     * @param weight  Total weight of the allocation (in kg)
+     * @param boxId   Box identifier
+     * @param aisle   Aisle where the product is located
+     * @param bay     Bay within the aisle
      */
     public Allocation(String orderId, int lineNo, String sku, int qty, double weight, String boxId, int aisle, int bay) {
         this.orderId = orderId;
@@ -55,60 +57,60 @@ public class Allocation {
         this.bay = bay;
     }
 
-    /** @return o identificador da encomenda associada. */
+    /** @return the identifier of the associated order. */
     public String getOrderId() {
         return orderId;
     }
 
-    /** @return o número da linha da encomenda. */
+    /** @return the line number within the order. */
     public int getLineNo() {
         return lineNo;
     }
 
-    /** @return o código do produto (SKU). */
+    /** @return the product SKU code. */
     public String getSku() {
         return sku;
     }
 
-    /** @return a quantidade de unidades deste produto. */
+    /** @return the quantity of units allocated. */
     public int getQty() {
         return qty;
     }
 
-    /** @return o peso total da alocação (em kg). */
+    /** @return the total weight of the allocation (in kg). */
     public double getWeight() {
         return weight;
     }
 
-    /** @return o número do corredor (aisle). */
+    /** @return the aisle number where the product is located. */
     public int getAisle() {
         return aisle;
     }
 
-    /** @return o identificador da caixa onde o produto está armazenado. */
+    /** @return the identifier of the box where the product is stored. */
     public String getBoxId() {
         return boxId;
     }
 
-    /** @return o número da baía (bay) dentro do corredor. */
+    /** @return the bay number within the aisle. */
     public int getBay() {
         return bay;
     }
 
     /**
-     * Define uma nova quantidade para esta alocação.
+     * Sets a new quantity for this allocation.
      *
-     * @param qty nova quantidade a atribuir.
+     * @param qty new quantity to assign
      */
     public void setQty(int qty) {
         this.qty = qty;
     }
 
     /**
-     * Retorna uma representação textual da alocação,
-     * contendo os principais atributos.
+     * Returns a textual representation of the allocation,
+     * including its main attributes.
      *
-     * @return String legível com os detalhes da alocação.
+     * @return human-readable string with allocation details
      */
     @Override
     public String toString() {
@@ -124,7 +126,3 @@ public class Allocation {
                 '}';
     }
 }
-
-
-
-

@@ -4,30 +4,30 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Planner para alocação de produtos (Allocations) em trolleys.
+ * Planner for allocating products (Allocations) into trolleys.
  * <p>
- * Suporta três estratégias principais:
+ * Supports three main strategies:
  * <ul>
- *     <li>First Fit</li>
- *     <li>First Fit Decreasing (FFD)</li>
- *     <li>Best Fit Decreasing (BFD)</li>
+ * <li>First Fit</li>
+ * <li>First Fit Decreasing (FFD)</li>
+ * <li>Best Fit Decreasing (BFD)</li>
  * </ul>
- * Cada trolley possui capacidade máxima, e as alocações excedendo essa capacidade são ignoradas.
+ * Each trolley has a maximum capacity, and allocations exceeding this capacity are ignored.
  * </p>
  */
 public class PickingPlanner {
 
-    /** Lista de alocações a serem planejadas. */
+    /** List of allocations to be planned. */
     private List<Allocation> allocations;
 
-    /** Capacidade máxima de cada trolley. */
+    /** Maximum capacity of each trolley. */
     private double trolleyCapacity;
 
     /**
-     * Construtor.
+     * Constructor.
      *
-     * @param allocations     lista de alocações a serem distribuídas nos trolleys
-     * @param trolleyCapacity capacidade máxima de cada trolley
+     * @param allocations     list of allocations to be distributed into trolleys
+     * @param trolleyCapacity maximum capacity of each trolley
      */
     public PickingPlanner(List<Allocation> allocations, double trolleyCapacity) {
         this.allocations = allocations;
@@ -35,31 +35,31 @@ public class PickingPlanner {
     }
 
     /**
-     * Retorna a lista de alocações.
+     * Returns the list of allocations.
      *
-     * @return lista de alocações
+     * @return list of allocations
      */
     public List<Allocation> getAllocations() {
         return allocations;
     }
 
     /**
-     * Retorna a capacidade máxima de cada trolley.
+     * Returns the maximum capacity of each trolley.
      *
-     * @return capacidade do trolley
+     * @return trolley capacity
      */
     public double getTrolleyCapacity() {
         return trolleyCapacity;
     }
 
     /**
-     * Planeia as alocações usando a estratégia First Fit.
+     * Plans the allocations using the First Fit strategy.
      * <p>
-     * Cada allocation é adicionada ao primeiro trolley que tiver capacidade suficiente.
-     * Se nenhum trolley puder acomodar a allocation, é criado um novo trolley.
+     * Each allocation is added to the first trolley that has sufficient capacity.
+     * If no trolley can accommodate the allocation, a new trolley is created.
      * </p>
      *
-     * @return lista de trolleys com alocações distribuídas
+     * @return list of trolleys with distributed allocations
      */
     public List<Trolley> planFirstFit() {
         List<Trolley> trolleys = new ArrayList<>();
@@ -92,12 +92,12 @@ public class PickingPlanner {
     }
 
     /**
-     * Planeia as alocações usando a estratégia First Fit Decreasing (FFD).
+     * Plans the allocations using the First Fit Decreasing (FFD) strategy.
      * <p>
-     * As alocações são ordenadas por peso decrescente antes de aplicar a estratégia First Fit.
+     * Allocations are sorted by descending weight before applying the First Fit strategy.
      * </p>
      *
-     * @return lista de trolleys com alocações distribuídas
+     * @return list of trolleys with distributed allocations
      */
     public List<Trolley> planFirstFitDecreasing() {
         List<Allocation> sorted = new ArrayList<>(allocations);
@@ -107,13 +107,13 @@ public class PickingPlanner {
     }
 
     /**
-     * Planeia as alocações usando a estratégia Best Fit Decreasing (BFD).
+     * Plans the allocations using the Best Fit Decreasing (BFD) strategy.
      * <p>
-     * Cada allocation é alocada no trolley que deixa o menor espaço livre remanescente possível.
-     * Se nenhum trolley puder acomodar a allocation, é criado um novo trolley.
+     * Each allocation is placed in the trolley that results in the smallest possible remaining free space.
+     * If no trolley can accommodate the allocation, a new trolley is created.
      * </p>
      *
-     * @return lista de trolleys com alocações distribuídas
+     * @return list of trolleys with distributed allocations
      */
     public List<Trolley> planBestFitDecreasing() {
         List<Allocation> sorted = new ArrayList<>(allocations);

@@ -1,43 +1,45 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Representa uma linha de alocação de um produto (SKU) dentro de uma encomenda.
- * Cada linha indica a quantidade de um SKU retirada de uma caixa específica,
- * bem como a sua localização física no armazém (corredor e baía).
+ * Represents a single allocation line of a product (SKU) within an order.
+ * <p>
+ * Each line indicates the quantity of a SKU taken from a specific box,
+ * along with its physical location in the warehouse (aisle and bay).
+ * </p>
  */
 public class AllocationRow {
 
-    /** Identificador da encomenda associada. */
+    /** Identifier of the associated order. */
     private String orderId;
 
-    /** Número da linha da encomenda. */
+    /** Line number within the order. */
     private int lineNo;
 
-    /** Código do produto (SKU). */
+    /** Product SKU code. */
     private String sku;
 
-    /** Quantidade retirada desta caixa. */
+    /** Quantity taken from this box. */
     private int qty;
 
-    /** Identificador da caixa de onde o produto foi retirado. */
+    /** Identifier of the box from which the product was taken. */
     private String boxId;
 
-    /** Número do corredor (aisle) onde a caixa está localizada. */
+    /** Aisle number where the box is located. */
     private int aisle;
 
-    /** Número da baía (bay) dentro do corredor. */
+    /** Bay number within the aisle. */
     private int bay;
 
     /**
-     * Constrói uma nova instância de {@code AllocationRow}.
+     * Constructs a new {@code AllocationRow} instance.
      *
-     * @param orderId identificador da encomenda
-     * @param lineNo  número da linha dentro da encomenda
-     * @param sku     código do produto (SKU)
-     * @param qty     quantidade retirada desta caixa
-     * @param boxId   identificador da caixa
-     * @param aisle   número do corredor onde a caixa se encontra
-     * @param bay     número da baía dentro do corredor
+     * @param orderId identifier of the order
+     * @param lineNo  line number within the order
+     * @param sku     product SKU code
+     * @param qty     quantity taken from this box
+     * @param boxId   identifier of the box
+     * @param aisle   aisle number where the box is located
+     * @param bay     bay number within the aisle
      */
     public AllocationRow(String orderId, int lineNo, String sku, int qty, String boxId, int aisle, int bay) {
         this.orderId = orderId;
@@ -49,26 +51,24 @@ public class AllocationRow {
         this.bay = bay;
     }
 
-    /** @return o identificador da encomenda associada. */
+    /** @return the identifier of the associated order. */
     public String getOrderId() { return orderId; }
 
-    /** @return o número da linha da encomenda. */
+    /** @return the line number within the order. */
     public int getLineNo() { return lineNo; }
 
-    /** @return o código do produto (SKU). */
+    /** @return the product SKU code. */
     public String getSku() { return sku; }
 
-    /** @return a quantidade retirada desta caixa. */
+    /** @return the quantity taken from this box. */
     public int getQty() { return qty; }
 
-    /** @return o identificador da caixa. */
+    /** @return the identifier of the box. */
     public String getBoxId() { return boxId; }
 
-    /** @return o número do corredor onde a caixa se encontra. */
+    /** @return the aisle number where the box is located. */
     public int getAisle() { return aisle; }
 
-    /** @return o número da baía dentro do corredor. */
+    /** @return the bay number within the aisle. */
     public int getBay() { return bay; }
 }
-
-

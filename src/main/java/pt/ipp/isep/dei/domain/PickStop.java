@@ -1,24 +1,24 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Representa uma paragem de picking dentro do armazém.
+ * Represents a picking stop within the warehouse.
  * <p>
- * Cada PickStop está associado a uma Allocation específica e a uma Coordinate dentro do armazém.
+ * Each PickStop is associated with a specific Allocation and a Coordinate inside the warehouse.
  * </p>
  */
 public class PickStop {
 
-    /** Coordenada do PickStop dentro do armazém (aisle e bay). */
+    /** Coordinate of the PickStop within the warehouse (aisle and bay). */
     private Coordinate coordinate;
 
-    /** Allocation associada a esta paragem. */
+    /** Allocation associated with this stop. */
     private Allocation allocation;
 
     /**
-     * Construtor da paragem de picking.
+     * Constructor for the picking stop.
      *
-     * @param coordinate coordenada do PickStop no armazém
-     * @param allocation allocation associada a esta paragem
+     * @param coordinate coordinate of the PickStop in the warehouse
+     * @param allocation allocation associated with this stop
      */
     public PickStop(Coordinate coordinate, Allocation allocation) {
         this.coordinate = coordinate;
@@ -26,27 +26,27 @@ public class PickStop {
     }
 
     /**
-     * Retorna a coordenada desta paragem.
+     * Returns the coordinate of this stop.
      *
-     * @return Coordinate do PickStop
+     * @return Coordinate of the PickStop
      */
     public Coordinate getCoordinate() {
         return coordinate;
     }
 
     /**
-     * Retorna a allocation associada a esta paragem.
+     * Returns the allocation associated with this stop.
      *
-     * @return Allocation do PickStop
+     * @return Allocation of the PickStop
      */
     public Allocation getAllocation() {
         return allocation;
     }
 
     /**
-     * Representação textual da paragem de picking.
+     * Textual representation of the picking stop.
      *
-     * @return string no formato "SKU @ (aisle,bay)"
+     * @return string in the format "SKU @ (aisle,bay)"
      */
     @Override
     public String toString() {

@@ -13,8 +13,12 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testes unitários para a classe TrafficDispatcherService sem usar Mockito.
- * Utiliza implementações "stub" dos repositórios para simular os dados.
+ * Unit tests for {@link TrafficDispatcherService} without using Mockito.
+ * <p>
+ * This test class uses simple stub implementations of the repositories to simulate data.
+ * It covers scenarios such as travel time calculation, retrieval of available stations
+ * and locomotives, and exception handling when invalid input is provided.
+ * </p>
  */
 class TrafficDispatcherServiceTest {
 
@@ -27,9 +31,12 @@ class TrafficDispatcherServiceTest {
     private Locomotive loco;
     private RailwayLine line;
 
+    /**
+     * Initializes the service and stub repositories with test data before each test.
+     */
     @BeforeEach
     void setUp() {
-        // Criar objetos de domínio
+        // Create domain objects
         s1 = new Station("S1", "Lisboa");
         s2 = new Station("S2", "Porto");
         loco = new Locomotive("L1", "CP2600", 120.0, 80.0, false);
@@ -38,7 +45,7 @@ class TrafficDispatcherServiceTest {
         LineSegment seg2 = new LineSegment(s2, s1, 40.0, 150.0, false);
         line = new RailwayLine(List.of(seg1, seg2));
 
-        // Criar repositórios stub
+        // Create stub repositories
         stationRepo = new StubStationRepository(Map.of(
                 "S1", s1,
                 "S2", s2
@@ -48,26 +55,33 @@ class TrafficDispatcherServiceTest {
         ));
         lineRepo = new StubRailwayLineRepository(line);
 
-        // Instanciar o serviço
+        // Instantiate the service
         service = new TrafficDispatcherService(stationRepo, locoRepo, lineRepo);
     }
 
-    // ---------------- TESTES PRINCIPAIS ----------------
+    // ---------------- TEST METHODS ----------------
 
-
-
+    /**
+     * Tests that calculating travel time with an invalid station ID throws an exception.
+     */
     @Test
     void testCalculateTravelTime_InvalidStation_ThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
                 service.calculateTravelTime("INVALID", "S2", "L1"));
     }
 
+    /**
+     * Tests that calculating travel time with an invalid locomotive ID throws an exception.
+     */
     @Test
     void testCalculateTravelTime_InvalidLocomotive_ThrowsException() {
         assertThrows(IllegalArgumentException.class, () ->
                 service.calculateTravelTime("S1", "S2", "BADID"));
     }
 
+    /**
+     * Tests that calculating travel time when no direct line exists throws an exception.
+     */
     @Test
     void testCalculateTravelTime_NoDirectLine_ThrowsException() {
         lineRepo.setReturnNull(true);
@@ -76,6 +90,9 @@ class TrafficDispatcherServiceTest {
                 service.calculateTravelTime("S1", "S2", "L1"));
     }
 
+    /**
+     * Tests that {@link TrafficDispatcherService#getAvailableStations()} returns the correct list.
+     */
     @Test
     void testGetAvailableStations_ReturnsCorrectList() {
         List<Station> stations = service.getAvailableStations();
@@ -84,6 +101,9 @@ class TrafficDispatcherServiceTest {
         assertTrue(stations.contains(s2));
     }
 
+    /**
+     * Tests that {@link TrafficDispatcherService#getAvailableLocomotives()} returns the correct list.
+     */
     @Test
     void testGetAvailableLocomotives_ReturnsCorrectList() {
         List<Locomotive> locos = service.getAvailableLocomotives();
@@ -91,8 +111,11 @@ class TrafficDispatcherServiceTest {
         assertEquals(loco, locos.get(0));
     }
 
-    // ---------------- STUB CLASSES ----------------
+    // ---------------- STUB REPOSITORY CLASSES ----------------
 
+    /**
+     * Simple stub implementation of {@link StationRepository}.
+     */
     private static class StubStationRepository implements StationRepository {
         private final Map<String, Station> data;
 
@@ -111,6 +134,9 @@ class TrafficDispatcherServiceTest {
         }
     }
 
+    /**
+     * Simple stub implementation of {@link LocomotiveRepository}.
+     */
     private static class StubLocomotiveRepository implements LocomotiveRepository {
         private final Map<String, Locomotive> data;
 
@@ -129,6 +155,10 @@ class TrafficDispatcherServiceTest {
         }
     }
 
+    /**
+     * Simple stub implementation of {@link RailwayLineRepository}.
+     * Can optionally simulate the absence of a direct line.
+     */
     private static class StubRailwayLineRepository implements RailwayLineRepository {
         private final RailwayLine line;
         private boolean returnNull = false;

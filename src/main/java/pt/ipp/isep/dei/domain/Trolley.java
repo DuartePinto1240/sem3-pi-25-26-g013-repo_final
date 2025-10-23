@@ -4,32 +4,32 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Representa um carrinho (trolley) utilizado para transportar alocações ({@link Allocation})
- * durante o processo de picking no armazém.
+ * Represents a trolley used to transport allocations ({@link Allocation})
+ * during the picking process in the warehouse.
  * <p>
- * Cada trolley possui uma capacidade máxima em peso e armazena um conjunto de alocações
- * cujo peso total não pode exceder essa capacidade.
+ * Each trolley has a maximum weight capacity and stores a set of allocations
+ * whose total weight cannot exceed that capacity.
  * </p>
  */
 public class Trolley {
 
-    /** Identificador único do trolley. */
+    /** Unique identifier of the trolley. */
     private final int id;
 
-    /** Capacidade máxima do trolley, em quilogramas. */
+    /** Maximum capacity of the trolley, in kilograms. */
     private final double capacity;
 
-    /** Peso total atualmente utilizado no trolley. */
+    /** Total weight currently utilized in the trolley. */
     private double usedWeight;
 
-    /** Lista de alocações contidas neste trolley. */
+    /** List of allocations contained in this trolley. */
     private final List<Allocation> allocations;
 
     /**
-     * Constrói um novo {@code Trolley} com a capacidade especificada.
+     * Constructs a new {@code Trolley} with the specified capacity.
      *
-     * @param id identificador único do trolley
-     * @param capacity capacidade máxima do trolley (em quilogramas)
+     * @param id unique identifier of the trolley
+     * @param capacity maximum capacity of the trolley (in kilograms)
      */
     public Trolley(int id, double capacity) {
         this.id = id;
@@ -39,56 +39,56 @@ public class Trolley {
     }
 
     /**
-     * Obtém o identificador do trolley.
+     * Gets the identifier of the trolley.
      *
-     * @return o ID do trolley
+     * @return the trolley ID
      */
     public int getId() {
         return id;
     }
 
     /**
-     * Obtém a capacidade máxima do trolley.
+     * Gets the maximum capacity of the trolley.
      *
-     * @return a capacidade total, em quilogramas
+     * @return the total capacity, in kilograms
      */
     public double getCapacity() {
         return capacity;
     }
 
     /**
-     * Obtém o peso atualmente utilizado no trolley.
+     * Gets the total weight currently utilized in the trolley.
      *
-     * @return o peso total ocupado, em quilogramas
+     * @return the total occupied weight, in kilograms
      */
     public double getUsedWeight() {
         return usedWeight;
     }
 
     /**
-     * Retorna a lista de alocações atualmente armazenadas no trolley.
+     * Returns the list of allocations currently stored in the trolley.
      *
-     * @return lista de objetos {@link Allocation}
+     * @return list of {@link Allocation} objects
      */
     public List<Allocation> getAllocations() {
         return allocations;
     }
 
     /**
-     * Verifica se o trolley tem capacidade suficiente para adicionar
-     * uma nova alocação com o peso especificado.
+     * Checks if the trolley has enough capacity to add
+     * a new allocation with the specified weight.
      *
-     * @param weight peso da nova alocação
-     * @return {@code true} se o trolley puder suportar o peso adicional, {@code false} caso contrário
+     * @param weight weight of the new allocation
+     * @return {@code true} if the trolley can support the additional weight, {@code false} otherwise
      */
     public boolean canFit(double weight) {
         return usedWeight + weight <= capacity;
     }
 
     /**
-     * Adiciona uma nova alocação ao trolley e atualiza o peso total utilizado.
+     * Adds a new allocation to the trolley and updates the total weight utilized.
      *
-     * @param alloc a alocação a ser adicionada
+     * @param alloc the allocation to be added
      */
     public void addAllocation(Allocation alloc) {
         allocations.add(alloc);
@@ -96,9 +96,9 @@ public class Trolley {
     }
 
     /**
-     * Calcula a taxa de utilização do trolley com base na capacidade total.
+     * Calculates the utilization rate of the trolley based on the total capacity.
      *
-     * @return a percentagem de utilização do trolley (0–100%)
+     * @return the percentage utilization of the trolley (0–100%)
      */
     public double getUtilization() {
         return (usedWeight / capacity) * 100;

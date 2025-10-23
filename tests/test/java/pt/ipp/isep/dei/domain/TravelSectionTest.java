@@ -8,7 +8,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Testes unitários para a classe TravelSection.
+ * Unit tests for the {@link TravelSection} class.
+ * <p>
+ * These tests verify that a {@code TravelSection} correctly stores and returns
+ * its associated {@link LineSegment}, effective speed, and travel time.
+ * It also ensures object reference integrity and consistent data behavior.
+ * </p>
  */
 public class TravelSectionTest {
 
@@ -16,14 +21,22 @@ public class TravelSectionTest {
     private Station destination;
     private LineSegment segment;
 
+    /**
+     * Sets up shared test data before each test.
+     * Creates two {@link Station} instances and a connecting {@link LineSegment}.
+     */
     @BeforeEach
     public void setUp() {
         origin = new Station("ST001", "Porto", 41.15, -8.61);
         destination = new Station("ST002", "Lisboa", 38.72, -9.14);
-        // ✅ Agora com o argumento electrified (true/false)
+        // The LineSegment includes distance, max speed, and electrification flag.
         segment = new LineSegment(origin, destination, 313.0, 160.0, true);
     }
 
+    /**
+     * Verifies that the constructor correctly initializes all fields
+     * and that the getter methods return the expected values.
+     */
     @Test
     public void testConstructorAndGetters_ShouldReturnCorrectValues() {
         TravelSection section = new TravelSection(segment, 120.0, 156.5);
@@ -33,10 +46,10 @@ public class TravelSectionTest {
         assertEquals(156.5, section.getSectionTimeMinutes());
     }
 
-
-
-
-
+    /**
+     * Ensures that the {@link LineSegment} reference stored inside
+     * the {@link TravelSection} is the same instance passed to the constructor.
+     */
     @Test
     public void testSegmentReferenceIntegrity_ShouldBeSameInstance() {
         TravelSection section = new TravelSection(segment, 100.0, 188.0);

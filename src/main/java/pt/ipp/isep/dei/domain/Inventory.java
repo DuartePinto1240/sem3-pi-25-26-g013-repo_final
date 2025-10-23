@@ -7,7 +7,7 @@ import java.util.*;
  * grouped by their SKU codes.
  * <p>
  * The inventory ensures that boxes for each SKU are maintained in
- * FEFO/FIFO order (First-Expire-First-Out / First-In-First-Out),
+ * **FEFO/FIFO** order (**First-Expire-First-Out / First-In-First-Out**),
  * so retrieval operations naturally respect product rotation.
  * </p>
  */
@@ -15,6 +15,8 @@ public class Inventory {
 
     /** Map associating each SKU to its list of stored boxes. */
     private final Map<String, List<Box>> stock = new HashMap<>();
+
+    //---
 
     /**
      * Adds a {@link Box} to the inventory.
@@ -33,8 +35,10 @@ public class Inventory {
         Collections.sort(boxes); // FEFO/FIFO ordering
     }
 
+    //---
+
     /**
-     * Checks if the inventory contains at least one box for a given SKU.
+     * Checks if the inventory contains at least one box for a given **SKU** (Stock Keeping Unit).
      *
      * @param sku the SKU code to check
      * @return {@code true} if the SKU exists in the inventory; {@code false} otherwise
@@ -43,8 +47,10 @@ public class Inventory {
         return stock.containsKey(sku);
     }
 
+    //---
+
     /**
-     * Returns all boxes associated with a given SKU.
+     * Returns all boxes associated with a given **SKU**.
      * <p>
      * If the SKU is not found, an empty (immutable) list is returned.
      * </p>
@@ -55,6 +61,8 @@ public class Inventory {
     public List<Box> getBoxes(String sku) {
         return stock.getOrDefault(sku, Collections.emptyList());
     }
+
+    //---
 
     /**
      * Returns an unmodifiable view of the entire stock map.
@@ -68,4 +76,3 @@ public class Inventory {
         return Collections.unmodifiableMap(stock);
     }
 }
-

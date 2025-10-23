@@ -3,51 +3,51 @@ package main.java.pt.ipp.isep.dei.domain;
 import java.util.Objects;
 
 /**
- * Representa uma estação ferroviária no sistema.
+ * Represents a railway station in the system.
  * <p>
- * Cada {@code Station} é identificada de forma única por um {@code id} e contém
- * informações básicas como o nome, latitude e longitude. Estas coordenadas podem
- * ser usadas para cálculos geográficos, visualizações ou identificação no mapa.
+ * Each {@code Station} is uniquely identified by an {@code id} and contains
+ * basic information such as the name, latitude, and longitude. These coordinates
+ * can be used for geographical calculations, visualizations, or map identification.
  * </p>
  *
  * <p>
- * Duas estações são consideradas iguais se tiverem o mesmo identificador
- * ({@code id}), independentemente de outros atributos.
+ * Two stations are considered equal if they have the same identifier
+ * ({@code id}), regardless of other attributes.
  * </p>
  */
 public class Station {
 
-    /** Identificador único da estação (ex: "ST001"). */
+    /** Unique identifier of the station (e.g., "ST001"). */
     private final String id;
 
-    /** Nome legível da estação (ex: "Lisboa Oriente"). */
+    /** Human-readable name of the station (e.g., "Lisboa Oriente"). */
     private final String name;
 
-    /** Latitude geográfica da estação (pode ser 0.0 se desconhecida). */
+    /** Geographical latitude of the station (may be 0.0 if unknown). */
     private final double latitude;
 
-    /** Longitude geográfica da estação (pode ser 0.0 se desconhecida). */
+    /** Geographical longitude of the station (may be 0.0 if unknown). */
     private final double longitude;
 
     /**
-     * Constrói uma estação sem coordenadas geográficas.
+     * Constructs a station without geographical coordinates.
      *
-     * @param id identificador único da estação, não pode ser vazio
-     * @param name nome da estação, não pode ser vazio
-     * @throws IllegalArgumentException se {@code id} ou {@code name} forem nulos ou vazios
+     * @param id unique identifier of the station, cannot be empty
+     * @param name name of the station, cannot be empty
+     * @throws IllegalArgumentException if {@code id} or {@code name} are null or empty
      */
     public Station(String id, String name) {
         this(id, name, 0.0, 0.0);
     }
 
     /**
-     * Constrói uma estação com todos os detalhes.
+     * Constructs a station with all details.
      *
-     * @param id identificador único da estação, não pode ser nulo nem vazio
-     * @param name nome da estação, não pode ser nulo nem vazio
-     * @param latitude latitude da estação (graus decimais)
-     * @param longitude longitude da estação (graus decimais)
-     * @throws IllegalArgumentException se {@code id} ou {@code name} forem inválidos
+     * @param id unique identifier of the station, cannot be null or empty
+     * @param name name of the station, cannot be null or empty
+     * @param latitude station latitude (decimal degrees)
+     * @param longitude station longitude (decimal degrees)
+     * @throws IllegalArgumentException if {@code id} or {@code name} are invalid
      */
     public Station(String id, String name, double latitude, double longitude) {
         if (id == null || id.trim().isEmpty() || name == null || name.trim().isEmpty()) {
@@ -59,30 +59,30 @@ public class Station {
         this.longitude = longitude;
     }
 
-    /** @return o identificador único da estação */
+    /** @return the unique identifier of the station */
     public String getId() {
         return id;
     }
 
-    /** @return o nome da estação */
+    /** @return the name of the station */
     public String getName() {
         return name;
     }
 
-    /** @return a latitude geográfica da estação */
+    /** @return the geographical latitude of the station */
     public double getLatitude() {
         return latitude;
     }
 
-    /** @return a longitude geográfica da estação */
+    /** @return the geographical longitude of the station */
     public double getLongitude() {
         return longitude;
     }
 
     /**
-     * Representação textual da estação, contendo o nome e o identificador.
+     * Textual representation of the station, containing the name and the identifier.
      *
-     * @return string no formato "Nome (ID)"
+     * @return string in the format "Name (ID)"
      */
     @Override
     public String toString() {
@@ -90,10 +90,10 @@ public class Station {
     }
 
     /**
-     * Duas estações são consideradas iguais se tiverem o mesmo identificador.
+     * Two stations are considered equal if they have the same identifier.
      *
-     * @param o outro objeto a comparar
-     * @return true se as estações tiverem o mesmo {@code id}
+     * @param o the other object to compare
+     * @return true if the stations have the same {@code id}
      */
     @Override
     public boolean equals(Object o) {
@@ -104,9 +104,9 @@ public class Station {
     }
 
     /**
-     * Calcula o hash code da estação com base no {@code id}.
+     * Calculates the station's hash code based on the {@code id}.
      *
-     * @return valor de hash consistente com {@link #equals(Object)}
+     * @return hash value consistent with {@link #equals(Object)}
      */
     @Override
     public int hashCode() {

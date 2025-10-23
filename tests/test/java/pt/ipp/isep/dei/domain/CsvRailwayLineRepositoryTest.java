@@ -10,6 +10,13 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link CsvRailwayLineRepository}.
+ * <p>
+ * These tests check the behavior of loading railway lines and their segments from CSV files,
+ * including handling of missing segments and validation of direct line lookup between stations.
+ * </p>
+ */
 class CsvRailwayLineRepositoryTest {
 
     private Path linesCsv;
@@ -17,9 +24,12 @@ class CsvRailwayLineRepositoryTest {
     private Path stationsCsv;
     private CsvStationRepository stationRepo;
 
+    /**
+     * Sets up temporary CSV files for stations, segments, and lines before each test.
+     */
     @BeforeEach
     void setUp() throws IOException {
-        // Criar ficheiro CSV de estações
+        // Create stations CSV
         stationsCsv = Files.createTempFile("stations", ".csv");
         String stationContent = """
                 S1,Lisboa,38.7169,-9.1399
@@ -29,7 +39,7 @@ class CsvRailwayLineRepositoryTest {
         Files.writeString(stationsCsv, stationContent);
         stationRepo = new CsvStationRepository(stationsCsv.toString());
 
-        // Criar ficheiro CSV de segmentos
+        // Create segments CSV
         segmentsCsv = Files.createTempFile("segments", ".csv");
         String segmentContent = """
                 L1,,S1,S2,200,120,1
@@ -38,7 +48,7 @@ class CsvRailwayLineRepositoryTest {
                 """;
         Files.writeString(segmentsCsv, segmentContent);
 
-        // Criar ficheiro CSV de linhas
+        // Create lines CSV
         linesCsv = Files.createTempFile("lines", ".csv");
         String lineContent = """
                 L1, Linha Norte, ativo
@@ -47,6 +57,9 @@ class CsvRailwayLineRepositoryTest {
         Files.writeString(linesCsv, lineContent);
     }
 
+    /**
+     * Deletes temporary CSV files after each test.
+     */
     @AfterEach
     void tearDown() throws IOException {
         Files.deleteIfExists(linesCsv);
@@ -54,8 +67,10 @@ class CsvRailwayLineRepositoryTest {
         Files.deleteIfExists(stationsCsv);
     }
 
-
-
+    /**
+     * Verifies that {@link CsvRailwayLineRepository#findDirectLine(Station, Station)}
+     * returns null when the line between the given stations does not exist.
+     */
     @Test
     void testFindDirectLine_ReturnsNullIfNotFound() {
         CsvRailwayLineRepository repo = new CsvRailwayLineRepository(
@@ -67,14 +82,15 @@ class CsvRailwayLineRepositoryTest {
         Station s1 = stationRepo.findById("S1");
         Station s3 = stationRepo.findById("S3");
 
-        assertNull(repo.findDirectLine(s3, s3), "Não deve existir linha S3->S3");
+        assertNull(repo.findDirectLine(s3, s3), "No line should exist from S3 to S3");
     }
 
-
-
+    /**
+     * Ensures that no RailwayLine is created if there are no segments in the CSV.
+     */
     @Test
     void testDoesNotCreateLineWithoutSegments() throws IOException {
-        // Limpar ficheiro de segmentos
+        // Clear segments CSV
         Files.writeString(segmentsCsv, "");
 
         CsvRailwayLineRepository repo = new CsvRailwayLineRepository(
@@ -88,7 +104,8 @@ class CsvRailwayLineRepositoryTest {
                 stationRepo.findById("S2")
         );
 
-        assertNull(line, "Sem segmentos, nenhuma linha deve ser criada");
+        assertNull(line, "Without segments, no line should be created");
     }
 }
+
 

@@ -9,10 +9,20 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for {@link CsvLocomotiveRepository}.
+ * <p>
+ * These tests check the correct loading of locomotives from a CSV file,
+ * including handling of incomplete data, ID lookup, and retrieval of all locomotives.
+ * </p>
+ */
 class CsvLocomotiveRepositoryTest {
 
     private Path locomotivesCsv;
 
+    /**
+     * Creates a temporary CSV file with test data before each test.
+     */
     @BeforeEach
     void setUp() throws IOException {
         locomotivesCsv = Files.createTempFile("locomotives", ".csv");
@@ -27,13 +37,17 @@ class CsvLocomotiveRepositoryTest {
         Files.writeString(locomotivesCsv, csvContent);
     }
 
+    /**
+     * Deletes the temporary CSV file after each test.
+     */
     @AfterEach
     void tearDown() throws IOException {
         Files.deleteIfExists(locomotivesCsv);
     }
 
-
-
+    /**
+     * Tests that locomotives with incomplete data are assigned default values correctly.
+     */
     @Test
     void testLoadLocomotives_IncompleteData_UsesDefaults() {
         CsvLocomotiveRepository repo = new CsvLocomotiveRepository(locomotivesCsv.toString());
@@ -46,6 +60,9 @@ class CsvLocomotiveRepositoryTest {
         assertFalse(l4.isElectric());
     }
 
+    /**
+     * Verifies that {@link CsvLocomotiveRepository#findById(String)} returns the correct locomotive.
+     */
     @Test
     void testFindById_ReturnsCorrectLocomotive() {
         CsvLocomotiveRepository repo = new CsvLocomotiveRepository(locomotivesCsv.toString());
@@ -56,22 +73,30 @@ class CsvLocomotiveRepositoryTest {
         assertFalse(loco.isElectric());
     }
 
+    /**
+     * Checks that searching for an invalid ID returns null.
+     */
     @Test
     void testFindById_InvalidId_ReturnsNull() {
         CsvLocomotiveRepository repo = new CsvLocomotiveRepository(locomotivesCsv.toString());
         assertNull(repo.findById("INVALID"));
     }
 
+    /**
+     * Ensures that the list returned by {@link CsvLocomotiveRepository#findAll()} is independent
+     * and external modifications do not affect the internal repository.
+     */
     @Test
     void testFindAll_ReturnsIndependentList() {
         CsvLocomotiveRepository repo = new CsvLocomotiveRepository(locomotivesCsv.toString());
 
         List<Locomotive> all = repo.findAll();
         int originalSize = all.size();
-        all.clear(); // limpar a lista não deve afetar o repositório interno
+        all.clear(); // clearing the list should not affect the internal repository
 
         assertEquals(originalSize, repo.findAll().size(),
-                "A lista devolvida por findAll() deve ser uma cópia independente");
+                "The list returned by findAll() should be an independent copy");
     }
 }
+
 
