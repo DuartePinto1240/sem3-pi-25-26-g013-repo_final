@@ -34,6 +34,7 @@ public class TravelSectionTest {
 
     }
 
+
     /**
      * Verifies that the constructor correctly initializes all fields
      * and that the getter methods return the expected values.

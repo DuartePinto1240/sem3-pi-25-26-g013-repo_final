@@ -117,3 +117,4 @@ public class LineSegmentTest {
         assertFalse(segment.isElectrified());
     }
 }
+

@@ -27,6 +27,7 @@ public class RailwayLineTest {
         return new Station(name, "City_" + name, 0.0, 0.0);
     }
 
+
     /**
      * Creates a test {@link LineSegment} between two stations with a specified distance
      * and a sequence number.

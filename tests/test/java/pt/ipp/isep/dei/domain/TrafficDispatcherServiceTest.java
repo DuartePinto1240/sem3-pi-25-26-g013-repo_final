@@ -60,6 +60,7 @@ class TrafficDispatcherServiceTest {
         service = new TrafficDispatcherService(stationRepo, locoRepo, lineRepo);
     }
 
+
     // ---------------- TEST METHODS ----------------
 
     /**

@@ -55,6 +55,7 @@ public class TravelTimeResultTest {
         sections = List.of(section1, section2);
     }
 
+
     /**
      * Verifies that the {@link TravelTimeResult} constructor correctly stores
      * all provided arguments (travel sections, total time, locomotive, and line).
