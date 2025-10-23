@@ -17,7 +17,7 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("USEI03", new USEI03UI()));
         options.add(new MenuItem("USEI04", new USEI04UI()));
         options.add(new MenuItem("USEI05", new USEI05UI()));
-
+        options.add(new MenuItem("USPL03",new USLP03UI()));
         int option = 0;
         do {
             option = Utils.showAndSelectIndex(options, "\n\n--- EDITOR MENU -------------------------");
