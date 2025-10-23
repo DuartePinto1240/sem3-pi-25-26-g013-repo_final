@@ -18,11 +18,30 @@ public class USEI01UI implements Runnable {
         List<Bay> bays = (List<Bay>) data.get("bays");
         List<Wagon> wagons = (List<Wagon>) data.get("wagons");
 
-        Warehouse warehouse = new Warehouse("W1");
-        for (Bay b : bays) warehouse.addBay(b);
-        WagonUnloader unloader = new WagonUnloader(warehouse);
+        // ✅ Determinar automaticamente o ID do armazém com base na primeira Bay
+        if (bays.isEmpty()) {
+            System.out.println("⚠️ Nenhuma bay encontrada no ficheiro CSV.");
+            return;
+        }
 
+        String warehouseId = bays.get(0).getWarehouseId();
+        Warehouse warehouse = new Warehouse(warehouseId);
+
+        // ✅ Validar e adicionar as bays ao armazém
+        for (Bay b : bays) {
+            if (!b.getWarehouseId().equals(warehouseId)) {
+                System.out.printf("⚠️ Ignorada Bay de warehouse diferente: %s (esperado %s)%n",
+                        b.getWarehouseId(), warehouseId);
+                continue;
+            }
+            warehouse.addBay(b);
+        }
+
+        WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
+
         System.out.println("✅ Wagons descarregados: " + wagons.size());
+        System.out.println("📦 Armazém processado: " + warehouseId);
     }
 }
+
