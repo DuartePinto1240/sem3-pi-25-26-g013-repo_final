@@ -1,0 +1,44 @@
+package main.java.pt.ipp.isep.dei.util;
+
+import main.java.pt.ipp.isep.dei.domain.*;
+import java.util.*;
+
+public class DataLoader {
+
+    public static Map<String, Object> loadAndValidate() {
+        CsvLoader loader = new CsvLoader();
+        Validator validator = new Validator();
+
+        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
+        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
+        List<Order> orders = loader.loadOrders(
+                "train_station_dataset_v2/train_station_dataset/orders.csv",
+                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
+        );
+        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
+        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
+
+        boolean valid = validator.validateItems(items) &
+                validator.validateBays(bays) &
+                validator.validateWagons(wagons, items) &
+                validator.validateOrders(orders, items) &
+                validator.validateReturns(returns, items);
+
+        if (!valid) {
+            System.err.println("❌ Erros detetados durante a validação. Execução terminada.");
+            return null;
+        }
+
+        System.out.println("✅ Todos os ficheiros carregados e validados com sucesso.");
+        System.out.printf("Bays: %d | Wagons: %d | Orders: %d | Items: %d | Returns: %d\n",
+                bays.size(), wagons.size(), orders.size(), items.size(), returns.size());
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("bays", bays);
+        data.put("wagons", wagons);
+        data.put("orders", orders);
+        data.put("items", items);
+        data.put("returns", returns);
+        return data;
+    }
+}
