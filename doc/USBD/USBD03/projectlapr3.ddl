@@ -6,7 +6,7 @@ CREATE TABLE RailwayLine
     start_station_id NUMBER(10)     NOT NULL,
     end_station_id   NUMBER(10)     NOT NULL,
     name             NVARCHAR2(255) NOT NULL UNIQUE,
-    CONSTRAINT PK_RailwayLine PRIMARY KEY (line_id)
+    CONSTRAINT PK_RailwayLine PRIMARY KEY (line_id),
 );
 
 CREATE TABLE LineSegment
@@ -23,8 +23,9 @@ CREATE TABLE LineSegment
     CONSTRAINT CHK_LineSegment_Order_GT0     CHECK (segment_order > 0),
     CONSTRAINT CHK_LineSegment_Length_GT0    CHECK (length_m > 0),
     CONSTRAINT CHK_LineSegment_MaxWeight_GT0 CHECK (max_weight > 0),
+    CONSTRAINT CHK_LineSegment_Speed_GT0     CHECK (speed_limit > 0),
     CONSTRAINT CHK_LineSegment_TrackType     CHECK (track_type IN ('single','double')),
-    CONSTRAINT CHK_LineSegment_Electrified   CHECK (electrified IN ('Yes','No'))
+    CONSTRAINT CHK_LineSegment_Electrified   CHECK (electrified IN ('Yes','No')),
 );
 
 CREATE TABLE Locomotive
@@ -46,10 +47,15 @@ CREATE TABLE Locomotive
     traction_kn           NUMBER(10,2)   NOT NULL,
     number_of_bogies      NUMBER(10)     NOT NULL,
     bogies                VARCHAR2(255)  NOT NULL,
-
-    CONSTRAINT PK_Locomotive PRIMARY KEY (loco_id)
+    CONSTRAINT PK_Locomotive PRIMARY KEY (loco_id),
+    CONSTRAINT CHK_Loco_power_GT0        CHECK (power_kw > 0),
+    CONSTRAINT CHK_Loco_weight_GT0       CHECK (weight_t > 0),
+    CONSTRAINT CHK_Loco_height_GT0       CHECK (height_m > 0),
+    CONSTRAINT CHK_Loco_width_GT0        CHECK (width_m > 0),
+    CONSTRAINT CHK_Loco_length_GT0       CHECK (length_m > 0),
+    CONSTRAINT CHK_Loco_Speeds           CHECK (max_speed_kmh > 0 AND operational_speed_kmh > 0 AND operational_speed_kmh <= max_speed_kmh),
+    CONSTRAINT CHK_Loco_Bogies           CHECK (number_of_bogies >= 1)
 );
-
 
 CREATE TABLE Wagon
 (
@@ -57,7 +63,7 @@ CREATE TABLE Wagon
     operator_id   NUMBER(10) NOT NULL,
     wagonmodel_id NUMBER(10) NOT NULL,
     service_year  NUMBER(4)  NOT NULL,
-    CONSTRAINT PK_Wagon PRIMARY KEY (wagon_id)
+    CONSTRAINT PK_Wagon PRIMARY KEY (wagon_id),
 );
 
 CREATE TABLE Facility
@@ -78,7 +84,6 @@ CREATE TABLE Freight
     departure_time         DATE       NOT NULL,
     arrival_time           DATE       NOT NULL,
     CONSTRAINT PK_Freight PRIMARY KEY (freight_id),
-    CONSTRAINT CHK_Freight_Dates CHECK (arrival_time >= departure_time)
 );
 
 CREATE TABLE Operator
@@ -88,21 +93,21 @@ CREATE TABLE Operator
     country     NVARCHAR2(255) NOT NULL,
     vat_number  VARCHAR2(255)  NOT NULL UNIQUE,
     short_name  VARCHAR2(255)  NOT NULL,
-    CONSTRAINT PK_Operator PRIMARY KEY (operator_id)
+    CONSTRAINT PK_Operator PRIMARY KEY (operator_id),
 );
 
 CREATE TABLE Train
 (
     train_id NUMBER(10) GENERATED AS IDENTITY,
     name     VARCHAR2(40) NOT NULL,
-    CONSTRAINT PK_Train PRIMARY KEY (train_id)
+    CONSTRAINT PK_Train PRIMARY KEY (train_id),
 );
 
 CREATE TABLE WagonType
 (
     wagontype_id NUMBER(10) GENERATED AS IDENTITY,
     type         VARCHAR2(255) NOT NULL,
-    CONSTRAINT PK_WagonType PRIMARY KEY (wagontype_id)
+    CONSTRAINT PK_WagonType PRIMARY KEY (wagontype_id),
 );
 
 CREATE TABLE Gauge
@@ -112,7 +117,6 @@ CREATE TABLE Gauge
     description NVARCHAR2(255) NOT NULL,
     CONSTRAINT PK_Gauge PRIMARY KEY (gauge_id)
 );
-
 
 CREATE TABLE Cargo
 (
@@ -124,7 +128,10 @@ CREATE TABLE Cargo
     volume      NUMBER(10,2)   NOT NULL,
     weight      NUMBER(10,2)   NOT NULL,
     expiry_date DATE           NOT NULL,
-    CONSTRAINT PK_Cargo PRIMARY KEY (cargo_id)
+    CONSTRAINT PK_Cargo PRIMARY KEY (cargo_id),
+    CONSTRAINT CHK_Cargo_quantity_GT0          CHECK (quantity > 0),
+    CONSTRAINT CHK_Cargo_volume_GT0          CHECK (volume > 0),
+    CONSTRAINT CHK_Cargo_weight_GT0          CHECK (weight > 0),
 );
 
 CREATE TABLE TrainLocomotive
@@ -157,7 +164,7 @@ CREATE TABLE WagonModel
     gauge_id         NUMBER(10)    NOT NULL,
     name             VARCHAR2(255) NOT NULL UNIQUE,
     maker            VARCHAR2(255) NOT NULL,
-    length_mm        NUMBER(10)   NOT NULL,
+    length_mm        NUMBER(10)    NOT NULL,
     weight_t         NUMBER(6,2)   NOT NULL,
     payload_t        NUMBER(6,2)   NOT NULL,
     max_speed_kmh    NUMBER(7,2)   NOT NULL,
@@ -166,9 +173,16 @@ CREATE TABLE WagonModel
     volume_m3        NUMBER(7,2)   NOT NULL,
     height_mm        NUMBER(10)   NOT NULL,
     width_mm         NUMBER(10)   NOT NULL,
-    CONSTRAINT PK_WagonModel PRIMARY KEY (wagonmodel_id)
+    CONSTRAINT PK_WagonModel PRIMARY KEY (wagonmodel_id),
+    CONSTRAINT CHK_WagonModel_length_GT0          CHECK (length_mm > 0),
+    CONSTRAINT CHK_WagonModel_height_GT0          CHECK (height_mm > 0),
+    CONSTRAINT CHK_WagonModel_width_GT0           CHECK (width_mm > 0),
+    CONSTRAINT CHK_WagonModel_volume_GT0          CHECK (volume_m3 > 0),
+    CONSTRAINT CHK_WagonModel_weight_GT0          CHECK (weight_t > 0),
+    CONSTRAINT CHK_WagonModel_payload_GT0         CHECK (payload_t >= 0),
+    CONSTRAINT CHK_WagonModel_maxspeed_GT0        CHECK (max_speed_kmh > 0),
+    CONSTRAINT CHK_WagonModel_numberofbogies_GT0  CHECK (number_of_bogies >= 1),
 );
-
 
 CREATE TABLE Diesel_Locomotive
 (
@@ -189,7 +203,7 @@ CREATE TABLE FacilityType
 (
     facilitytype_id NUMBER(10) GENERATED AS IDENTITY,
     type            VARCHAR2(255) NOT NULL,
-    CONSTRAINT PK_FacilityType PRIMARY KEY (facilitytype_id)
+    CONSTRAINT PK_FacilityType PRIMARY KEY (facilitytype_id),
 );
 
 ALTER TABLE LineSegment
