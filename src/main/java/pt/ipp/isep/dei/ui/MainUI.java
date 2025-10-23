@@ -5,6 +5,7 @@ import main.java.pt.ipp.isep.dei.domain.Station;
 import main.java.pt.ipp.isep.dei.domain.TravelTimeResult;
 import main.java.pt.ipp.isep.dei.service.TrafficDispatcherService;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
@@ -50,6 +51,8 @@ public class MainUI {
                 System.out.println("\nERRO: Não existem estações configuradas no sistema.\n");
                 return;
             }
+            stations.sort(Comparator.comparing(station -> Integer.parseInt(station.getId())));
+
             System.out.println("\n--- Estações Disponíveis ---");
             for (int i = 0; i < stations.size(); i++) {
                 System.out.printf("%d. %s\n", i + 1, stations.get(i));

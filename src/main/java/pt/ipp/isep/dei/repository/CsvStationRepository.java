@@ -45,22 +45,20 @@ public class CsvStationRepository implements StationRepository {
             if (record.length == 0 || record[0].trim().isEmpty()) continue; // Ignorar linhas vazias
 
             String id = record[0].trim();
-            Station station;
+            String name; // Declarar a variável para o nome
 
-            // --- LÓGICA DE ROBUSTEZ ---
-            // Se o CSV tiver 4 ou mais colunas, lê todos os dados.
-            if (record.length >= 4) {
-                String name = record[1].trim();
-                double latitude = Double.parseDouble(record[2].trim());
-                double longitude = Double.parseDouble(record[3].trim());
-                station = new Station(id, name, latitude, longitude);
+            // --- LÓGICA CORRIGIDA ---
+            // Se a linha do CSV tiver 2 ou mais colunas, usa a segunda coluna para o nome.
+            if (record.length >= 2) {
+                name = record[1].trim();
             }
-            // Se tiver menos colunas, usa valores padrão e assume que a primeira é o ID.
+            // Se tiver apenas 1 coluna (o ID), cria um nome padrão para não dar erro.
             else {
-                String defaultName = "Estacao " + id;
-                station = new Station(id, defaultName, 0.0, 0.0);
+                name = "Estacao " + id;
             }
 
+            // Cria o objeto Station com o nome correto. Latitude e longitude são 0.0.
+            Station station = new Station(id, name, 0.0, 0.0);
             stations.put(id, station);
         }
     }
