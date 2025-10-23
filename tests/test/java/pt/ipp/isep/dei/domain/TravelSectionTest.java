@@ -30,7 +30,8 @@ public class TravelSectionTest {
         origin = new Station("ST001", "Porto", 41.15, -8.61);
         destination = new Station("ST002", "Lisboa", 38.72, -9.14);
         // The LineSegment includes distance, max speed, and electrification flag.
-        segment = new LineSegment(origin, destination, 313.0, 160.0, true);
+        segment = new LineSegment(1, origin, destination, 313.0, 160.0, true);
+
     }
 
     /**

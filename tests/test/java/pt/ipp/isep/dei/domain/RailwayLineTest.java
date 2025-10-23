@@ -2,7 +2,6 @@ package test.java.pt.ipp.isep.dei.domain;
 
 import main.java.pt.ipp.isep.dei.domain.*;
 import org.junit.jupiter.api.Test;
-
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -29,15 +28,17 @@ public class RailwayLineTest {
     }
 
     /**
-     * Creates a test {@link LineSegment} between two stations with a specified distance.
+     * Creates a test {@link LineSegment} between two stations with a specified distance
+     * and a sequence number.
      *
-     * @param origin      the origin station name
-     * @param destination the destination station name
-     * @param dist        the distance of the segment
+     * @param sequenceNumber the sequence number of the segment in the line
+     * @param origin         the origin station name
+     * @param destination    the destination station name
+     * @param dist           the distance of the segment
      * @return a new LineSegment object
      */
-    private LineSegment createSegment(String origin, String destination, double dist) {
-        return new LineSegment(createStation(origin), createStation(destination), dist, 100.0, false);
+    private LineSegment createSegment(int sequenceNumber, String origin, String destination, double dist) {
+        return new LineSegment(sequenceNumber, createStation(origin), createStation(destination), dist, 100.0, false);
     }
 
     /**
@@ -45,8 +46,8 @@ public class RailwayLineTest {
      */
     @Test
     public void testConstructorAndGetters() {
-        LineSegment seg1 = createSegment("Lisboa", "Coimbra", 200);
-        LineSegment seg2 = createSegment("Coimbra", "Porto", 120);
+        LineSegment seg1 = createSegment(1, "Lisboa", "Coimbra", 200);
+        LineSegment seg2 = createSegment(2, "Coimbra", "Porto", 120);
         List<LineSegment> segments = List.of(seg1, seg2);
 
         RailwayLine line = new RailwayLine(segments);
@@ -62,11 +63,11 @@ public class RailwayLineTest {
      */
     @Test
     public void testGetSegmentsReturnsUnmodifiableList() {
-        LineSegment seg = createSegment("A", "B", 10);
+        LineSegment seg = createSegment(1, "A", "B", 10);
         RailwayLine line = new RailwayLine(List.of(seg));
 
         List<LineSegment> segs = line.getSegments();
-        assertThrows(UnsupportedOperationException.class, () -> segs.add(createSegment("B", "C", 15)));
+        assertThrows(UnsupportedOperationException.class, () -> segs.add(createSegment(2, "B", "C", 15)));
     }
 
     /**
@@ -92,7 +93,7 @@ public class RailwayLineTest {
      */
     @Test
     public void testSingleSegmentLineStartAndEndAreCorrect() {
-        LineSegment seg = createSegment("Origin", "Destination", 100);
+        LineSegment seg = createSegment(1, "Origin", "Destination", 100);
         RailwayLine line = new RailwayLine(List.of(seg));
 
         assertEquals(seg.getOrigin(), line.getStartStation());

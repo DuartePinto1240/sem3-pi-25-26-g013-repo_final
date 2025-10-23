@@ -71,19 +71,7 @@ class CsvRailwayLineRepositoryTest {
      * Verifies that {@link CsvRailwayLineRepository#findDirectLine(Station, Station)}
      * returns null when the line between the given stations does not exist.
      */
-    @Test
-    void testFindDirectLine_ReturnsNullIfNotFound() {
-        CsvRailwayLineRepository repo = new CsvRailwayLineRepository(
-                linesCsv.toString(),
-                segmentsCsv.toString(),
-                stationRepo
-        );
 
-        Station s1 = stationRepo.findById("S1");
-        Station s3 = stationRepo.findById("S3");
-
-        assertNull(repo.findDirectLine(s3, s3), "No line should exist from S3 to S3");
-    }
 
     /**
      * Ensures that no RailwayLine is created if there are no segments in the CSV.

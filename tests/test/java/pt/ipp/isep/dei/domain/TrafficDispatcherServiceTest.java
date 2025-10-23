@@ -41,9 +41,10 @@ class TrafficDispatcherServiceTest {
         s2 = new Station("S2", "Porto");
         loco = new Locomotive("L1", "CP2600", 120.0, 80.0, false);
 
-        LineSegment seg1 = new LineSegment(s1, s2, 60.0, 100.0, false);
-        LineSegment seg2 = new LineSegment(s2, s1, 40.0, 150.0, false);
+        LineSegment seg1 = new LineSegment(1, s1, s2, 60.0, 100.0, false);
+        LineSegment seg2 = new LineSegment(2, s2, s1, 40.0, 150.0, false);
         line = new RailwayLine(List.of(seg1, seg2));
+
 
         // Create stub repositories
         stationRepo = new StubStationRepository(Map.of(

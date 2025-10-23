@@ -10,6 +10,18 @@ public class LineSegment {
     private final boolean electrified;
 
     public LineSegment(int sequenceNumber, Station origin, Station destination, double distanceKm, double maxSpeedKmH, boolean electrified) {
+        if (origin == null) {
+            throw new IllegalArgumentException("Origin station cannot be null");
+        }
+        if (destination == null) {
+            throw new IllegalArgumentException("Destination station cannot be null");
+        }
+        if (distanceKm <= 0) {
+            throw new IllegalArgumentException("Distance must be positive");
+        }
+        if (maxSpeedKmH <= 0) {
+            throw new IllegalArgumentException("Max Speed must be positive");
+        }
         this.sequenceNumber = sequenceNumber;
         this.origin = origin;
         this.destination = destination;
