@@ -24,11 +24,11 @@ public class USEI04UI implements Runnable {
             return;
         }
 
-        // ✅ Criar warehouse com base no ID real das bays
+        // Criar warehouse com base no ID real das bays
         String warehouseId = bays.get(0).getWarehouseId();
         Warehouse warehouse = new Warehouse(warehouseId);
 
-        // ✅ Adicionar apenas bays consistentes
+        // Adicionar apenas bays consistentes
         for (Bay b : bays) {
             if (!b.getWarehouseId().equals(warehouseId)) {
                 System.out.printf("⚠️ Ignorada bay de outro warehouse: %s%n", b.getWarehouseId());
@@ -37,18 +37,27 @@ public class USEI04UI implements Runnable {
             warehouse.addBay(b);
         }
 
-        // 🚂 Descarregar os vagões
+        // Descarregar os vagões
         new WagonUnloader(warehouse).unload(wagons);
 
-        // 📦 Alocar encomendas
-        OrderAllocator allocator = new OrderAllocator();
-        OrderAllocator.Result result = allocator.allocateOrders(orders, warehouse, true);
+        Scanner sc = new Scanner(System.in);
 
-        // 🔢 Converter para allocations
+        // Escolher modo de alocação (US02)
+        System.out.println("\nDeseja usar qual conjunto de alocações para o planeamento?");
+        System.out.println("1 - STRICT");
+        System.out.println("2 - PARTIAL");
+        System.out.print("Opção: ");
+        int modeChoice = sc.nextInt();
+
+        OrderAllocator allocator = new OrderAllocator();
+        OrderAllocator.Result result = allocator.allocateOrders(orders, warehouse, modeChoice == 2);
+
+        // Obter peso por item
         Map<String, Double> weights = new HashMap<>();
         for (Item item : items)
             weights.put(item.getSku(), item.getUnitWeight());
 
+        // Converter AllocationsRows em Allocations com peso
         List<Allocation> allocations = new ArrayList<>();
         for (AllocationRow row : result.allocationRows) {
             double weight = weights.getOrDefault(row.getSku(), 0.0) * row.getQty();
@@ -64,25 +73,74 @@ public class USEI04UI implements Runnable {
             ));
         }
 
-        // 🚶‍♂️ Agrupar por ponto de recolha (aisle + bay)
-        Map<String, PickStop> merged = new HashMap<>();
-        for (Allocation a : allocations) {
-            String key = a.getAisle() + ":" + a.getBay();
-            merged.merge(key, new PickStop(new Coordinate(a.getAisle(), a.getBay()), a),
+        // Pedir capacidade máxima (peso) do trolley (US03)
+        System.out.print("\nIndique a capacidade máxima (peso) de cada trolley: ");
+        double trolleyCapacity = sc.nextDouble();
+
+        // Escolher heurística de planeamento (US03)
+        System.out.println("\nEscolha a heurística de distribuição:");
+        System.out.println("1 - First Fit (FF)");
+        System.out.println("2 - First Fit Decreasing (FFD)");
+        System.out.println("3 - Best Fit Decreasing (BFD)");
+        System.out.print("Opção: ");
+        int option = sc.nextInt();
+
+        // Executa a heurística selecionada
+        PickingPlanner planner = new PickingPlanner(allocations, trolleyCapacity);
+        List<Trolley> trolleys;
+        switch (option) {
+            case 1:
+                trolleys = planner.planFirstFit();
+                break;
+            case 2:
+                trolleys = planner.planFirstFitDecreasing();
+                break;
+            case 3:
+            default:
+                trolleys = planner.planBestFitDecreasing();
+                break;
+        }
+
+        // Recolhe todas as allocations dos trolleys (para o percurso)
+        List<Allocation> allAllocations = new ArrayList<>();
+        for (Trolley t : trolleys) {
+            allAllocations.addAll(t.getAllocations());
+        }
+
+        // Funde baias duplicadas (somar quantidades)
+        Map<String, PickStop> mergedMap = new HashMap<>();
+        for (Allocation alloc : allAllocations) {
+            String key = alloc.getAisle() + ":" + alloc.getBay();
+            Coordinate coord = new Coordinate(alloc.getAisle(), alloc.getBay());
+
+            mergedMap.merge(key, new PickStop(coord, alloc),
                     (oldVal, newVal) -> {
                         oldVal.getAllocation().setQty(
-                                oldVal.getAllocation().getQty() + a.getQty());
+                                oldVal.getAllocation().getQty() + alloc.getQty());
                         return oldVal;
                     });
         }
 
-        // 🧭 Planeamento do trajeto
-        PickPathPlanner planner = new PickPathPlanner();
-        PickPath deterministic = planner.planDeterministicSweep(new ArrayList<>(merged.values()));
-        PickPath nearest = planner.planNearestNeighbour(new ArrayList<>(merged.values()));
+        List<PickStop> mergedStops = new ArrayList<>(mergedMap.values());
 
-        System.out.println("✅ Warehouse processado: " + warehouseId);
-        System.out.printf("Deterministic Distance: %.2f%n", deterministic.getTotalDistance());
-        System.out.printf("Nearest-Neighbour Distance: %.2f%n", nearest.getTotalDistance());
+        // Gerar trajetos (US04)
+        PickPathPlanner pickPathPlanner = new PickPathPlanner();
+        PickPath deterministic = pickPathPlanner.planDeterministicSweep(mergedStops);
+        PickPath nearest = pickPathPlanner.planNearestNeighbour(mergedStops);
+
+        // Mostrar resultados detalhados
+        System.out.println("\n✅ Warehouse processado: " + warehouseId);
+        printPath("A — Deterministic Sweep", deterministic);
+        printPath("B — Nearest Neighbour", nearest);
+    }
+
+    // Impressão do percurso
+    private void printPath(String name, PickPath path) {
+        System.out.println("\nEstratégia " + name);
+        System.out.print("Caminho: (0,0)");
+        for (PickStop s : path.getSequence()) {
+            System.out.print(" -> (" + s.getCoordinate().getAisle() + "," + s.getCoordinate().getBay() + ")");
+        }
+        System.out.printf("\nDistância total: %.2f\n", path.getTotalDistance());
     }
 }
