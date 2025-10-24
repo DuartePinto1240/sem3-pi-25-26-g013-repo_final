@@ -1,2 +1,2 @@
-2025-10-23 20:48 | returnId=RET001 | sku=SKU1 | action=Restocked | qty=5
-2025-10-23 20:48 | returnId=RET002 | sku=SKU2 | action=Discarded | qty=3
+2025-10-24 12:11 | returnId=RET001 | sku=SKU1 | action=Restocked | qty=5
+2025-10-24 12:11 | returnId=RET002 | sku=SKU2 | action=Discarded | qty=3

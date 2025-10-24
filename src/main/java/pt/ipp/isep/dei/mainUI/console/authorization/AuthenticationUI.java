@@ -11,13 +11,30 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
+/**
+ * Console User Interface (UI) responsible for handling user authentication
+ * and role selection after a successful login.
+ * <p>
+ * It interacts with the {@link AuthenticationController} to manage the login,
+ * role retrieval, and logout processes.
+ * </p>
+ */
 public class AuthenticationUI implements Runnable {
+
+    /** The controller handling authentication logic. */
     private final AuthenticationController ctrl;
 
+    /**
+     * Constructs an {@code AuthenticationUI} and initializes the controller.
+     */
     public AuthenticationUI() {
         ctrl = new AuthenticationController();
     }
 
+    /**
+     * Executes the authentication process: login, role selection,
+     * redirection to the corresponding UI, and logout.
+     */
     public void run() {
         boolean success = doLogin();
 
@@ -38,6 +55,11 @@ public class AuthenticationUI implements Runnable {
         this.logout();
     }
 
+    /**
+     * Maps the user roles to their respective starting console UIs (as {@link MenuItem}s).
+     *
+     * @return a list of {@link MenuItem} objects, one for each supported role.
+     */
     private List<MenuItem> getMenuItemForRoles() {
         List<MenuItem> rolesUI = new ArrayList<>();
         rolesUI.add(new MenuItem(AuthenticationController.ROLE_ADMIN, new AdminUI()));
@@ -47,6 +69,11 @@ public class AuthenticationUI implements Runnable {
         return rolesUI;
     }
 
+    /**
+     * Prompts the user for login credentials and attempts to authenticate up to 3 times.
+     *
+     * @return {@code true} if login is successful, {@code false} otherwise.
+     */
     private boolean doLogin() {
         System.out.println("\n\n--- LOGIN UI ---------------------------");
 
@@ -66,10 +93,19 @@ public class AuthenticationUI implements Runnable {
         return success;
     }
 
+    /**
+     * Logs the currently authenticated user out.
+     */
     private void logout() {
         ctrl.doLogout();
     }
 
+    /**
+     * Finds and executes the main console UI associated with the selected user role.
+     *
+     * @param rolesUI the list of available {@link MenuItem} UIs mapped to roles.
+     * @param role the {@link UserRoleDTO} selected by the user.
+     */
     private void redirectToRoleUI(List<MenuItem> rolesUI, UserRoleDTO role) {
         boolean found = false;
         Iterator<MenuItem> it = rolesUI.iterator();
@@ -85,6 +121,12 @@ public class AuthenticationUI implements Runnable {
         }
     }
 
+    /**
+     * Allows the user to select one role if multiple are assigned.
+     *
+     * @param roles the list of {@link UserRoleDTO} assigned to the user.
+     * @return the selected {@link UserRoleDTO}, or {@code null} if no role is selected.
+     */
     private UserRoleDTO selectsRole(List<UserRoleDTO> roles) {
         if (roles.size() == 1) {
             return roles.get(0);

@@ -5,8 +5,28 @@ import main.java.pt.ipp.isep.dei.util.DataLoader;
 
 import java.util.*;
 
+/**
+ * Console User Interface (UI) for Use Case USEI04: Pick Path Sequencing and Optimization.
+ * <p>
+ * This UI simulates the full flow: loading data, allocating orders, and then
+ * generating two different optimized pick paths—Deterministic Sweep and Nearest Neighbour—
+ * for the consolidated set of required pick stops, comparing their total distances.
+ * </p>
+ */
 public class USEI04UI implements Runnable {
 
+    /**
+     * Executes the USEI04 use case sequence.
+     * <p>
+     * 1. Loads and validates all domain data.
+     * 2. Initializes the {@link Warehouse} and stock via {@link WagonUnloader}.
+     * 3. Allocates {@link Order}s (partial mode) using {@link OrderAllocator}.
+     * 4. Converts allocation results into weighted {@link Allocation} objects.
+     * 5. Consolidates allocations into unique {@link PickStop}s (grouping by aisle and bay).
+     * 6. Generates the pick path using two different algorithms: Deterministic Sweep and Nearest Neighbour.
+     * 7. Prints the total distance for each generated path.
+     * </p>
+     */
     @Override
     public void run() {
         System.out.println("\n=== USEI04 — Pick Path Sequencing ===");
@@ -24,11 +44,11 @@ public class USEI04UI implements Runnable {
             return;
         }
 
-        // ✅ Criar warehouse com base no ID real das bays
+        // ✅ Create warehouse based on the actual ID of the bays
         String warehouseId = bays.get(0).getWarehouseId();
         Warehouse warehouse = new Warehouse(warehouseId);
 
-        // ✅ Adicionar apenas bays consistentes
+        // ✅ Add only consistent bays
         for (Bay b : bays) {
             if (!b.getWarehouseId().equals(warehouseId)) {
                 System.out.printf("⚠️ Ignorada bay de outro warehouse: %s%n", b.getWarehouseId());
@@ -37,14 +57,14 @@ public class USEI04UI implements Runnable {
             warehouse.addBay(b);
         }
 
-        // 🚂 Descarregar os vagões
+        // 🚂 Unload the wagons
         new WagonUnloader(warehouse).unload(wagons);
 
-        // 📦 Alocar encomendas
+        // 📦 Allocate orders
         OrderAllocator allocator = new OrderAllocator();
         OrderAllocator.Result result = allocator.allocateOrders(orders, warehouse, true);
 
-        // 🔢 Converter para allocations
+        // 🔢 Convert to allocations
         Map<String, Double> weights = new HashMap<>();
         for (Item item : items)
             weights.put(item.getSku(), item.getUnitWeight());
@@ -64,7 +84,7 @@ public class USEI04UI implements Runnable {
             ));
         }
 
-        // 🚶‍♂️ Agrupar por ponto de recolha (aisle + bay)
+        // 🚶‍♂️ Group by pick location (aisle + bay)
         Map<String, PickStop> merged = new HashMap<>();
         for (Allocation a : allocations) {
             String key = a.getAisle() + ":" + a.getBay();
@@ -76,7 +96,7 @@ public class USEI04UI implements Runnable {
                     });
         }
 
-        // 🧭 Planeamento do trajeto
+        // 🧭 Path planning
         PickPathPlanner planner = new PickPathPlanner();
         PickPath deterministic = planner.planDeterministicSweep(new ArrayList<>(merged.values()));
         PickPath nearest = planner.planNearestNeighbour(new ArrayList<>(merged.values()));
