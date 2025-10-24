@@ -293,3 +293,4 @@ ALTER TABLE Diesel_Locomotive
 ALTER TABLE Facility
     ADD CONSTRAINT FK_Facility_Type
         FOREIGN KEY (facilitytype_id) REFERENCES FacilityType (facilitytype_id);
+
