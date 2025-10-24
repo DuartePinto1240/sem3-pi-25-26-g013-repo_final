@@ -15,16 +15,37 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * Console User Interface (UI) for Use Case USLP03: Calculate Estimated Travel Time.
+ * <p>
+ * This UI handles the user interaction for selecting the starting station,
+ * ending station, and a locomotive, and then calls the {@link TrafficDispatcherService}
+ * to calculate the travel time across the railway network.
+ * </p>
+ */
 public class USLP03UI implements Runnable {
 
-    // Não há mais dependências no construtor.
+    /**
+     * Constructs the USLP03 UI.
+     */
+    public USLP03UI() {}
 
+    /**
+     * Executes the USLP03 use case sequence.
+     * <p>
+     * 1. Initializes all repositories by loading data from CSV files.
+     * 2. Creates the {@link TrafficDispatcherService}.
+     * 3. Prompts the user to select the start station, end station, and locomotive.
+     * 4. Calls the service to calculate the travel time.
+     * 5. Prints the detailed {@link TravelTimeResult}.
+     * </p>
+     */
     @Override
     public void run() {
         System.out.println("\n--- USLP03: Calcular Tempo de Viagem Estimado ---");
 
         try {
-            // 1. Carregar os dados e criar os serviços AQUI DENTRO.
+            // 1. Load data and create services HERE.
             final String CSV_FOLDER = "csv_data/";
             final String STATIONS_FILE = CSV_FOLDER + "stations.csv";
             final String LOCOMOTIVES_FILE = CSV_FOLDER + "locomotives.csv";
@@ -37,7 +58,7 @@ public class USLP03UI implements Runnable {
 
             TrafficDispatcherService service = new TrafficDispatcherService(stationRepo, locomotiveRepo, lineRepo);
 
-            // 2. Executar a lógica de interação com o utilizador.
+            // 2. Execute the user interaction logic.
             Scanner scanner = new Scanner(System.in);
             List<Station> stations = service.getAvailableStations();
             if (stations.isEmpty()){
@@ -81,4 +102,6 @@ public class USLP03UI implements Runnable {
         System.out.println("\nPressione Enter para voltar ao menu principal...");
         new Scanner(System.in).nextLine();
     }
+
+
 }

@@ -3,8 +3,23 @@ package main.java.pt.ipp.isep.dei.util;
 import main.java.pt.ipp.isep.dei.domain.*;
 import java.util.*;
 
+/**
+ * Utility class responsible for loading all necessary domain data
+ * from CSV files and performing initial validation.
+ * <p>
+ * This class uses {@link CsvLoader} to read the files and {@link Validator}
+ * to check for data integrity and consistency across all entities.
+ * </p>
+ */
 public class DataLoader {
 
+    /**
+     * Loads all required domain entities (Bays, Wagons, Orders, Items, Returns)
+     * and validates them.
+     *
+     * @return A {@link Map} containing all validated domain lists, keyed by their type name (e.g., "bays", "wagons").
+     * Returns {@code null} if validation fails.
+     */
     public static Map<String, Object> loadAndValidate() {
         CsvLoader loader = new CsvLoader();
         Validator validator = new Validator();

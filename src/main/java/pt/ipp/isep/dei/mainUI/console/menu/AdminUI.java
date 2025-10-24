@@ -6,10 +6,28 @@ import main.java.pt.ipp.isep.dei.util.Utils;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Console User Interface (UI) that presents the main menu options
+ * available to a user with the **Administrator/Editor** role.
+ * <p>
+ * This UI allows the administrator to select and execute various
+ * use cases relevant to their role (e.g., USEI01, USEI02, etc.).
+ * </p>
+ */
 public class AdminUI implements Runnable {
 
+    /**
+     * Constructs an {@code AdminUI}.
+     */
     public AdminUI() {}
 
+    /**
+     * Executes the main menu loop for the Administrator role.
+     * <p>
+     * Displays the menu options and redirects execution to the selected use case UI.
+     * The loop continues until the user selects the exit option (-1).
+     * </p>
+     */
     public void run() {
         List<MenuItem> options = new ArrayList<MenuItem>();
         options.add(new MenuItem("USEI01", new USEI01UI()));
