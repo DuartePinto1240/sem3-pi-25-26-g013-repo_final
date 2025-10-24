@@ -42,14 +42,18 @@ public class USEI05UI implements Runnable {
         AuditLogger logger = new AuditLogger("returns_audit_log.txt", true);
         QualityOperator operator = new QualityOperator(quarantine, inventory, logger);
 
+        List<ReturnItem> validReturns = new ArrayList<>();
         for (ReturnItem r : returns) {
             boolean validSku = items.stream().anyMatch(i -> i.getSku().equalsIgnoreCase(r.getSku()));
             if (!validSku) {
                 System.err.println("⚠️ SKU inválido: " + r.getSku());
                 continue;
             }
-            quarantine.add(r);
+            validReturns.add(r);
         }
+
+        // Add all at once in correct (timestamp DESC) order
+        quarantine.addAll(validReturns);
 
         System.out.println("Valid returns loaded into quarantine: " + quarantine.size());
         operator.processReturns();
