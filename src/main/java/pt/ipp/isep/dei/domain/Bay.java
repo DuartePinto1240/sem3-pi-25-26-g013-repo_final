@@ -19,11 +19,6 @@ public class Bay {
 
     /**
      * Constructs a new Bay.
-     *
-     * @param warehouseId   ID of the warehouse this bay belongs to
-     * @param aisle         aisle number
-     * @param bay           bay number within the aisle
-     * @param capacityBoxes maximum number of boxes this bay can store
      */
     public Bay(String warehouseId, int aisle, int bay, int capacityBoxes) {
         this.warehouseId = warehouseId;
@@ -33,49 +28,38 @@ public class Bay {
         this.storedBoxes = new ArrayList<>();
     }
 
-    /**
-     * Returns the ID of the warehouse this bay belongs to.
-     *
-     * @return warehouse ID
-     */
+    // --- Getters ---
+
     public String getWarehouseId() {
         return warehouseId;
     }
 
-    /**
-     * Returns the aisle number of the bay.
-     *
-     * @return aisle number
-     */
     public int getAisle() {
         return aisle;
     }
 
-    /**
-     * Returns the bay number within the aisle.
-     *
-     * @return bay number
-     */
     public int getBay() {
         return bay;
     }
 
-    /**
-     * Returns the maximum box capacity of this bay.
-     *
-     * @return maximum number of boxes
-     */
     public int getCapacityBoxes() {
         return capacityBoxes;
     }
 
+    public List<Box> getStoredBoxes() {
+        return storedBoxes;
+    }
+
+    // --- Gestão de Capacidade ---
+
     /**
      * Checks if a new box can be stored in this bay.
      *
-     * @param box box to be stored
+     * @param box box to be stored (not used in current simple capacity check)
      * @return {@code true} if space is available, {@code false} otherwise
      */
     public boolean canStoreBox(Box box) {
+        // Verifica se o número de caixas armazenadas é menor que a capacidade máxima
         return storedBoxes.size() < capacityBoxes;
     }
 
@@ -87,24 +71,12 @@ public class Bay {
     public void addBox(Box box) {
         if (canStoreBox(box)) {
             storedBoxes.add(box);
+        } else {
+            // Se esta baia está sendo usada no WagonUnloader, esta condição
+            // não deve ser atingida se o algoritmo de alocação estiver correto.
         }
     }
 
-    /**
-     * Returns the list of boxes currently stored in this bay.
-     *
-     * @return list of {@link Box} objects
-     */
-    public List<Box> getStoredBoxes() {
-        return storedBoxes;
-    }
-
-    /**
-     * Returns a string representation of this bay, including warehouse ID, aisle,
-     * bay number, and maximum capacity.
-     *
-     * @return string representation of the bay
-     */
     @Override
     public String toString() {
         return "Bay{" +
@@ -114,5 +86,4 @@ public class Bay {
                 ", capacityBoxes=" + capacityBoxes +
                 '}';
     }
-
 }
