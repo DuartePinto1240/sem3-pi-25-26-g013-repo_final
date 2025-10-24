@@ -124,4 +124,5 @@ public class Box implements Comparable<Box> {
         // FIFO fallback when both have same expiry or are non-perishable
         return this.receivedAt.compareTo(other.receivedAt);
     }
+
 }

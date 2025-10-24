@@ -94,4 +94,5 @@ public class WagonUnloader {
         // If no bay has sufficient capacity
         System.out.println("Não há capacidade suficiente para armazenar a Box " + box.getBoxId());
     }
+
 }
