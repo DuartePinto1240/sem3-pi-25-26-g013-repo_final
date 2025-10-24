@@ -92,7 +92,7 @@ public class QualityOperator {
      * @param item returned item to be discarded
      */
     private void discard(ReturnItem item) {
-        logger.log(String.format("returnId=%s | sku=%s | action=Discarded | qty=%d",
-                item.getReturnId(), item.getSku(), item.getQuantity()));
+        logger.log(String.format("returnId=%s | sku=%s | action=Discarded",
+                item.getReturnId(), item.getSku()));
     }
 }

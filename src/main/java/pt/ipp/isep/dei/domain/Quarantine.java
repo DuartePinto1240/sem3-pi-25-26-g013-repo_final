@@ -36,9 +36,10 @@ public class Quarantine {
      * @param items list of items to add
      */
     public void addAll(List<ReturnItem> items) {
+        // Sort items: latest first (timestamp DESC, returnId ASC)
         items.stream()
-                .sorted() // by timestamp DESC
-                .forEach(this::add);
+                .sorted() // uses ReturnItem.compareTo()
+                .forEachOrdered(stack::addLast); // enqueue preserving sort order
     }
 
     /**

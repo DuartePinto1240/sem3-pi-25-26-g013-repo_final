@@ -66,26 +66,22 @@ public class PickingPlanner {
         int nextId = 1;
 
         for (Allocation alloc : allocations) {
-            if (alloc.getWeight() > trolleyCapacity) {
-                System.out.printf(
-                        "⚠️ Allocation %s (%.1f kg) excede capacidade total do trolley (%.1f kg) — ignorada.%n",
-                        alloc.getSku(), alloc.getWeight(), trolleyCapacity
-                );
-                continue;
-            }
+            List<Allocation> toPlace = splitIfNeeded(alloc, trolleyCapacity);
 
-            boolean placed = false;
-            for (Trolley t : trolleys) {
-                if (t.canFit(alloc.getWeight())) {
-                    t.addAllocation(alloc);
-                    placed = true;
-                    break;
+            for (Allocation part : toPlace) {
+                boolean placed = false;
+                for (Trolley t : trolleys) {
+                    if (t.canFit(alloc.getWeight())) {
+                        t.addAllocation(alloc);
+                        placed = true;
+                        break;
+                    }
                 }
-            }
-            if (!placed) {
-                Trolley newT = new Trolley(nextId++, trolleyCapacity);
-                newT.addAllocation(alloc);
-                trolleys.add(newT);
+                if (!placed) {
+                    Trolley newT = new Trolley(nextId++, trolleyCapacity);
+                    newT.addAllocation(alloc);
+                    trolleys.add(newT);
+                }
             }
         }
         return trolleys;
@@ -123,29 +119,67 @@ public class PickingPlanner {
         int nextId = 1;
 
         for (Allocation alloc : sorted) {
-            if (alloc.getWeight() > trolleyCapacity) {
-                System.out.printf(
-                        "⚠️ Allocation %s (%.1f kg) excede capacidade total do trolley (%.1f kg) — ignorada.%n",
-                        alloc.getSku(), alloc.getWeight(), trolleyCapacity
-                );
-                continue;
-            }
+            List<Allocation> toPlace = splitIfNeeded(alloc, trolleyCapacity);
 
-            Trolley bestFit = null;
-            double minRemaining = Double.MAX_VALUE;
-            for (Trolley t : trolleys) {
-                double remaining = t.getCapacity() - t.getUsedWeight();
-                if (t.canFit(alloc.getWeight()) && remaining - alloc.getWeight() < minRemaining) {
-                    bestFit = t;
-                    minRemaining = remaining - alloc.getWeight();
+            for (Allocation part : toPlace) {
+                Trolley bestFit = null;
+                double minRemaining = Double.MAX_VALUE;
+
+                for (Trolley t : trolleys) {
+                    double remaining = t.getCapacity() - t.getUsedWeight();
+                    if (t.canFit(alloc.getWeight()) && remaining - alloc.getWeight() < minRemaining) {
+                        bestFit = t;
+                        minRemaining = remaining - alloc.getWeight();
+                    }
                 }
+                if (bestFit == null) {
+                    bestFit = new Trolley(nextId++, trolleyCapacity);
+                    trolleys.add(bestFit);
+                }
+                bestFit.addAllocation(alloc);
             }
-            if (bestFit == null) {
-                bestFit = new Trolley(nextId++, trolleyCapacity);
-                trolleys.add(bestFit);
-            }
-            bestFit.addAllocation(alloc);
         }
         return trolleys;
+    }
+
+    /**
+     * Divides an allocation that exceeds the trolley's capacity into several smaller sub-allocations.
+     * <p>
+     * Split an allocation into smaller parts if the total weight exceeds a certain maximum capacity.
+     * It returns a list of allocations that meet this limit.
+     * </p>
+     *
+     * @return list of allocations that meet this limit.
+     */
+    private List<Allocation> splitIfNeeded(Allocation alloc, double capacity) {
+        List<Allocation> parts = new ArrayList<>();
+
+        if (alloc.getWeight() <= capacity) {
+            parts.add(alloc);
+            return parts;
+        }
+
+        double unitWeight = alloc.getWeight() / alloc.getQty();
+        int remainingQty = alloc.getQty();
+
+        while (remainingQty > 0) {
+            int qtyForPart = (int) Math.min(remainingQty, Math.floor(capacity / unitWeight));
+            if (qtyForPart <= 0) break;
+
+            double partWeight = qtyForPart * unitWeight;
+            parts.add(new Allocation(
+                    alloc.getOrderId(),
+                    alloc.getLineNo(),
+                    alloc.getSku(),
+                    qtyForPart,
+                    partWeight,
+                    alloc.getBoxId(),
+                    alloc.getAisle(),
+                    alloc.getBay()
+            ));
+            remainingQty -= qtyForPart;
+        }
+
+        return parts;
     }
 }
