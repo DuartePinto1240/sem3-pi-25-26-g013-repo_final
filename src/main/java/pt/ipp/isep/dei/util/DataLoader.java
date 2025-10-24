@@ -9,14 +9,14 @@ public class DataLoader {
         CsvLoader loader = new CsvLoader();
         Validator validator = new Validator();
 
-        List<Bay> bays = loader.loadBays("train_station_dataset_v2/train_station_dataset/bays.csv");
-        List<Wagon> wagons = loader.loadWagons("train_station_dataset_v2/train_station_dataset/wagons.csv");
+        List<Bay> bays = loader.loadBays("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/bays.csv");
+        List<Wagon> wagons = loader.loadWagons("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/wagons.csv");
         List<Order> orders = loader.loadOrders(
-                "train_station_dataset_v2/train_station_dataset/orders.csv",
-                "train_station_dataset_v2/train_station_dataset/order_lines.csv"
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/orders.csv",
+                "sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/order_lines.csv"
         );
-        List<Item> items = loader.loadItems("train_station_dataset_v2/train_station_dataset/items.csv");
-        List<ReturnItem> returns = loader.loadReturns("train_station_dataset_v2/train_station_dataset/returns.csv");
+        List<Item> items = loader.loadItems("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/items.csv");
+        List<ReturnItem> returns = loader.loadReturns("sem3-pi-25-26-g013-repo/train_station_dataset_v2/train_station_dataset/returns.csv");
 
         boolean valid = validator.validateItems(items) &
                 validator.validateBays(bays) &
