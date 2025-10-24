@@ -19,37 +19,69 @@ public class USEI04UI implements Runnable {
         List<Order> orders = (List<Order>) data.get("orders");
         List<Item> items = (List<Item>) data.get("items");
 
-        Warehouse warehouse = new Warehouse("W1");
-        for (Bay b : bays) warehouse.addBay(b);
+        if (bays.isEmpty()) {
+            System.out.println("⚠️ Nenhuma bay encontrada no CSV.");
+            return;
+        }
+
+        // ✅ Criar warehouse com base no ID real das bays
+        String warehouseId = bays.get(0).getWarehouseId();
+        Warehouse warehouse = new Warehouse(warehouseId);
+
+        // ✅ Adicionar apenas bays consistentes
+        for (Bay b : bays) {
+            if (!b.getWarehouseId().equals(warehouseId)) {
+                System.out.printf("⚠️ Ignorada bay de outro warehouse: %s%n", b.getWarehouseId());
+                continue;
+            }
+            warehouse.addBay(b);
+        }
+
+        // 🚂 Descarregar os vagões
         new WagonUnloader(warehouse).unload(wagons);
 
+        // 📦 Alocar encomendas
         OrderAllocator allocator = new OrderAllocator();
         OrderAllocator.Result result = allocator.allocateOrders(orders, warehouse, true);
 
-        // Convert to allocations
+        // 🔢 Converter para allocations
         Map<String, Double> weights = new HashMap<>();
-        for (Item item : items) weights.put(item.getSku(), item.getUnitWeight());
+        for (Item item : items)
+            weights.put(item.getSku(), item.getUnitWeight());
+
         List<Allocation> allocations = new ArrayList<>();
         for (AllocationRow row : result.allocationRows) {
             double weight = weights.getOrDefault(row.getSku(), 0.0) * row.getQty();
-            allocations.add(new Allocation(row.getOrderId(), row.getLineNo(), row.getSku(),
-                    row.getQty(), weight, row.getBoxId(), row.getAisle(), row.getBay()));
+            allocations.add(new Allocation(
+                    row.getOrderId(),
+                    row.getLineNo(),
+                    row.getSku(),
+                    row.getQty(),
+                    weight,
+                    row.getBoxId(),
+                    row.getAisle(),
+                    row.getBay()
+            ));
         }
 
-        // Merge stops
+        // 🚶‍♂️ Agrupar por ponto de recolha (aisle + bay)
         Map<String, PickStop> merged = new HashMap<>();
         for (Allocation a : allocations) {
             String key = a.getAisle() + ":" + a.getBay();
             merged.merge(key, new PickStop(new Coordinate(a.getAisle(), a.getBay()), a),
-                    (oldVal, newVal) -> { oldVal.getAllocation().setQty(
-                            oldVal.getAllocation().getQty() + a.getQty());
-                        return oldVal; });
+                    (oldVal, newVal) -> {
+                        oldVal.getAllocation().setQty(
+                                oldVal.getAllocation().getQty() + a.getQty());
+                        return oldVal;
+                    });
         }
 
+        // 🧭 Planeamento do trajeto
         PickPathPlanner planner = new PickPathPlanner();
         PickPath deterministic = planner.planDeterministicSweep(new ArrayList<>(merged.values()));
         PickPath nearest = planner.planNearestNeighbour(new ArrayList<>(merged.values()));
 
+        System.out.println("✅ Warehouse processado: " + warehouseId);
         System.out.printf("Deterministic Distance: %.2f%n", deterministic.getTotalDistance());
         System.out.printf("Nearest-Neighbour Distance: %.2f%n", nearest.getTotalDistance());
     }

@@ -19,11 +19,29 @@ public class USEI02UI implements Runnable {
         List<Wagon> wagons = (List<Wagon>) data.get("wagons");
         List<Order> orders = (List<Order>) data.get("orders");
 
-        Warehouse warehouse = new Warehouse("W1");
-        for (Bay b : bays) warehouse.addBay(b);
+        if (bays.isEmpty()) {
+            System.out.println("⚠️ Nenhuma bay encontrada.");
+            return;
+        }
+
+        // ✅ Criar o warehouse com base no ID real da primeira Bay
+        String warehouseId = bays.get(0).getWarehouseId();
+        Warehouse warehouse = new Warehouse(warehouseId);
+
+        // ✅ Adicionar apenas bays consistentes
+        for (Bay b : bays) {
+            if (!b.getWarehouseId().equals(warehouseId)) {
+                System.out.printf("⚠️ Ignorada bay de outro warehouse: %s%n", b.getWarehouseId());
+                continue;
+            }
+            warehouse.addBay(b);
+        }
+
+        // 🚂 Descarregar os vagões
         WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(wagons);
 
+        // 📦 Alocar encomendas
         OrderAllocator allocator = new OrderAllocator();
         OrderAllocator.Result strict = allocator.allocateOrders(orders, warehouse, false);
         OrderAllocator.Result partial = allocator.allocateOrders(orders, warehouse, true);
