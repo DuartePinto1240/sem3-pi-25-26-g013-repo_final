@@ -71,15 +71,15 @@ public class PickingPlanner {
             for (Allocation part : toPlace) {
                 boolean placed = false;
                 for (Trolley t : trolleys) {
-                    if (t.canFit(alloc.getWeight())) {
-                        t.addAllocation(alloc);
+                    if (t.canFit(part.getWeight())) {
+                        t.addAllocation(part);
                         placed = true;
                         break;
                     }
                 }
                 if (!placed) {
                     Trolley newT = new Trolley(nextId++, trolleyCapacity);
-                    newT.addAllocation(alloc);
+                    newT.addAllocation(part);
                     trolleys.add(newT);
                 }
             }
@@ -127,16 +127,16 @@ public class PickingPlanner {
 
                 for (Trolley t : trolleys) {
                     double remaining = t.getCapacity() - t.getUsedWeight();
-                    if (t.canFit(alloc.getWeight()) && remaining - alloc.getWeight() < minRemaining) {
+                    if (t.canFit(part.getWeight()) && remaining - part.getWeight() < minRemaining) {
                         bestFit = t;
-                        minRemaining = remaining - alloc.getWeight();
+                        minRemaining = remaining - part.getWeight();
                     }
                 }
                 if (bestFit == null) {
                     bestFit = new Trolley(nextId++, trolleyCapacity);
                     trolleys.add(bestFit);
                 }
-                bestFit.addAllocation(alloc);
+                bestFit.addAllocation(part);
             }
         }
         return trolleys;
