@@ -62,8 +62,16 @@ User Stories:
 ---
 
 ### 🏗️ Laboratory Project 3 (LAPR3) – Sprint 1
-- USLP01 – Domain model creation (PlantUML / Visual Paradigm).  
-- USLP02 – Cargo Handling functionality via a **text-based interface**.  
+- USLP01 – Domain model creation (PlantUML / Visual Paradigm).
+- USLP02 – Cargo Handling functionality via a **text-based interface**.
+<div style="text-align: left;">
+  <img src="doc/auth/svg/USLP02.svg" alt="MenuUI" width="400">
+</div>
+- USLP03 - Estimated travel time between two stations.
+<div style="text-align: left;">
+  <img src="doc/auth/svg/USLP03-Stations.svg" alt="USPL03-Stations" style="width: 40%;">
+</div>
+<img src="doc/auth/svg/USLP03-Results.svg" alt="USPL03-Results" style="width: 60%;">
 
 ---
 
