@@ -30,15 +30,15 @@ public class AdminUI implements Runnable {
      */
     public void run() {
         List<MenuItem> options = new ArrayList<MenuItem>();
-        options.add(new MenuItem("USEI01", new USEI01UI()));
-        options.add(new MenuItem("USEI02", new USEI02UI()));
-        options.add(new MenuItem("USEI03", new USEI03UI()));
-        options.add(new MenuItem("USEI04", new USEI04UI()));
-        options.add(new MenuItem("USEI05", new USEI05UI()));
-        options.add(new MenuItem("USPL03",new USLP03UI()));
+        options.add(new MenuItem("Wagon Unloading - USEI01", new USEI01UI()));
+        options.add(new MenuItem("Order Eligibility & Allocation - USEI02", new USEI02UI()));
+        options.add(new MenuItem("Picking Plans - USEI03", new USEI03UI()));
+        options.add(new MenuItem("Pick Path Sequencing - USEI04", new USEI04UI()));
+        options.add(new MenuItem("Returns & Quarantine - USEI05", new USEI05UI()));
+        options.add(new MenuItem("Estimated Travel Time - USPL03",new USLP03UI()));
         int option = 0;
         do {
-            option = Utils.showAndSelectIndex(options, "\n\n--- EDITOR MENU -------------------------");
+            option = Utils.showAndSelectIndex(options, "\n\n--- ADMIN MENU -------------------------");
 
             if ((option >= 0) && (option < options.size())) {
                 options.get(option).run();
