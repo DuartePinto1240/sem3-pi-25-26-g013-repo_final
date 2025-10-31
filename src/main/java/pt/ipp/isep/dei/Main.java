@@ -5,14 +5,14 @@ import main.java.pt.ipp.isep.dei.mainUI.console.menu.MainMenuUI;
 public class Main {
 
     private static final String ASCII_ART = """
-                                  88              
-      ,d                          ""              
-      88                                          
-    MM88MMM 8b,dPPYba, ,adPPYYba, 88 8b,dPPYba,   
-      88    88P'   "Y8 ""     `Y8 88 88P'   `"8a  
-      88    88         ,adPPPPP88 88 88       88  
-      88,   88         88,    ,88 88 88       88  
-      "Y888 88         `"8bbdP"Y8 88 88       88  
+                                  88
+      ,d                          ""
+      88
+    MM88MMM 8b,dPPYba, ,adPPYYba, 88 8b,dPPYba,
+      88    88P'   "Y8 ""     `Y8 88 88P'   `"8a
+      88    88         ,adPPPPP88 88 88       88
+      88,   88         88,    ,88 88 88       88
+      "Y888 88         `"8bbdP"Y8 88 88       88
     ------------------------------------------------
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣠⠔⠚⠛⠓⠒⢤⣤⠴⠚⠋⠉⠉⠙⢲⠔⠒⠒⠢⣄⣤⠴⠛⠓⠒⢦⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠼⣏⠀⠀⠀⠀⠀⠀⠐⠃⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠊⠁⠀⠀⠀⠀⠀⠀⠙⡇⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
