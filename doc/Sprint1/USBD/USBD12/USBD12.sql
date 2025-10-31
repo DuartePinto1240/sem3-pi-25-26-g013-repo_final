@@ -14,4 +14,3 @@ WHERE (op.short_name = 'Medway')                        -- <== EDIT
   AND wt.type       = 'Cereal wagon'                    -- <== EDIT
   AND g.width_mm    = 1668                              -- <== EDIT
 ORDER BY w.wagon_id;
-

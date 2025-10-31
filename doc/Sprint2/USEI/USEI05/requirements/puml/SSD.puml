@@ -1,0 +1,56 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Quality Operator" as OPERATOR
+participant ":System" as System
+participant "WMS" as WMS
+participant "Audit Log" as Log
+
+activate OPERATOR
+
+OPERATOR -> System : requests to process returned goods (returns.csv)
+activate System
+System --> OPERATOR : confirms returns successfully loaded
+
+System -> WMS : load quarantine list (ordered by timestamp DESC, returnId ASC)
+activate WMS
+WMS --> System : returns list of items pending inspection
+deactivate WMS
+
+System -> WMS : inspect next return (latest first)
+activate WMS
+note right
+  Inspection logic:
+  • Reason = Customer remorse or Cycle count → Restock
+  • Reason = Damaged or Expired → Discard
+  • FEFO/FIFO insertion rules from USEI01 for restock
+end note
+WMS --> System : inspection result (Restock / Discard)
+deactivate WMS
+
+alt Restock
+    System -> WMS : create new box (boxId="RET-"+returnId, receivedAt=now())
+    activate WMS
+    WMS --> System : box inserted into appropriate bay (FEFO/FIFO order)
+    deactivate WMS
+else Discard
+    System -> WMS : mark item as discarded (not reintegrated)
+    activate WMS
+    WMS --> System : confirm discard
+    deactivate WMS
+end
+
+System -> Log : write audit entry (timestamp, returnId, sku, action, qty)
+activate Log
+Log --> System : audit entry successfully recorded
+deactivate Log
+
+System --> OPERATOR : displays summary (Restocked/Discarded/Total processed)
+deactivate System
+deactivate OPERATOR
+
+@enduml

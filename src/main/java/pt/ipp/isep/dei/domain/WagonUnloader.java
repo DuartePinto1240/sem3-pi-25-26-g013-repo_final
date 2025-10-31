@@ -39,7 +39,7 @@ public class WagonUnloader {
 
         // 3. Ordenar cada grupo de boxes por FEFO/FIFO
         for (List<Box> boxes : boxesBySku.values()) {
-            Collections.sort(boxes); // Usa Box.compareTo()
+            Collections.sort(boxes);
         }
 
         // 4. Preparar lista de bays ordenada (por warehouse, aisle, bay)
