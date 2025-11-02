@@ -1,0 +1,89 @@
+@startuml
+' https://plantuml.com/class-diagram
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+package "Station Indexing & Query Management" {
+
+    class Station {
+        +stationId
+        +name
+        +country
+        +timeZoneGroup   ' CET | WET | EET | etc.
+        +latitude
+        +longitude
+    }
+
+    class IndexManager {
+        +loadStations()
+        +queryByTimeZoneGroup()
+        +queryTimeZoneWindow()
+        +validationLog
+    }
+
+    class LatitudeTree {
+        +root
+    }
+
+    class LongitudeTree {
+        +root
+    }
+
+    class TimeZoneTree {
+        +root
+    }
+
+    class ValidationLog {
+        +timestamp
+        +stationId
+        +errorMessage
+    }
+
+    class Planner {
+        +searchStations()
+    }
+}
+
+' --- Relationships ---
+Planner "1" --> "1" IndexManager : uses >
+IndexManager "1" --> "1" LatitudeTree : maintains >
+IndexManager "1" --> "1" LongitudeTree : maintains >
+IndexManager "1" --> "1" TimeZoneTree : maintains >
+Station "1" --> "1" TimeZoneTree : sorted into >
+Station "1" --> "1" LatitudeTree : sorted into >
+Station "1" --> "1" LongitudeTree : sorted into >
+IndexManager "1" --> "0..*" ValidationLog : records >
+IndexManager "1" --> "0..*" Station : validates & inserts >
+
+' --- Behavioral notes ---
+note bottom of TimeZoneTree
+Search ordering rule:
+• TZ Group ASC
+• Country ASC
+• Station Name ASC
+end note
+
+note bottom of LatitudeTree
+Used for geographic ordering queries
+(North → South)
+end note
+
+note bottom of LongitudeTree
+Used for geographic ordering queries
+(West → East)
+end note
+
+note right of ValidationLog
+Invalid station rows must be logged,
+never inserted into index trees.
+end note
+
+@enduml
+
+
+
