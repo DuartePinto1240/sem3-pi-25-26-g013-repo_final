@@ -1,0 +1,28 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+autonumber
+
+actor "Freight Manager" as Manager
+participant ":System" as System
+
+activate Manager
+
+Manager -> System : requests to add train to dispatch schedule\n(train ID, route, locomotives, departure time)
+activate System
+
+System --> Manager : Train added to dispatch schedule
+
+deactivate System
+
+Manager -> System : requests to view dispatch schedule
+activate System
+
+System --> Manager : displays dispatch schedule\n(list of trains with routes,\n locomotives, times, status)
+
+deactivate System
+
+deactivate Manager
+
+@enduml

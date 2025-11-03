@@ -1,0 +1,24 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+autonumber
+
+actor "Planner" as Planner
+participant ":System" as System
+
+activate Planner
+
+Planner -> System : searchByGeographicalArea(\n  minLat, maxLat, minLon, maxLon,\n  sortBy, sortOrder,\n  filterCountry, filterTimeZone)
+activate System
+
+alt Invalid bounds or error
+    System --> Planner : error message
+else Valid request
+    System --> Planner : List<Station> or\n"No stations found in the specified geographical area."
+end
+
+deactivate System
+deactivate Planner
+
+@enduml

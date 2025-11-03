@@ -1,0 +1,60 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+class FreightManager {
+}
+
+class Train {
+    +id : int
+}
+
+class Route {
+    +id : int
+    +stations : List<Facility>
+    +totalDistance : int
+}
+
+class TrainSchedule {
+    +trainId : int
+    +scheduled : boolean
+    +departureTime : TimeStamp
+    +arrivalTime : TimeStamp
+    +departureStation : Station
+    +arrivalStation : Station
+}
+
+class Station {
+    +stationId
+    +name : String
+    +location
+}
+
+class Facility {
+    +id : int
+    +name : String
+    +location
+}
+
+class Locomotive {
+    +locomotiveId : String
+    +model : LocomotiveModel
+    +type : LocomotiveType
+}
+
+
+FreightManager "1" --> "*" TrainSchedule : manages >
+TrainSchedule "1" --> "1" Train : references >
+TrainSchedule "1" --> "1" Route : uses >
+TrainSchedule "1" --> "1" Station : departure >
+TrainSchedule "1" --> "1" Station : arrival >
+Route "*" --> "*" Facility : passes through >
+Facility <|-- Station : extends >
+Train "*" --> "*" Locomotive : uses >
+
+@enduml
