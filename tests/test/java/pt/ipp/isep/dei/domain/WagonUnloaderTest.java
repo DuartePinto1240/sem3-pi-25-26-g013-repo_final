@@ -1,75 +1,107 @@
 package test.java.pt.ipp.isep.dei.domain;
 
 import main.java.pt.ipp.isep.dei.domain.*;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.List;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
-/**
- * Unit tests for the {@link WagonUnloader} class.
- * <p>
- * These tests verify that the {@code WagonUnloader} correctly unloads boxes
- * from wagons into warehouse bays following the appropriate storage policy:
- * FIFO (First-In-First-Out) for non-perishable boxes and FEFO (First-Expired-First-Out)
- * for perishable boxes.
- * </p>
- */
-public class WagonUnloaderTest {
+import static org.junit.jupiter.api.Assertions.*;
 
-    /**
-     * Tests that the {@link WagonUnloader#unload(List)} method correctly unloads
-     * non-perishable boxes using the FIFO (First-In-First-Out) policy.
-     * <p>
-     * The boxes should be stored in the warehouse bay in ascending order of their
-     * arrival date and time — the oldest box first.
-     * </p>
-     */
-    @Test
-    public void testUnloadFIFO() {
-        Warehouse warehouse = new Warehouse("W1");
-        Bay bay1 = new Bay("W1", 1, 1, 10);
+class WagonUnloaderTest {
+
+    private Warehouse warehouse;
+    private WagonUnloader unloader;
+    private Bay bay1;
+    private Bay bay2;
+    private Bay bay3;
+
+    @BeforeEach
+    void setUp() {
+        warehouse = new Warehouse("W1");
+
+        bay1 = new Bay("W1", 1, 1, 2);
+        bay2 = new Bay("W1", 1, 2, 2);
+        bay3 = new Bay("W1", 2, 1, 2);
+
         warehouse.addBay(bay1);
+        warehouse.addBay(bay2);
+        warehouse.addBay(bay3);
 
-        // Creating non-perishable boxes (FIFO)
-        Box box1 = new Box("BOX001", "SKU001", 10, null, LocalDateTime.of(2025, 7, 5, 15, 42, 0));
-        Box box2 = new Box("BOX002", "SKU002", 15, null, LocalDateTime.of(2025, 6, 10, 10, 30, 0));
-        Wagon wagon = new Wagon("WGN001", List.of(box1, box2));
-
-        WagonUnloader unloader = new WagonUnloader(warehouse);
-        unloader.unload(List.of(wagon));
-
-        // Boxes should be stored in FIFO order
-        assertEquals(box2, bay1.getStoredBoxes().get(0));  // The oldest box should come first
-        assertEquals(box1, bay1.getStoredBoxes().get(1));
+        unloader = new WagonUnloader(warehouse);
     }
 
-    /**
-     * Tests that the {@link WagonUnloader#unload(List)} method correctly unloads
-     * perishable boxes using the FEFO (First-Expired-First-Out) policy.
-     * <p>
-     * The boxes should be stored in the warehouse bay in ascending order of their
-     * expiration date — the one expiring soonest first.
-     * </p>
-     */
     @Test
-    public void testUnloadFEFO() {
-        Warehouse warehouse = new Warehouse("W1");
-        Bay bay1 = new Bay("W1", 1, 1, 10);
-        warehouse.addBay(bay1);
+    void ensureBoxesAreGroupedBySKU() {
+        Wagon wagon = new Wagon("WG1");
+        wagon.addBox(new Box("B1", "SKU1", 1, LocalDate.now(), LocalDateTime.now()));
+        wagon.addBox(new Box("B2", "SKU2", 1, null, LocalDateTime.now()));
+        wagon.addBox(new Box("B3", "SKU1", 1, LocalDate.now().plusDays(3), LocalDateTime.now()));
 
-        // Creating perishable boxes (FEFO)
-        Box box1 = new Box("BOX001", "SKU001", 10, LocalDate.of(2025, 12, 31), LocalDateTime.of(2025, 7, 5, 15, 42, 0));
-        Box box2 = new Box("BOX002", "SKU002", 15, LocalDate.of(2025, 6, 30), LocalDateTime.of(2025, 6, 10, 10, 30, 0));
-        Wagon wagon = new Wagon("WGN001", List.of(box1, box2));
-
-        WagonUnloader unloader = new WagonUnloader(warehouse);
         unloader.unload(List.of(wagon));
 
-        // Boxes should be stored in FEFO order (earliest expiration date first)
-        assertEquals(box2, bay1.getStoredBoxes().get(0));  // The box expiring soonest should come first
-        assertEquals(box1, bay1.getStoredBoxes().get(1));  // The box with the later expiration date should come second
+        assertEquals(2, bay1.getStoredBoxes().size());
+        assertTrue(bay1.getStoredBoxes().stream().allMatch(b -> b.getSku().equals("SKU1")));
+    }
+
+    @Test
+    void ensureFEFOOrderIsRespected() {
+        LocalDateTime now = LocalDateTime.now();
+        Wagon wagon = new Wagon("WG1");
+
+        wagon.addBox(new Box("B1", "SKU1", 1, LocalDate.now().plusDays(5), now));
+        wagon.addBox(new Box("B2", "SKU1", 1, LocalDate.now().plusDays(1), now));
+
+        unloader.unload(List.of(wagon));
+
+        List<Box> stored = bay1.getStoredBoxes();
+        assertEquals("B2", stored.get(0).getBoxId());
+        assertEquals("B1", stored.get(1).getBoxId());
+    }
+
+    @Test
+    void ensureNextBayIsUsedWhenCapacityIsExceeded() {
+        LocalDateTime now = LocalDateTime.now();
+        Wagon wagon = new Wagon("WG1");
+
+        wagon.addBox(new Box("B1", "SKU1", 1, LocalDate.now(), now));
+        wagon.addBox(new Box("B2", "SKU1", 1, LocalDate.now(), now));
+        wagon.addBox(new Box("B3", "SKU1", 1, LocalDate.now(), now));
+
+        unloader.unload(List.of(wagon));
+
+        assertEquals(2, bay1.getStoredBoxes().size());
+        assertEquals(1, bay2.getStoredBoxes().size());
+    }
+
+    @Test
+    void ensureEachBayContainsOnlyOneSKU() {
+        LocalDateTime now = LocalDateTime.now();
+        Wagon wagon = new Wagon("WG1");
+
+        wagon.addBox(new Box("B1", "SKU1", 1, LocalDate.now(), now));
+        wagon.addBox(new Box("B2", "SKU2", 1, LocalDate.now(), now));
+
+        unloader.unload(List.of(wagon));
+
+        assertEquals("SKU1", bay1.getStoredBoxes().get(0).getSku());
+        assertEquals("SKU2", bay2.getStoredBoxes().get(0).getSku());
+    }
+
+    @Test
+    void ensureFIFOWhenNoExpiryDate() {
+        LocalDateTime now = LocalDateTime.now();
+        Wagon wagon = new Wagon("WG1");
+
+        wagon.addBox(new Box("B1", "SKU1", 1, null, now.minusDays(5)));
+        wagon.addBox(new Box("B2", "SKU1", 1, null, now.minusDays(10)));
+
+        unloader.unload(List.of(wagon));
+
+        List<Box> stored = bay1.getStoredBoxes();
+        assertEquals("B2", stored.get(0).getBoxId()); // mais antiga primeiro → FIFO
+        assertEquals("B1", stored.get(1).getBoxId());
     }
 }
