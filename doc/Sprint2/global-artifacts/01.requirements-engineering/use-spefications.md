@@ -1,78 +1,95 @@
-# Supplementary Specification (FURPS+)
+
+# Supplementary Specification — FURPS+ (Aligned with v2.21)
 
 ## Functionality
 
-- The system must support **railway network management**, including **infrastructure modeling** (tracks, stations, terminals) and **rolling stock management** (locomotives, wagons).
-- **Security requirements** include **user authentication** for roles like **planners** and **operators**, requiring passwords with **at least eight characters**, including **uppercase letters**, **digits**, and **special symbols**.
-- All key algorithms (e.g., **FEFO/FIFO for cargo handling**, **graph-based routing**) must use **primitive Java operations only**, not external libraries.
+- The system shall support:
+    - **Railway network management** including infrastructure modeling (tracks, stations, terminals)
+    - **Rolling stock management** including locomotives, trains, and wagons
+- Security requirements:
+    - **User authentication** with passwords of at least 8 characters including uppercase letters, digits, and a special character
+    - Role‑based access control (planner, operator, administrator…)
+- Core operational algorithms must be implemented in **pure Java**, without external libraries:
+    - **FEFO/FIFO** for inventory and cargo handling
+    - **Graph‑based traversal algorithms** for routing and travel time
+- Integration with other languages:
+    - **C/Assembly** for station hardware interaction
+    - **PL/SQL** for data persistence and queries
 
 ---
 
 ## Usability
 
-- Provide **command-line prompts and menus** to guide users in **data import**, **query execution**, and **cargo simulation**.
-- The interface shall be **text-based**, with clear options for user stories like **listing line segments** or **generating picking plans**.
-- **Helpful error messages** and **validation feedback** shall assist users during **CSV file imports** or **warehouse operations**.
-- **User roles** (e.g., planner, station manager) may have **role-specific menus** to reduce complexity and input errors.
+- **Console‑based interface** with clear menus and command prompts
+- Role‑specific workflows to simplify user interactions
+- Helpful validation and **deterministic error messages** for operations such as CSV imports
+- Accessible execution of all relevant user stories via the terminal UI
 
 ---
 
 ## Reliability
 
-The system shall be built using **Test-Driven Development (TDD)** with:
-
-- **JUnit 5** for unit testing.
-- **Rule validations** for business logic (e.g., gauge compatibility, capacity constraints).
-- Target code coverage is at least **80%**, verified using **JaCoCo**.
+- Full **Test‑Driven Development (TDD)** using **JUnit 5**
+- Minimum test coverage: **80%**, validated with **JaCoCo**
+- Enforcement of business rule validation:
+    - gauge compatibility
+    - cargo capacity and weight constraints
+    - warehouse and rail operational limits
 
 ---
 
 ## Performance
 
-- Algorithms for **graph traversal**, **cargo allocation (FEFO/FIFO)**, or **picking path sequencing** must be optimized to handle **large datasets** from `.csv` files (e.g., thousands of wagons or bays).
+- Efficient handling of **large in‑memory datasets** such as:
+    - ~64k European station records
+    - Thousands of shipments and warehouse records
+- Algorithms must demonstrate acceptable time complexity and predictable performance
+- Indexed data structures (KD‑Tree, AVL/BST) for near‑constant‑time queries
 
 ---
 
 ## Supportability
 
-- The codebase shall follow **object-oriented design principles (OOP)**.
-- Classes must be **modular and reusable**, with **Javadoc documentation** for maintainability.
-- **Markdown documentation** (e.g., for **USEI04’s sequencing strategies**) shall be included in the repository.
-- The system shall support **SVG export** for **warehouse plants** or **network visualizations**.
-- The use of **Java** as the primary language should facilitate **scalability** and **long-term maintenance**.
+- Architecture must follow **OOP principles** (modular, reusable, maintainable)
+- **Javadoc** documentation required for core Java classes
+- Markdown documentation (including strategy descriptions and architecture notes) included in repository
+- Supports **SVG export** for network or warehouse views
 
 ---
 
-## +
+## + (Additional Requirements)
 
 ### Design Constraints
 
-- The software must be developed in **Java**, following **Object-Oriented (OO) best practices**.
-- The solution must use **Test-Driven Development (TDD)** using **JUnit 5** for unit tests.
-- The project must follow the **Scrum methodology**, ensuring **iterative and incremental development across three sprints**.
+- Developed in **Java** as the primary language
+- **SCRUM methodology** with 3 sprints and a private Scrum board
+    - Columns must include: Backlog, To Do, In Progress, Testing, Done, Logbook
+- Logging and traceability mandatory for station operations and cargo handling
 
 ---
 
 ### Implementation Constraints
 
-- **Java** is **mandatory** for the main application, with **PL/SQL** for database components and **C/Assembly** for station interactions, adhering to coding standards (e.g., **CamelCase**).
-- The project must include **comprehensive unit tests**, achieving at least **80% code coverage**, verified via the **JaCoCo plugin**.
-- Logic related to **cargo handling**, **inventory management**, or **path calculations** must use **primitive loops**, **conditionals**, and **collections**, not Java **Stream APIs**.
-- The **GitHub repository** must:
-    - Be named according to the format `sem3-pi-25-26-gNNN-repo`
-    - Remain **private**
-    - Include a **working Scrum board** with columns: *Backlog*, *ToDo*, *In Process*, *Testing*, *Done*, *Logbook*
+- Java **Stream API not allowed** for core business logic — use:
+    - loops
+    - conditionals
+    - primitive collections
+- GitHub repository:
+    - Must be named `sem3-pi-25-26-gNNN-repo`
+    - Must remain **private**
+    - Instructor/TA access required
+- Storage managed in **Oracle DBMS** via PL/SQL scripts/functions
 
 ---
 
 ### Interface Constraints
 
-- The system must be **compatible with external data formats**, such as **SVG for images** generated during software development (e.g., **warehouse plants**).
-- The system shall support **import/export of data via .csv files** (e.g., for **bays**, **wagons**, **items**, **orders**).
+- Supports **.csv import/export**
+- Compatible with **SVG** outputs created during simulation and reporting
 
 ---
 
 ### Physical Constraints
 
-- The application should be **lightweight and optimized** to run efficiently on **standard desktop and laptop computers**.
-- The application must remain **lightweight and fully executable** on machines with **Java 11+** and **Oracle DBMS**, without heavy external dependencies.  
+- Lightweight execution using **Java 11+** on standard desktop/laptop hardware
+- Minimal third‑party dependencies to ensure portability and maintainability

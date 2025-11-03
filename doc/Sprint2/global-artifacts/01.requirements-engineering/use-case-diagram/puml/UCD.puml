@@ -1,32 +1,68 @@
 @startuml
 left to right direction
+skinparam packageStyle rectangle
+skinparam usecaseFontSize 12
+skinparam actorFontSize 12
 
-actor TerminalOperator as "Terminal operator"
-actor WarehousePlanner as "Warehouse planner"
-actor Planner as "Planner"
+actor TerminalOperator as "Terminal Operator"
+actor WarehousePlanner as "Warehouse Planner"
+actor Planner as "Picking Planner"
 actor Picker as "Picker"
-actor QualityOperator as "Quality operator"
-actor ProductOwner as "Product owner"
+actor QualityOperator as "Quality Operator"
+actor ProductOwner as "Product Owner"
 actor TrafficDispatcher as "Traffic Dispatcher"
+actor StationStorageManager as "Station Storage Manager"
+actor SystemAdministrator as "System Administrator"
 
-package "Logistics in Railway Networks" {
-    rectangle "Sprint 1" {
+package "Logistics On Rails - Use Case Model" {
 
-        usecase "UC1 - Instantiate the relational model using SQL DDL" as UC1
-        usecase "UC2 - Insert the date into the the new database" as UC2
-        usecase "UC3 - Wagons Unloading (Inventory replenishment)" as UC3
-        usecase "UC4 - Order Eligibility & Allocation" as UC4
-        usecase "UC5 - Picking Plans" as UC5
-        usecase "UC6 - Pick Path Sequencing" as UC6
-        usecase "UC7 - Returns & Quarantine" as UC7
-        usecase "UC8 - Present the Cargo Handling functionality" as UC8
-        usecase "UC9 - Calculate the estimated travel time between two stations" as UC9
+    package "Sprint 1" {
 
+        package "BDDAD" {
+            usecase "UC1 - Instantiate \nRelational Model\n(USBD03)" as UC1
+            usecase "UC2 - Insert Data\n(USBD04)" as UC2
+        }
+
+        package "ESINF" {
+            usecase "UC3 - Wagon Unloading\n(Inventory Replenishment)\n(USEI01)" as UC3
+            usecase "UC4 - Order Eligibility\n& Allocation (USEI02)" as UC4
+            usecase "UC5 - Picking Plans\n(USEI03)" as UC5
+            usecase "UC6 - Pick Path Sequencing\n(USEI04)" as UC6
+            usecase "UC7 - Returns & Quarantine\n(USEI05)" as UC7
+        }
+
+        package "LAPR3" {
+            usecase "UC8 - Present Cargo\nHandling Operations\n(USLP02)" as UC8
+            usecase "UC9 - Travel Time\nEstimation\n(USLP03)" as UC9
+        }
+    }
+
+    package "Sprint 2" {
+
+        package "ARQCP" {
+            usecase "UC10 - Encrypt Data\n(USAC01)" as UC10
+            usecase "UC11 - Decrypt Data\n(USAC02)" as UC11
+            usecase "UC12 - Extract Sensor Data\n(USAC03)" as UC12
+            usecase "UC13 - Format Light Commands\n(USAC04)" as UC13
+            usecase "UC14 - Circular Buffer\nOperations\n(USAC05–USAC09)" as UC14
+        }
+
+        package "BDDAD" {
+            usecase "UC15 - Maintain & Query\nDatabase\n(USBD21–USBD30)" as UC15
+        }
+
+        package "ESINF" {
+            usecase "UC16 - Time Zone\nIndexed Queries\n(USEI06)" as UC16
+            usecase "UC17 - Build & Query\n2D KD-Tree\n(USEI07–USEI10)" as UC17
+        }
+
+        package "LAPR3" {
+            usecase "UC18 - Train Dispatching &\nManual Route Creation\n(USLP07)" as UC18
+        }
     }
 }
 
-
-' Associations
+' Sprint 1 Relationships
 ProductOwner --> UC1
 ProductOwner --> UC2
 TerminalOperator --> UC3
@@ -34,7 +70,18 @@ WarehousePlanner --> UC4
 Planner --> UC5
 Picker --> UC6
 QualityOperator --> UC7
-ProductOwner --> UC8
+StationStorageManager --> UC8
 TrafficDispatcher --> UC9
+
+' Sprint 2 Relationships
+SystemAdministrator --> UC10
+SystemAdministrator --> UC11
+SystemAdministrator --> UC12
+SystemAdministrator --> UC13
+SystemAdministrator --> UC14
+ProductOwner --> UC15
+Planner --> UC16
+Planner --> UC17
+TrafficDispatcher --> UC18
 
 @enduml
