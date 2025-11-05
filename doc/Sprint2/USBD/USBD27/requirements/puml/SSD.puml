@@ -1,5 +1,5 @@
-@startuml USBD26-SSD
-title SSD - USBD26: Wagons Not Used in Any Train in a Given Period
+@startuml USBD27-SSD
+title SSD - USBD27: Grain Wagons Used in Every Train that Used Grain Wagons (Given Period)
 
 actor PLANNER
 participant "System" as APP
@@ -7,16 +7,16 @@ participant "SQL Database" as DB
 
 activate PLANNER
 
-PLANNER -> APP : request list of unused wagons\n(startDate, endDate)
+PLANNER -> APP : request list of grain wagons used in every grain train\n(startDate, endDate)
 activate APP
 
-APP -> DB : execute SQL query\n(find wagons not assigned to any train\nwithin the given period)
+APP -> DB : execute SQL query\n(find grain wagons present in all trains\nthat included grain wagons within the given period)
 activate DB
 
-DB --> APP : return result set (wagonId, type, operator, gauge)
+DB --> APP : return result set (wagonId, type='grain', operator, gauge)
 deactivate DB
 
-APP --> PLANNER : display list of unused wagons
+APP --> PLANNER : display list of grain wagons\nused in all relevant trains
 deactivate APP
 
 deactivate PLANNER

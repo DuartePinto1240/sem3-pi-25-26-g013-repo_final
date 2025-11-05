@@ -65,18 +65,18 @@ It interacts with:
 ### 1.5. Input and Output Data
 
 #### Input Parameters:
-| Parameter | Type | Description |
-|----------|------|-------------|
+| Parameter   | Type | Description                        |
+|-------------|------|------------------------------------|
 | `startDate` | DATE | Lower bound of the analysis period |
-| `endDate` | DATE | Upper bound of the analysis period |
+| `endDate`   | DATE | Upper bound of the analysis period |
 
 #### Output Data (Query Result):
-| Field | Description |
-|-------|-------------|
-| wagonId | Unique identifier of the wagon |
-| wagonType | Should always be `grain` |
-| operator | Company that owns or operates the wagon |
-| gauge | Track gauge compatible with the wagon |
+| Field     | Description                             |
+|-----------|-----------------------------------------|
+| wagonId   | Unique identifier of the wagon          |
+| wagonType | Should always be `grain`                |
+| operator  | Company that owns or operates the wagon |
+| gauge     | Track gauge compatible with the wagon   |
 
 ---
 
@@ -87,7 +87,7 @@ It interacts with:
 Placeholder:
 
 
-![System Sequence Diagram](svg/SSD.png)
+![System Sequence Diagram](svg/SSD.svg)
 
 
 ---

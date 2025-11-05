@@ -99,7 +99,7 @@ Interacts with:
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![USEI10-SSD](svg/SSD.png)
+![USEI10-SSD](svg/SSD.svg)
 
 ---
 
