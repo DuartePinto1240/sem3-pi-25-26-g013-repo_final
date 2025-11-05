@@ -93,7 +93,7 @@ It interacts with:
 Placeholder:
 
 
-![System Sequence Diagram](svg/SSD.png)
+![System Sequence Diagram](svg/SSD.svg)
 
 
 ---
