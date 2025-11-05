@@ -6,48 +6,49 @@ autonumber
 
 actor "Planner" as Planner
 participant ":System" as System
-participant "Station Index Trees\n(BST/AVL)" as Indexes
-participant "Validation Log" as Log
+participant "KD-Tree Indexes\n(Stations / Airports / Seaports)" as KDTree
+participant "Distance Calculator\n(Haversine)" as Distance
 
 activate Planner
-Planner -> System : request station index loading (stations.csv)
+
+Planner -> System : request nearest facility\n(latitude, longitude, facilityType)
 activate System
 
-System -> System : validate station record fields
-alt Invalid record
-    System -> Log : write validation error (name/country/tz/lat/lon issue)
-    Log --> System : logged
+System -> KDTree : search nearest node\nmatching facilityType
+activate KDTree
+KDTree --> System : candidate nearest facility\n(facilityId, name, type, coords)
+deactivate KDTree
 
-else Valid record
-    System -> Indexes : insert into\n• Latitude Tree\n• Longitude Tree\n• TimeZoneGroup Tree
-    activate Indexes
-    Indexes --> System : insertion ok
-    deactivate Indexes
-end
+System -> Distance : compute precise distance\n(using Haversine formula)
+activate Distance
+Distance --> System : distanceKm
+deactivate Distance
 
-System --> Planner : all valid stations indexed
+System --> Planner : return nearest facility info\n(facilityId, name, type, country, coords, distanceKm)
 deactivate System
 
-== Query Operations ==
+== Facility-to-Facility Query ==
 
-Planner -> System : query stations by timeZoneGroup
+Planner -> System : request nearest facility\nto another facility (refFacilityId, facilityType)
 activate System
-System -> Indexes : search by TZ group
-activate Indexes
-Indexes --> System : sorted list (country ASC, name ASC)
-deactivate Indexes
-System --> Planner : display filtered list
-deactivate System
 
-Planner -> System : windowed TZ group query ([TZ_min..TZ_max])
-activate System
-System -> Indexes : range search in TZ tree
-activate Indexes
-Indexes --> System : sorted list\nTZ ASC → country ASC → name ASC
-deactivate Indexes
-System --> Planner : display results
+System -> KDTree : locate reference facility coordinates
+activate KDTree
+KDTree --> System : refLat, refLon
+deactivate KDTree
+
+System -> KDTree : find nearest facility of type = facilityType
+activate KDTree
+KDTree --> System : nearest candidate (coords, metadata)
+deactivate KDTree
+
+System -> Distance : compute final distance between facilities
+activate Distance
+Distance --> System : distanceKm
+deactivate Distance
+
+System --> Planner : display nearest facility and distance
 deactivate System
 deactivate Planner
 
 @enduml
-
