@@ -1,35 +1,43 @@
-# USAC06 — Remove oldest element from buffer and output it to integer pointer
+# USAC06 — Remove oldest element from circular buffer (dequeue)
 
 ## 1. User Story
-As a station operator system developer, I need a function that removes the oldest element from a circular integer buffer and returns it via a provided integer pointer, so components can consume buffered data in FIFO order.
+As a station operator system developer, I need a function that removes the oldest integer from a circular buffer and returns it via a provided pointer, so components can consume buffered data in FIFO order.
 
 ---
 
 ## 2. Specifications / Requirements
-Expected function prototype:
+**Expected function prototype:**
+```
+int dequeue_value(int* buffer, int length, int* nelem, int* tail, int* head, int* value);
+```
 
-    int remove_oldest(int *buffer, int capacity, int *head, int *tail, int *value)
+**Inputs:**
+- `buffer` — pointer to an integer array allocated with capacity `length`.
+- `length` — positive integer representing the buffer capacity.
+- `nelem` — pointer to the current number of elements stored (0..length).
+- `tail` — pointer to the index of the **oldest** element (0..length-1).
+- `head` — pointer to the index of the **next insertion** position (0..length-1).
+- `value` — pointer to an integer where the removed value will be stored.
 
-Inputs:
-- `buffer` — pointer to an integer array allocated with length `capacity`
-- `capacity` — positive integer representing the buffer length
-- `head` — pointer to the index of the oldest element (0..capacity-1)
-- `tail` — pointer to the index of the next insertion position (0..capacity-1)
-- `value` — pointer to an integer where the removed value will be stored
+**Buffer semantics (circular FIFO):**
+- **Empty** when `*nelem == 0`.
+- **Full** when `*nelem == length`. (Not directly used by this function.)
 
-Buffer semantics (circular FIFO):
-- Buffer is empty when `*head == *tail`
-- Buffer is full when advancing `tail` would equal `head` (not used by this function)
+**Operation (dequeue):**
+- If the buffer is **not empty**:
+  1. Read `buffer[*tail]`, store into `*value`.
+  2. Advance `*tail = (*tail + 1) % length`.
+  3. Decrement `*nelem` (`*nelem = *nelem - 1`).
+  4. Return `1`.
+- If the buffer is **empty** or input is **invalid**:
+  - Do **not** modify indices or `*nelem`; set `*value = 0`; return `0`.
 
-Operation:
-- If buffer not empty: read `buffer[*head]`, write it to `*value`, advance `*head = (*head + 1) % capacity`, return `1`.
-- If buffer empty or invalid input: do not modify buffer indices, set `*value = 0`, return `0`.
-
-Invalid conditions:
-- Any null pointer among `buffer`, `head`, `tail`, `value`
-- `capacity <= 0`
-- `*head` or `*tail` outside range `[0, capacity-1]`
-- Buffer empty (`*head == *tail`)
+**Invalid conditions (fail-fast, no state change besides setting `*value = 0`):**
+- Any null pointer among `buffer`, `nelem`, `tail`, `head`, `value`.
+- `length <= 0`.
+- `*nelem` outside `[0, length]`.
+- `*head` or `*tail` outside `[0, length-1]`.
+- Buffer empty (`*nelem == 0`).
 
 ---
 
@@ -37,58 +45,69 @@ Invalid conditions:
 
 | ID | Description |
 |----|-------------|
-| **AC1** | When buffer is non-empty, the function removes the oldest element and stores it into `*value`. |
-| **AC2** | `*head` is advanced with wrap-around and remains within `[0, capacity-1]`. |
-| **AC3** | Function returns `1` on successful removal. |
-| **AC4** | On failure (invalid input or empty), function returns `0` and sets `*value = 0`. |
-| **AC5** | Function does not corrupt `buffer`, `*head`, or `*tail` on failure. |
+| **AC1** | When the buffer is non-empty, the function removes the oldest element (`buffer[*tail]`) and stores it in `*value`. |
+| **AC2** | `*tail` is advanced with wrap-around and remains within `[0, length-1]`. |
+| **AC3** | `*nelem` is decremented exactly once on successful removal and never becomes negative. |
+| **AC4** | Function returns `1` on successful removal. |
+| **AC5** | On failure (invalid input or empty), function returns `0`, sets `*value = 0`, and leaves `buffer`, `*nelem`, `*head`, and `*tail` unchanged. |
 
 ---
 
 ## 4. I/O Examples
 
-Valid example:
-- State:
-    - `buffer = [10, 20, 30, _, _]`
-    - `capacity = 5`
-    - `*head = 0`
-    - `*tail = 3`  (three elements stored: 10,20,30)
-- Call: `remove_oldest(buffer, 5, &head, &tail, &value)`
-- Result:
-    - `value = 10`
-    - `head = 1`
-    - return `1`
+**Valid example — remove from non-empty buffer**
+- State (before):
+  - `buffer = [10, 20, 30, _, _]`
+  - `length = 5`
+  - `*nelem = 3`
+  - `*tail = 0`  (oldest at index 0 → 10)
+  - `*head = 3`  (next insert at index 3)
+- Call: `dequeue_value(buffer, 5, &nelem, &tail, &head, &value)`
+- Result (after):
+  - `value = 10`
+  - `tail = 1`, `nelem = 2` (head unchanged)
+  - return `1`
 
-Invalid example (empty buffer):
-- State:
-    - `*head = 2`
-    - `*tail = 2`
-- Call: `remove_oldest(...)`
-- Result:
-    - `value = 0`
-    - `head` and `tail` unchanged
-    - return `0`
+**Invalid example — empty buffer**
+- State (before):
+  - `length = 5`
+  - `*nelem = 0`
+  - `*tail = 2`, `*head = 2` (indices arbitrary when empty)
+- Call: `dequeue_value(...)`
+- Result (after):
+  - `value = 0`
+  - `tail`, `head`, `nelem` unchanged
+  - return `0`
 
 ---
 
 ## 5. Error Handling
 On validation failure:
-- Do not read or remove elements from `buffer`
-- Set `*value = 0`
-- Return `0`
+- Do not read or remove elements from `buffer`.
+- Set `*value = 0`.
+- Return `0`.
 
 Mandatory checks before removal:
-- `buffer`, `head`, `tail`, `value` are not NULL
-- `capacity > 0`
-- `*head` and `*tail` within `[0, capacity-1]`
-- Buffer is not empty (`*head != *tail`)
+- `buffer`, `nelem`, `tail`, `head`, `value` are not `NULL`.
+- `length > 0`.
+- `*nelem ∈ [0, length]`.
+- `*head`, `*tail ∈ [0, length-1]`.
+- Buffer is not empty (`*nelem > 0`).
 
 ---
 
 ## 6. Implementation Notes
-- Use modulo arithmetic for wrap-around:
-  `*head = (*head + 1) % capacity`
-- Validate all preconditions before performing the removal.
-- Keep updates to `*head` atomic with respect to the return value (update index only after reading value).
-- If function used in multithreaded context, synchronization must be done externally.
-- Ensure function is efficient (O(1)) and does not access memory out of bounds.
+- **Wrap-around** uses modular arithmetic:
+  - `*tail = (*tail + 1) % length`
+- Update order:
+  - Read value first → then advance `*tail` → then decrement `*nelem`.
+- **Complexity:** O(1).
+- **Assembly integration (RV32I/M, ABI):**
+  - `a0` = buffer
+  - `a1` = length
+  - `a2` = nelem
+  - `a3` = tail
+  - `a4` = head
+  - `a5` = value (pointer)
+  - Return in `a0` (1 on success, 0 on failure).
+- Use only caller-saved registers (`t0–t6`, `a*`). No stack frame required if you don’t touch `s*` registers.
