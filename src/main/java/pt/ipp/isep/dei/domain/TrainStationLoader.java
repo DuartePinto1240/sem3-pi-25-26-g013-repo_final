@@ -6,98 +6,96 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Loader for TrainStation entities from CSV files.
+ * Expected CSV format: country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+ */
 public class TrainStationLoader {
 
-    public List<TrainStation> load(String csvPath) {
+    /**
+     * Detects the delimiter used in a CSV file based on the first line (header).
+     * If the header contains a semicolon (;), that is assumed to be the delimiter.
+     * Otherwise, the comma delimiter (,) is used.
+     *
+     * @param headerLine the header line of the CSV file
+     * @return the identified delimiter ("," or ";")
+     */
+    private String detectDelimiter(String headerLine) {
+        if (headerLine.contains(";")) return ";";
+        else return ",";
+    }
+
+    /**
+     * Loads a list of TrainStations from a CSV file.
+     * Expected format: country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+     *
+     * @param filePath path to the CSV file
+     * @return list of loaded TrainStation objects
+     */
+    public List<TrainStation> loadTrainStations(String filePath) {
         List<TrainStation> stations = new ArrayList<>();
-        int rejected = 0;
-        long lineNum = 0;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(csvPath))) {
-            String line = br.readLine(); // header
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+            String header = br.readLine();
+            if (header == null) return stations;
+
+            String delimiter = detectDelimiter(header);
+            String line;
+
             while ((line = br.readLine()) != null) {
-                lineNum++;
+                if (line.isBlank()) continue;
 
-                List<String> cols = safeSplit(line);
-
-                if (cols.size() < 9) {
-                    logReject(lineNum, line, "Expected 9 columns, got " + cols.size());
-                    rejected++;
-                    continue;
-                }
-
-                String country = clean(cols.get(0));
-                String timeZone = clean(cols.get(1));
-                String timeZoneGroup = clean(cols.get(2));
-                String station = clean(cols.get(3));
-
-                if (country.isEmpty() || timeZoneGroup.isEmpty() || station.isEmpty()) {
-                    logReject(lineNum, line, "Missing required fields");
-                    rejected++;
-                    continue;
-                }
+                String[] fields = line.split(delimiter);
+                if (fields.length < 9) continue;
 
                 try {
-                    double lat = Double.parseDouble(clean(cols.get(4)));
-                    double lon = Double.parseDouble(clean(cols.get(5)));
+                    String country = fields[0].trim();
+                    String timeZone = fields[1].trim();
+                    String timeZoneGroup = fields[2].trim();
+                    String station = fields[3].trim();
+                    double latitude = Double.parseDouble(fields[4].trim());
+                    double longitude = Double.parseDouble(fields[5].trim());
+                    boolean isCity = Boolean.parseBoolean(fields[6].trim());
+                    boolean isMainStation = Boolean.parseBoolean(fields[7].trim());
+                    boolean isAirport = Boolean.parseBoolean(fields[8].trim());
 
-                    if (!validLat(lat) || !validLon(lon)) {
-                        logReject(lineNum, line, "Invalid coordinates");
-                        rejected++;
-                        continue;
-                    }
-
-                    boolean isCity = Boolean.parseBoolean(clean(cols.get(6)));
-                    boolean isMainStation = Boolean.parseBoolean(clean(cols.get(7)));
-                    boolean isAirport = Boolean.parseBoolean(clean(cols.get(8)));
-
-                    stations.add(new TrainStation(
+                    TrainStation trainStation = new TrainStation(
                             country, timeZone, timeZoneGroup, station,
-                            lat, lon, isCity, isMainStation, isAirport
-                    ));
+                            latitude, longitude, isCity, isMainStation, isAirport
+                    );
 
-                } catch (NumberFormatException ex) {
-                    logReject(lineNum, line, "Number parse failed: " + ex.getMessage());
-                    rejected++;
+                    stations.add(trainStation);
+
+                } catch (NumberFormatException e) {
+                    System.err.println("⚠️ Erro ao processar linha: " + line);
+                    System.err.println("   Detalhe: " + e.getMessage());
                 }
             }
 
         } catch (IOException e) {
-            System.err.println("❌ Error reading: " + e.getMessage());
+            System.err.println("❌ Erro a ler ficheiro de estações: " + e.getMessage());
         }
 
-        System.out.printf("✅ Loaded %d stations | ❌ Rejected %d%n", stations.size(), rejected);
         return stations;
     }
 
-    private static List<String> safeSplit(String line) {
-        List<String> parts = new ArrayList<>();
-        StringBuilder current = new StringBuilder();
-        boolean insideQuotes = false;
+    /**
+     * Loads train stations filtered by country code.
+     *
+     * @param filePath path to the CSV file
+     * @param countryCode country code to filter (e.g., "SE", "PT")
+     * @return list of train stations from the specified country
+     */
+    public List<TrainStation> loadTrainStationsByCountry(String filePath, String countryCode) {
+        List<TrainStation> allStations = loadTrainStations(filePath);
+        List<TrainStation> filtered = new ArrayList<>();
 
-        for (char c : line.toCharArray()) {
-            if (c == '"') insideQuotes = !insideQuotes;
-            else if (c == ',' && !insideQuotes) {
-                parts.add(current.toString().trim());
-                current.setLength(0);
-            } else current.append(c);
+        for (TrainStation station : allStations) {
+            if (station.getCountry().equalsIgnoreCase(countryCode)) {
+                filtered.add(station);
+            }
         }
-        parts.add(current.toString().trim());
-        return parts;
-    }
 
-    private boolean validLat(double lat) { return lat >= -90 && lat <= 90; }
-    private boolean validLon(double lon) { return lon >= -180 && lon <= 180; }
-
-    private String clean(String s) {
-        return s == null ? "" : s.replace("\"", "").trim();
-    }
-
-    private void logReject(long lineNum, String line, String reason) {
-        System.err.printf(
-                "⚠️ Rejected line %d:\n   %s\n   Reason: %s\n\n",
-                lineNum + 1, line, reason
-        );
+        return filtered;
     }
 }
-
