@@ -4,7 +4,7 @@
 
 ### 1.1. User Story Description
 
-To analyze specialized wagon utilization and operational consistency, the system must identify grain wagons that were used in every train where grain wagons appeared during a specified time period.
+To analyze specialized wagon utilization and operational consistency, the system must identify grain wagons that were used in every train where grain wagons appeared during a specified time period.  
 This information allows planners to assess which wagons are systematically employed in all grain-related operations, supporting maintenance prioritization and resource allocation.
 
 **User Story:**

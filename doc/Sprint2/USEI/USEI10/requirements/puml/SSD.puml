@@ -1,0 +1,53 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+autonumber
+
+actor "Planner" as Planner
+participant ":System" as System
+participant "Station Index Trees\n(BST/AVL)" as Indexes
+participant "Validation Log" as Log
+
+activate Planner
+Planner -> System : request station index loading (stations.csv)
+activate System
+
+System -> System : validate station record fields
+alt Invalid record
+    System -> Log : write validation error (name/country/tz/lat/lon issue)
+    Log --> System : logged
+
+else Valid record
+    System -> Indexes : insert into\n• Latitude Tree\n• Longitude Tree\n• TimeZoneGroup Tree
+    activate Indexes
+    Indexes --> System : insertion ok
+    deactivate Indexes
+end
+
+System --> Planner : all valid stations indexed
+deactivate System
+
+== Query Operations ==
+
+Planner -> System : query stations by timeZoneGroup
+activate System
+System -> Indexes : search by TZ group
+activate Indexes
+Indexes --> System : sorted list (country ASC, name ASC)
+deactivate Indexes
+System --> Planner : display filtered list
+deactivate System
+
+Planner -> System : windowed TZ group query ([TZ_min..TZ_max])
+activate System
+System -> Indexes : range search in TZ tree
+activate Indexes
+Indexes --> System : sorted list\nTZ ASC → country ASC → name ASC
+deactivate Indexes
+System --> Planner : display results
+deactivate System
+deactivate Planner
+
+@enduml
+
