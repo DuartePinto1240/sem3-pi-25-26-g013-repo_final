@@ -1,7 +1,7 @@
 # USAC09 — Median Calculation
 
 ## 1. User Story Description
-As a station monitoring system developer, I want to calculate the median value from a numeric array of sensor readings, so that I can determine the central tendency of temperature or humidity samples efficiently in embedded systems.
+As a station monitoring system developer, I want to calculate the median value from a numeric array.
 
 ---
 
@@ -33,14 +33,14 @@ int median(int* vec, int length, int* me)
 
 ## 3. Acceptance Criteria
 
-| ID       | Description                                                                           |
-|----------|---------------------------------------------------------------------------------------|
-| **AC1**  | The array must be sorted in ascending order before calculating the median.            |
-| **AC2**  | For odd-sized arrays, the median is the central element.                              |
-| **AC3**  | For even-sized arrays, the median is the integer average of the two central elements. |
-| **AC4**  | The computed median must be stored in the integer pointer `*me.`                      |
-| **AC5**  | The function returns 1 on success.                                                    |
-| ** AC6** | The function returns 0 on failure and sets `*me = 0`.                                 |
+| ID      | Description                                                                           |
+|---------|---------------------------------------------------------------------------------------|
+| **AC1** | The array must be sorted in ascending order before calculating the median.            |
+| **AC2** | For odd-sized arrays, the median is the central element.                              |
+| **AC3** | For even-sized arrays, the median is the integer average of the two central elements. |
+| **AC4** | The computed median must be stored in the integer pointer `*me.`                      |
+| **AC5** | The function returns 1 on success.                                                    |
+| **AC6** | The function returns 0 on failure and sets `*me = 0`.                                 |
 
 ---
 
@@ -83,7 +83,6 @@ length = 5
 
 **Output**
 ```
-*me = 0
 return = 0
 ```
 
@@ -92,7 +91,6 @@ return = 0
 ## 5. Error Handling
 When validation fails:
 - Do not sort or access the array.
-- Set `*me = 0`
 - Return `0`
 
 Checks must include:
