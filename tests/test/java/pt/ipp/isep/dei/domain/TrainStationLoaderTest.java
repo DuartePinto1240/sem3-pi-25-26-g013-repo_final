@@ -29,47 +29,29 @@ class TrainStationLoaderTest {
     }
 
     @Test
-    void testLoadTrainStationsWithCommaDelimiter() throws IOException {
+    void testLoadValidStation() throws IOException {
         writeCSV("""
                 country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
                 PT,UTC,Group1,Porto Campanhã,41.1456,-8.6077,true,true,false
                 """);
 
-        List<TrainStation> result = loader.loadTrainStations(tempFile.toString());
+        List<TrainStation> result = loader.load(tempFile.toString());
 
         assertEquals(1, result.size());
-        assertEquals("PT", result.get(0).getCountry());
-        assertEquals("Porto Campanhã", result.get(0).getStation());
-        assertTrue(result.get(0).isCity());
+        TrainStation station = result.get(0);
+        assertEquals("PT", station.getCountry());
+        assertEquals("UTC", station.getTimeZone());
+        assertEquals("Group1", station.getTimeZoneGroup());
+        assertEquals("Porto Campanhã", station.getStation());
+        assertEquals(41.1456, station.getLatitude(), 0.0001);
+        assertEquals(-8.6077, station.getLongitude(), 0.0001);
+        assertTrue(station.isCity());
+        assertTrue(station.isMainStation());
+        assertFalse(station.isAirport());
     }
 
     @Test
-    void testLoadTrainStationsWithSemicolonDelimiter() throws IOException {
-        writeCSV("""
-                country;time_zone;time_zone_group;station;latitude;longitude;is_city;is_main_station;is_airport
-                SE;UTC+1;Group2;Stockholm Central;59.3293;18.0686;true;true;false
-                """);
-
-        List<TrainStation> result = loader.loadTrainStations(tempFile.toString());
-
-        assertEquals(1, result.size());
-        assertEquals("SE", result.get(0).getCountry());
-    }
-
-    @Test
-    void testIgnoreInvalidLines() throws IOException {
-        writeCSV("""
-                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
-                PT,UTC,Group1,IncompleteLine
-                """);
-
-        List<TrainStation> result = loader.loadTrainStations(tempFile.toString());
-
-        assertTrue(result.isEmpty());
-    }
-
-    @Test
-    void testLoadTrainStationsByCountry() throws IOException {
+    void testLoadMultipleStations() throws IOException {
         writeCSV("""
                 country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
                 PT,UTC,Group1,Porto Campanhã,41.1456,-8.6077,true,true,false
@@ -77,9 +59,120 @@ class TrainStationLoaderTest {
                 PT,UTC,Group1,Lisboa Santa Apolónia,38.7139,-9.1225,true,true,false
                 """);
 
-        List<TrainStation> result = loader.loadTrainStationsByCountry(tempFile.toString(), "PT");
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void testRejectIncompleteLine() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,IncompleteLine
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testRejectMissingRequiredFields() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                ,,Group1,Porto,41.1456,-8.6077,true,true,false
+                PT,UTC,,Porto,41.1456,-8.6077,true,true,false
+                PT,UTC,Group1,,41.1456,-8.6077,true,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void testRejectInvalidCoordinates() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,Invalid Lat,91.0,-8.6077,true,true,false
+                PT,UTC,Group1,Invalid Lon,41.1456,181.0,true,true,false
+                PT,UTC,Group1,Invalid Both,-91.0,-181.0,true,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertEquals(0, result.size());
+    }
+
+    @Test
+    void testRejectInvalidNumberFormat() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,Porto,NOT_A_NUMBER,-8.6077,true,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void testHandleQuotedFields() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,"Porto, Campanhã",41.1456,-8.6077,true,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertEquals(1, result.size());
+        assertEquals("Porto, Campanhã", result.get(0).getStation());
+    }
+
+    @Test
+    void testMixValidAndInvalidLines() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,Porto Campanhã,41.1456,-8.6077,true,true,false
+                INVALID_LINE
+                ES,UTC+1,Group2,Madrid Atocha,40.4065,-3.6891,true,true,false
+                PT,UTC,Group1,Invalid,999.0,-8.6077,true,true,false
+                FR,UTC+1,Group3,Paris Gare du Nord,48.8809,2.3553,true,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertEquals(3, result.size());
+    }
+
+    @Test
+    void testBooleanParsing() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                PT,UTC,Group1,Station1,41.1456,-8.6077,true,false,true
+                PT,UTC,Group1,Station2,41.1456,-8.6077,false,true,false
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
 
         assertEquals(2, result.size());
-        assertTrue(result.stream().allMatch(s -> s.getCountry().equals("PT")));
+        assertTrue(result.get(0).isCity());
+        assertFalse(result.get(0).isMainStation());
+        assertTrue(result.get(0).isAirport());
+
+        assertFalse(result.get(1).isCity());
+        assertTrue(result.get(1).isMainStation());
+        assertFalse(result.get(1).isAirport());
+    }
+
+    @Test
+    void testEmptyFile() throws IOException {
+        writeCSV("""
+                country,time_zone,time_zone_group,station,latitude,longitude,is_city,is_main_station,is_airport
+                """);
+
+        List<TrainStation> result = loader.load(tempFile.toString());
+
+        assertTrue(result.isEmpty());
     }
 }

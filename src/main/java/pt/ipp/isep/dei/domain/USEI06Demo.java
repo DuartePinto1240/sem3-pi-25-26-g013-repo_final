@@ -18,7 +18,7 @@ public class USEI06Demo {
         // Load stations from CSV
         System.out.println("📁 Loading European railway stations...");
         TrainStationLoader loader = new TrainStationLoader();
-        List<TrainStation> stations = loader.loadTrainStations("stations_europe.csv");
+        List<TrainStation> stations = loader.load("C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\train_stations_europe.csv");
         System.out.println("✅ Loaded " + stations.size() + " stations from CSV\n");
 
         // Build index system
