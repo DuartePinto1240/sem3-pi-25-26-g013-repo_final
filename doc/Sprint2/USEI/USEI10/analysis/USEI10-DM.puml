@@ -1,0 +1,77 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+package "Geographic Query Engine" {
+
+    class Station {
+        +stationId
+        +name
+        +country
+        +latitude
+        +longitude
+        +timeZoneGroup
+    }
+
+    class StationIndex {
+        +byLatitude
+        +byLongitude
+        +byTimeZoneGroup
+        +searchByWindow()
+        +searchByRadius()
+    }
+
+    class GeoQuery {
+        +queryId
+        +queryType  ' radius | window | nearest
+        +parameters
+        +resultSet
+    }
+
+    class GeoQueryEngine {
+        +executeQuery()
+        +applyFilters()
+        +computeDistance()
+        +formatResults()
+    }
+
+    class Planner {
+        +submitQuery()
+        +viewResults()
+    }
+
+}
+
+Planner "1" --> "1" GeoQueryEngine : uses >
+GeoQueryEngine "1" --> "1" GeoQuery : executes >
+GeoQueryEngine "1" --> "1" StationIndex : accesses >
+StationIndex "1" --> "0..*" Station : references >
+
+note bottom of GeoQuery
+A GeoQuery defines the type "of" spatial search:
+- radius (stations within X km)
+- window (stations between lat/lon bounds)
+- nearest (closest N stations)
+Results are sorted deterministically.
+end note
+
+note right of StationIndex
+StationIndex wraps multiple AVL/BST trees:
+- byLatitude
+- byLongitude
+- byTimeZoneGroup
+Used for efficient spatial lookups.
+end note
+
+note right of GeoQueryEngine
+Combines results from multiple indexes,
+applies geographic filters and distance
+computations (e.g., Haversine).
+end note
+
+@enduml
