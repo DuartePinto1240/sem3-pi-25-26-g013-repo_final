@@ -7,32 +7,44 @@ hide circle
 hide methods
 left to right direction
 
+' ===== Core Management =====
 class FreightManager {
+    +managerId : int
+    +name : String
+    +email : String
+    +experienceLevel : ManagerLevel
+    +assignedRegion : String
 }
 
-class Train {
-    +id : int
-}
-
-class Route {
-    +id : int
-    +stations : List<Facility>
-    +totalDistance : int
-}
 
 class TrainSchedule {
-    +trainId : int
+    +id : int
     +scheduled : boolean
     +departureTime : TimeStamp
     +arrivalTime : TimeStamp
-    +departureStation : Station
-    +arrivalStation : Station
+    +status : ScheduleStatus
+}
+
+FreightManager "1" --> "*" TrainSchedule : manages >
+
+' ===== Railway Network =====
+class Route {
+    +id : int
+    +totalDistance : int
+}
+
+class RouteSegment {
+    +segmentOrder : int
+    +distance : int
+    +speedLimit : int
+    +trackType : TrackType
 }
 
 class Station {
-    +stationId
+    +stationId : int
     +name : String
     +location
+    +hasSideLine : boolean
 }
 
 class Facility {
@@ -41,20 +53,45 @@ class Facility {
     +location
 }
 
+Facility <|-- Station
+Route "1" --> "*" RouteSegment : composed of >
+RouteSegment "*" --> "1" Facility : connects >
+
+TrainSchedule "1" --> "1" Route : uses >
+TrainSchedule "1" --> "1" Station : departure >
+TrainSchedule "1" --> "1" Station : arrival >
+
+' ===== Rolling Stock =====
+class Train {
+    +id : int
+    +totalWeight : double
+}
+
 class Locomotive {
     +locomotiveId : String
     +model : LocomotiveModel
     +type : LocomotiveType
+    +power : double
 }
 
+class Wagon {
+    +wagonId : String
+    +tareWeight : double
+    +cargoWeight : double
+    +loaded : boolean
+}
 
-FreightManager "1" --> "*" TrainSchedule : manages >
-TrainSchedule "1" --> "1" Train : references >
-TrainSchedule "1" --> "1" Route : uses >
-TrainSchedule "1" --> "1" Station : departure >
-TrainSchedule "1" --> "1" Station : arrival >
-Route "*" --> "*" Facility : passes through >
-Facility <|-- Station : extends >
 Train "*" --> "*" Locomotive : uses >
+Train "*" --> "*" Wagon : composed of >
+TrainSchedule "1" --> "1" Train : references >
+
+' ===== Operations =====
+class CrossingOperation {
+    +crossingId : int
+    +time : TimeStamp
+}
+
+CrossingOperation "*" --> "2" TrainSchedule : involves >
+CrossingOperation "*" --> "1" Station : occurs at >
 
 @enduml
