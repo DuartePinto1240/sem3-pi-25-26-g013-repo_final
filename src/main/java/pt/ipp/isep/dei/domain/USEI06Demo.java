@@ -18,7 +18,7 @@ public class USEI06Demo {
         TrainStationLoader loader = new TrainStationLoader();
 
         // Adjust path to your CSV location
-        String csvPath = "C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\train_stations_europe.csv"; // or full path
+        String csvPath = "train_station_dataset_v2/train_stations_europe.csv"; // or full path
         List<TrainStation> stations = loader.load(csvPath);
 
         System.out.println("✅ Loaded " + stations.size() + " stations from CSV\n");
