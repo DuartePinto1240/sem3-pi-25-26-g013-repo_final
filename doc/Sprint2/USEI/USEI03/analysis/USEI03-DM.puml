@@ -1,5 +1,4 @@
 @startuml
-' https://plantuml.com/class-diagram
 skinparam monochrome true
 skinparam packageStyle rectangle
 skinparam shadowing false
