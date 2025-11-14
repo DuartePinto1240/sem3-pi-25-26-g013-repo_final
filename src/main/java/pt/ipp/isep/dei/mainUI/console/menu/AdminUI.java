@@ -35,6 +35,7 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("Picking Plans - USEI03", new USEI03UI()));
         options.add(new MenuItem("Pick Path Sequencing - USEI04", new USEI04UI()));
         options.add(new MenuItem("Returns & Quarantine - USEI05", new USEI05UI()));
+        options.add(new MenuItem("USEI07", new USEI07UI()));
         options.add(new MenuItem("Estimated Travel Time - USPL03",new USLP03UI()));
         int option = 0;
         do {
