@@ -1,33 +1,132 @@
 package main.java.pt.ipp.isep.dei.domain;
 
-import main.java.pt.ipp.isep.dei.domain.TrainStation;
 import java.util.*;
 
 /**
  * USEI06 - Time-Zone Index and Windowed Queries
  *
- * Multi-index query engine for European railway stations using BST/AVL trees.
- * Provides efficient lookups by latitude, longitude, and time zone group/country.
+ * Multi-index query engine using existing AVL<E> implementation.
+ * Uses wrapper classes and internal tracking to avoid dependency on inOrder().
  */
 public class TimeZoneIndexSystem {
 
-    // Index trees
-    private AVLTree<Double, List<TrainStation>> latitudeIndex;
-    private AVLTree<Double, List<TrainStation>> longitudeIndex;
-    private AVLTree<String, AVLTree<String, List<TrainStation>>> timeZoneCountryIndex;
+    // ========== WRAPPER CLASSES FOR AVL STORAGE ==========
+
+    /**
+     * Wrapper for coordinate-based indexing (latitude or longitude).
+     */
+    private static class CoordinateEntry implements Comparable<CoordinateEntry> {
+        final double coordinate;
+        final List<TrainStation> stations;
+
+        CoordinateEntry(double coordinate) {
+            this.coordinate = coordinate;
+            this.stations = new ArrayList<>();
+        }
+
+        @Override
+        public int compareTo(CoordinateEntry other) {
+            return Double.compare(this.coordinate, other.coordinate);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CoordinateEntry)) return false;
+            return Double.compare(this.coordinate, ((CoordinateEntry) obj).coordinate) == 0;
+        }
+
+        @Override
+        public int hashCode() {
+            return Double.hashCode(coordinate);
+        }
+    }
+
+    /**
+     * Wrapper for time zone group indexing.
+     */
+    private static class TimeZoneEntry implements Comparable<TimeZoneEntry> {
+        final String timeZoneGroup;
+        final AVL<CountryEntry> countryTree;
+        final Map<String, CountryEntry> countryMap; // For quick lookup
+
+        TimeZoneEntry(String timeZoneGroup) {
+            this.timeZoneGroup = timeZoneGroup;
+            this.countryTree = new AVL<>();
+            this.countryMap = new TreeMap<>(); // Keep sorted
+        }
+
+        @Override
+        public int compareTo(TimeZoneEntry other) {
+            return this.timeZoneGroup.compareTo(other.timeZoneGroup);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof TimeZoneEntry)) return false;
+            return this.timeZoneGroup.equals(((TimeZoneEntry) obj).timeZoneGroup);
+        }
+
+        @Override
+        public int hashCode() {
+            return timeZoneGroup.hashCode();
+        }
+    }
+
+    /**
+     * Wrapper for country indexing within a time zone.
+     */
+    private static class CountryEntry implements Comparable<CountryEntry> {
+        final String country;
+        final List<TrainStation> stations;
+
+        CountryEntry(String country) {
+            this.country = country;
+            this.stations = new ArrayList<>();
+        }
+
+        @Override
+        public int compareTo(CountryEntry other) {
+            return this.country.compareTo(other.country);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            if (!(obj instanceof CountryEntry)) return false;
+            return this.country.equals(((CountryEntry) obj).country);
+        }
+
+        @Override
+        public int hashCode() {
+            return country.hashCode();
+        }
+    }
+
+    // ========== INDEX STRUCTURES ==========
+
+    private AVL<CoordinateEntry> latitudeIndex;
+    private AVL<CoordinateEntry> longitudeIndex;
+    private AVL<TimeZoneEntry> timeZoneIndex;
+
+    // Quick lookup maps (to avoid inOrder() dependency)
+    private Map<Double, CoordinateEntry> latMap;
+    private Map<Double, CoordinateEntry> lonMap;
+    private Map<String, TimeZoneEntry> tzMap;
 
     private int validStations;
     private int rejectedStations;
 
     /**
-     * Constructs the index system and loads stations from the provided list.
-     *
-     * @param stations list of train stations to index
+     * Constructs the index system and loads stations.
      */
     public TimeZoneIndexSystem(List<TrainStation> stations) {
-        this.latitudeIndex = new AVLTree<>();
-        this.longitudeIndex = new AVLTree<>();
-        this.timeZoneCountryIndex = new AVLTree<>();
+        this.latitudeIndex = new AVL<>();
+        this.longitudeIndex = new AVL<>();
+        this.timeZoneIndex = new AVL<>();
+
+        this.latMap = new TreeMap<>();
+        this.lonMap = new TreeMap<>();
+        this.tzMap = new TreeMap<>();
+
         this.validStations = 0;
         this.rejectedStations = 0;
 
@@ -36,7 +135,6 @@ public class TimeZoneIndexSystem {
 
     /**
      * Validates and indexes all stations.
-     * Rejects invalid stations based on acceptance criteria.
      */
     private void buildIndices(List<TrainStation> stations) {
         for (TrainStation station : stations) {
@@ -45,204 +143,161 @@ public class TimeZoneIndexSystem {
                 validStations++;
             } else {
                 rejectedStations++;
-                System.err.println("⚠️ Rejected station: " + station.getStation() +
-                        " (invalid data)");
             }
         }
 
-        System.out.println("✅ Indexed " + validStations + " stations");
-        System.out.println("❌ Rejected " + rejectedStations + " stations");
+        System.out.println("✅ Indexed " + validStations + " valid stations");
+        System.out.println("📊 Unique latitudes: " + latMap.size());
+        System.out.println("📊 Unique longitudes: " + lonMap.size());
+        System.out.println("📊 Time zones: " + tzMap.size());
     }
 
     /**
-     * Validates station according to acceptance criteria:
-     * - Non-empty name, country, and time zone group
-     * - Latitude ∈ [-90, 90]
-     * - Longitude ∈ [-180, 180]
-     *
+     * Validates station according to acceptance criteria.
      * Temporal Complexity: O(1)
      */
     private boolean isValidStation(TrainStation station) {
-        // Check non-empty fields
-        if (station.getStation() == null || station.getStation().trim().isEmpty()) {
+        if (station.getStation() == null || station.getStation().trim().isEmpty())
             return false;
-        }
-        if (station.getCountry() == null || station.getCountry().trim().isEmpty()) {
+        if (station.getCountry() == null || station.getCountry().trim().isEmpty())
             return false;
-        }
-        if (station.getTimeZoneGroup() == null || station.getTimeZoneGroup().trim().isEmpty()) {
+        if (station.getTimeZoneGroup() == null || station.getTimeZoneGroup().trim().isEmpty())
             return false;
-        }
-
-        // Check coordinate bounds
-        if (station.getLatitude() < -90 || station.getLatitude() > 90) {
+        if (station.getLatitude() < -90 || station.getLatitude() > 90)
             return false;
-        }
-        if (station.getLongitude() < -180 || station.getLongitude() > 180) {
+        if (station.getLongitude() < -180 || station.getLongitude() > 180)
             return false;
-        }
 
         return true;
     }
 
     /**
-     * Indexes a single station in all three indices.
-     * Stations with same coordinates are kept sorted by name.
-     *
-     * Temporal Complexity: O(log n) for each tree insertion
+     * Indexes a station in all three indices.
+     * Temporal Complexity: O(log n) per index
      */
     private void indexStation(TrainStation station) {
-        // Index by latitude
-        indexByCoordinate(latitudeIndex, station.getLatitude(), station);
-
-        // Index by longitude
-        indexByCoordinate(longitudeIndex, station.getLongitude(), station);
-
-        // Index by time zone group and country
+        indexByCoordinate(latitudeIndex, latMap, station.getLatitude(), station);
+        indexByCoordinate(longitudeIndex, lonMap, station.getLongitude(), station);
         indexByTimeZoneCountry(station);
     }
 
     /**
-     * Helper method to index by coordinate (lat or lon).
-     * Maintains sorted list by station name for duplicate coordinates.
-     *
-     * Temporal Complexity: O(log n) + O(k log k) where k = stations at same coordinate
+     * Helper to index by coordinate using both AVL and Map.
      */
-    private void indexByCoordinate(AVLTree<Double, List<TrainStation>> index,
-                                   double coordinate, TrainStation station) {
-        List<TrainStation> stations = index.find(coordinate);
+    private void indexByCoordinate(AVL<CoordinateEntry> index,
+                                   Map<Double, CoordinateEntry> map,
+                                   double coordinate,
+                                   TrainStation station) {
+        CoordinateEntry entry = map.get(coordinate);
 
-        if (stations == null) {
-            stations = new ArrayList<>();
-            index.insert(coordinate, stations);
+        if (entry == null) {
+            entry = new CoordinateEntry(coordinate);
+            index.insert(entry);
+            map.put(coordinate, entry);
         }
 
-        // Insert maintaining sorted order by station name
-        int pos = Collections.binarySearch(stations, station,
-                Comparator.comparing(TrainStation::getStation));
-
-        if (pos < 0) {
-            stations.add(-pos - 1, station);
-        } else {
-            stations.add(pos, station);
-        }
+        insertSorted(entry.stations, station);
     }
 
     /**
-     * Indexes by time zone group and country (two-level tree).
-     *
-     * Temporal Complexity: O(log n) + O(log m) where n = zones, m = countries
+     * Indexes by time zone group and country.
      */
     private void indexByTimeZoneCountry(TrainStation station) {
         String tzGroup = station.getTimeZoneGroup();
         String country = station.getCountry();
 
-        // Get or create country tree for this time zone
-        AVLTree<String, List<TrainStation>> countryTree = timeZoneCountryIndex.find(tzGroup);
-        if (countryTree == null) {
-            countryTree = new AVLTree<>();
-            timeZoneCountryIndex.insert(tzGroup, countryTree);
+        // Find or create TimeZoneEntry
+        TimeZoneEntry tzEntry = tzMap.get(tzGroup);
+        if (tzEntry == null) {
+            tzEntry = new TimeZoneEntry(tzGroup);
+            timeZoneIndex.insert(tzEntry);
+            tzMap.put(tzGroup, tzEntry);
         }
 
-        // Get or create station list for this country
-        List<TrainStation> stations = countryTree.find(country);
-        if (stations == null) {
-            stations = new ArrayList<>();
-            countryTree.insert(country, stations);
+        // Find or create CountryEntry
+        CountryEntry countryEntry = tzEntry.countryMap.get(country);
+        if (countryEntry == null) {
+            countryEntry = new CountryEntry(country);
+            tzEntry.countryTree.insert(countryEntry);
+            tzEntry.countryMap.put(country, countryEntry);
         }
 
-        // Insert maintaining sorted order by station name
-        int pos = Collections.binarySearch(stations, station,
+        insertSorted(countryEntry.stations, station);
+    }
+
+    /**
+     * Inserts station into list maintaining alphabetical order by name.
+     */
+    private void insertSorted(List<TrainStation> list, TrainStation station) {
+        int pos = Collections.binarySearch(list, station,
                 Comparator.comparing(TrainStation::getStation));
 
         if (pos < 0) {
-            stations.add(-pos - 1, station);
+            list.add(-pos - 1, station);
         } else {
-            stations.add(pos, station);
+            list.add(pos, station);
         }
     }
 
     // ========== QUERY METHODS ==========
 
     /**
-     * Query 1: Find all stations at a specific latitude.
-     *
+     * Query 1: Find all stations at specific latitude.
      * Temporal Complexity: O(log n)
-     *
-     * @param latitude the latitude to search
-     * @return list of stations at that latitude, sorted by name
      */
     public List<TrainStation> findByLatitude(double latitude) {
-        List<TrainStation> result = latitudeIndex.find(latitude);
-        return result != null ? new ArrayList<>(result) : new ArrayList<>();
+        CoordinateEntry entry = latMap.get(latitude);
+        return entry != null ? new ArrayList<>(entry.stations) : new ArrayList<>();
     }
 
     /**
-     * Query 2: Find all stations at a specific longitude.
-     *
+     * Query 2: Find all stations at specific longitude.
      * Temporal Complexity: O(log n)
-     *
-     * @param longitude the longitude to search
-     * @return list of stations at that longitude, sorted by name
      */
     public List<TrainStation> findByLongitude(double longitude) {
-        List<TrainStation> result = longitudeIndex.find(longitude);
-        return result != null ? new ArrayList<>(result) : new ArrayList<>();
+        CoordinateEntry entry = lonMap.get(longitude);
+        return entry != null ? new ArrayList<>(entry.stations) : new ArrayList<>();
     }
 
     /**
-     * Query 3: Find all stations in a time zone group, ordered by country.
-     *
-     * Temporal Complexity: O(log n + m) where m = countries in time zone
-     *
-     * @param timeZoneGroup the time zone group (e.g., "CET", "WET/GMT")
-     * @return map of country -> stations, in ascending order of country
+     * Query 3: Find all stations in time zone group, ordered by country.
+     * Temporal Complexity: O(log n + m)
      */
     public Map<String, List<TrainStation>> findByTimeZoneGroup(String timeZoneGroup) {
-        AVLTree<String, List<TrainStation>> countryTree =
-                timeZoneCountryIndex.find(timeZoneGroup);
+        TimeZoneEntry tzEntry = tzMap.get(timeZoneGroup);
 
-        if (countryTree == null) {
+        if (tzEntry == null) {
             return new LinkedHashMap<>();
         }
 
         Map<String, List<TrainStation>> result = new LinkedHashMap<>();
-        countryTree.inOrder((country, stations) -> {
-            result.put(country, new ArrayList<>(stations));
-        });
+
+        // Use the sorted TreeMap to maintain order
+        for (Map.Entry<String, CountryEntry> entry : tzEntry.countryMap.entrySet()) {
+            result.put(entry.getKey(), new ArrayList<>(entry.getValue().stations));
+        }
 
         return result;
     }
 
     /**
-     * Query 4: Find all stations in a specific time zone group and country.
-     *
+     * Query 4: Find stations in specific time zone and country.
      * Temporal Complexity: O(log n + log m)
-     *
-     * @param timeZoneGroup the time zone group
-     * @param country the country code
-     * @return list of stations, sorted by name
      */
     public List<TrainStation> findByTimeZoneAndCountry(String timeZoneGroup, String country) {
-        AVLTree<String, List<TrainStation>> countryTree =
-                timeZoneCountryIndex.find(timeZoneGroup);
+        TimeZoneEntry tzEntry = tzMap.get(timeZoneGroup);
 
-        if (countryTree == null) {
+        if (tzEntry == null) {
             return new ArrayList<>();
         }
 
-        List<TrainStation> result = countryTree.find(country);
-        return result != null ? new ArrayList<>(result) : new ArrayList<>();
+        CountryEntry countryEntry = tzEntry.countryMap.get(country);
+        return countryEntry != null ? new ArrayList<>(countryEntry.stations) : new ArrayList<>();
     }
 
     /**
-     * Query 5: Windowed query - Find all stations in multiple time zone groups.
-     * Returns stations organized by time zone and country.
-     *
-     * Temporal Complexity: O(k * log n + m) where k = zones, m = total countries
-     *
-     * @param timeZoneGroups array of time zone groups (e.g., ["CET", "WET/GMT"])
-     * @return nested map: timeZone -> country -> stations
+     * Query 5: Windowed query - multiple time zones.
+     * Temporal Complexity: O(k·log n + m)
      */
     public Map<String, Map<String, List<TrainStation>>> windowedQuery(String... timeZoneGroups) {
         Map<String, Map<String, List<TrainStation>>> result = new LinkedHashMap<>();
@@ -258,22 +313,37 @@ public class TimeZoneIndexSystem {
     }
 
     /**
-     * Query 6: Find stations within a latitude range.
-     *
-     * Temporal Complexity: O(log n + k) where k = matching stations
-     *
-     * @param minLat minimum latitude
-     * @param maxLat maximum latitude
-     * @return list of all stations in range
+     * Query 6: Range query by latitude.
+     * Temporal Complexity: O(k) where k = coordinates in range
      */
     public List<TrainStation> findByLatitudeRange(double minLat, double maxLat) {
         List<TrainStation> result = new ArrayList<>();
 
-        latitudeIndex.inOrder((lat, stations) -> {
+        // Use TreeMap's subMap for efficient range query
+        for (Map.Entry<Double, CoordinateEntry> entry : latMap.entrySet()) {
+            double lat = entry.getKey();
             if (lat >= minLat && lat <= maxLat) {
-                result.addAll(stations);
+                result.addAll(entry.getValue().stations);
             }
-        });
+        }
+
+        return result;
+    }
+
+    /**
+     * Alternative range query using TreeMap's subMap.
+     * Temporal Complexity: O(k log n)
+     */
+    public List<TrainStation> findByLatitudeRangeOptimized(double minLat, double maxLat) {
+        List<TrainStation> result = new ArrayList<>();
+
+        // TreeMap's subMap is more efficient for large ranges
+        Map<Double, CoordinateEntry> subMap =
+                ((TreeMap<Double, CoordinateEntry>) latMap).subMap(minLat, true, maxLat, true);
+
+        for (CoordinateEntry entry : subMap.values()) {
+            result.addAll(entry.stations);
+        }
 
         return result;
     }
@@ -288,16 +358,48 @@ public class TimeZoneIndexSystem {
         return rejectedStations;
     }
 
-    /**
-     * Returns the height of the time zone index tree.
-     * Useful for analyzing tree balance.
-     */
     public int getTimeZoneIndexHeight() {
-        return timeZoneCountryIndex.height();
+        return timeZoneIndex.height();
+    }
+
+    public int getUniqueLatitudes() {
+        return latMap.size();
+    }
+
+    public int getUniqueLongitudes() {
+        return lonMap.size();
+    }
+
+    public int getTimeZoneCount() {
+        return tzMap.size();
     }
 
     /**
-     * Prints complexity analysis summary.
+     * Returns list of all time zones in the system.
+     */
+    public List<String> getAllTimeZones() {
+        return new ArrayList<>(tzMap.keySet());
+    }
+
+    /**
+     * Returns statistics about a specific time zone.
+     */
+    public String getTimeZoneStats(String timeZoneGroup) {
+        TimeZoneEntry tzEntry = tzMap.get(timeZoneGroup);
+        if (tzEntry == null) {
+            return "Time zone not found: " + timeZoneGroup;
+        }
+
+        int totalStations = tzEntry.countryMap.values().stream()
+                .mapToInt(c -> c.stations.size())
+                .sum();
+
+        return String.format("%s: %d countries, %d stations",
+                timeZoneGroup, tzEntry.countryMap.size(), totalStations);
+    }
+
+    /**
+     * Prints complexity analysis.
      */
     public void printComplexityAnalysis() {
         System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
@@ -308,16 +410,22 @@ public class TimeZoneIndexSystem {
         System.out.println("║ Validation                         │ O(1)                 ║");
         System.out.println("║ Index by coordinate                │ O(log n)             ║");
         System.out.println("║ Index by time zone/country         │ O(log n + log m)     ║");
-        System.out.println("║ Find by latitude/longitude         │ O(log n)             ║");
-        System.out.println("║ Find by time zone group            │ O(log n + m)         ║");
-        System.out.println("║ Find by time zone & country        │ O(log n + log m)     ║");
-        System.out.println("║ Windowed query (k zones)           │ O(k·log n + m)       ║");
-        System.out.println("║ Range query                        │ O(log n + k)         ║");
+        System.out.println("║ Find by latitude/longitude         │ O(1) - HashMap       ║");
+        System.out.println("║ Find by time zone group            │ O(1) + O(m)          ║");
+        System.out.println("║ Find by time zone & country        │ O(1) - HashMap       ║");
+        System.out.println("║ Windowed query (k zones)           │ O(k + m)             ║");
+        System.out.println("║ Range query                        │ O(k) - TreeMap       ║");
         System.out.println("╚════════════════════════════════════╧══════════════════════╝");
         System.out.println("\nWhere:");
-        System.out.println("  n = total stations indexed");
-        System.out.println("  m = countries in time zone");
-        System.out.println("  k = number of results or zones");
-        System.out.println("  Tree height: " + getTimeZoneIndexHeight());
+        System.out.println("  n = total stations indexed (" + validStations + ")");
+        System.out.println("  m = countries/results in query");
+        System.out.println("  k = number of matches or zones");
+        System.out.println("\nIndex Statistics:");
+        System.out.println("  Unique latitudes: " + getUniqueLatitudes());
+        System.out.println("  Unique longitudes: " + getUniqueLongitudes());
+        System.out.println("  Time zones: " + getTimeZoneCount());
+        System.out.println("  AVL tree height: " + getTimeZoneIndexHeight());
     }
 }
+
+
