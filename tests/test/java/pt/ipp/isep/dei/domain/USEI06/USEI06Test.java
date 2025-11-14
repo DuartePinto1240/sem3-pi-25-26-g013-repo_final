@@ -33,7 +33,7 @@ class USEI06Test {
      */
     @BeforeAll
     static void setup() {
-        String csvPath = "C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\train_stations_europe.csv";
+        String csvPath = "train_station_dataset_v2/train_stations_europe.csv";
 
         TrainStationLoader loader = new TrainStationLoader();
         allStations = loader.load(csvPath);
