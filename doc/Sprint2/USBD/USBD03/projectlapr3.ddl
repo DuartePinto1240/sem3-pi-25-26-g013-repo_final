@@ -78,22 +78,21 @@ CREATE TABLE LineSegment
     line_id         NUMBER(10),
     segment_order   NUMBER(10),
     length_m        NUMBER(10),
-    speed_limit     NUMBER(10),
     max_weight      NUMBER(10),
     track_type      VARCHAR2(6),
     electrified     VARCHAR2(3),
+    siding_position NUMBER(10),
+    siding_length   NUMBER(10),
     CONSTRAINT PK_LineSegment PRIMARY KEY (line_segment_id),
     CONSTRAINT NN_LSeg_Line CHECK (line_id IS NOT NULL),
     CONSTRAINT NN_LSeg_Order CHECK (segment_order IS NOT NULL),
     CONSTRAINT NN_LSeg_Length CHECK (length_m IS NOT NULL),
-    CONSTRAINT NN_LSeg_Speed CHECK (speed_limit IS NOT NULL),
     CONSTRAINT NN_LSeg_MaxWeight CHECK (max_weight IS NOT NULL),
     CONSTRAINT NN_LSeg_TrackType CHECK (track_type IS NOT NULL),
     CONSTRAINT NN_LSeg_Electrified CHECK (electrified IS NOT NULL),
     CONSTRAINT UQ_LineSegment_Line_Order UNIQUE (line_id, segment_order),
     CONSTRAINT CHK_LSeg_Order_GT0 CHECK (segment_order > 0),
     CONSTRAINT CHK_LSeg_Length_GT0 CHECK (length_m > 0),
-    CONSTRAINT CHK_LSeg_Speed_GT0 CHECK (speed_limit > 0),
     CONSTRAINT CHK_LSeg_MaxWeight_GT0 CHECK (max_weight > 0),
     CONSTRAINT CHK_LSeg_Track_Valid CHECK (track_type IN ('single', 'double')),
     CONSTRAINT CHK_LSeg_Electrified CHECK (electrified IN ('Yes', 'No'))
@@ -191,6 +190,7 @@ CREATE TABLE Locomotive
     loco_id             NUMBER(10) GENERATED AS IDENTITY,
     operator_id         NUMBER(10),
     locomotive_model_id NUMBER(10),
+    name                VARCHAR2(255),
     service_year        NUMBER(4),
     CONSTRAINT PK_Locomotive PRIMARY KEY (loco_id),
     CONSTRAINT NN_Loco_Operator CHECK (operator_id IS NOT NULL),
@@ -240,13 +240,12 @@ CREATE TABLE LocomotiveGauge
 CREATE TABLE Train
 (
     train_id          NUMBER(10) GENERATED AS IDENTITY,
+    operator_id       NUMBER(10),
     name              VARCHAR2(10),
     planned_departure DATE,
-    planned_arrival   DATE,
     CONSTRAINT PK_Train PRIMARY KEY (train_id),
     CONSTRAINT NN_Train_Name CHECK (name IS NOT NULL),
-    CONSTRAINT NN_Train_Depart CHECK (planned_departure IS NOT NULL),
-    CONSTRAINT NN_Train_Arrival CHECK (planned_arrival IS NOT NULL)
+    CONSTRAINT NN_Train_Depart CHECK (planned_departure IS NOT NULL)
 );
 
 CREATE TABLE Route
@@ -329,15 +328,12 @@ CREATE TABLE Freight
     origin_station_id      NUMBER(10),
     destination_station_id NUMBER(10),
     train_id               NUMBER(10),
-    departure_time         DATE,
-    arrival_time           DATE,
+    freight_date           DATE,
     CONSTRAINT PK_Freight PRIMARY KEY (freight_id),
     CONSTRAINT NN_Freight_Origin CHECK (origin_station_id IS NOT NULL),
     CONSTRAINT NN_Freight_Dest CHECK (destination_station_id IS NOT NULL),
     CONSTRAINT NN_Freight_Train CHECK (train_id IS NOT NULL),
-    CONSTRAINT NN_Freight_Depart CHECK (departure_time IS NOT NULL),
-    CONSTRAINT NN_Freight_Arrival CHECK (arrival_time IS NOT NULL),
-    CONSTRAINT CHK_Freight_Dates CHECK (arrival_time >= departure_time)
+    CONSTRAINT NN_Freight_Date CHECK (freight_date IS NOT NULL)
 );
 
 CREATE TABLE Cargo
@@ -460,6 +456,9 @@ ALTER TABLE RouteStop
 
 ALTER TABLE RouteStop
     ADD CONSTRAINT FK_RouteStop_Route FOREIGN KEY (route_id) REFERENCES Route (route_id);
+
+ALTER TABLE Train
+    ADD CONSTRAINT FK_Train_Operator FOREIGN KEY (operator_id) REFERENCES Operator (operator_id);
 
 ALTER TABLE TrainEvent
     ADD CONSTRAINT FK_TrainEvent_Train FOREIGN KEY (train_id) REFERENCES Train (train_id);
