@@ -1,24 +1,26 @@
 package main.java.pt.ipp.isep.dei.domain;
 
-import main.java.pt.ipp.isep.dei.domain.TrainStation;
-import main.java.pt.ipp.isep.dei.domain.TrainStationLoader;
 import java.util.*;
 
 /**
- * Demonstration class for USEI06 with 3-5 sample queries.
+ * Demonstration class for USEI06 with 5 sample queries.
  * Shows practical usage of the TimeZoneIndexSystem.
  */
 public class USEI06Demo {
 
     public static void main(String[] args) {
         System.out.println("╔════════════════════════════════════════════════════════════╗");
-        System.out.println("║  USEI06 - Time-Zone Index and Windowed Queries Demo      ║");
+        System.out.println("║  USEI06 - Time-Zone Index and Windowed Queries Demo        ║");
         System.out.println("╚════════════════════════════════════════════════════════════╝\n");
 
         // Load stations from CSV
         System.out.println("📁 Loading European railway stations...");
         TrainStationLoader loader = new TrainStationLoader();
-        List<TrainStation> stations = loader.load("C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\train_stations_europe.csv");
+
+        // Adjust path to your CSV location
+        String csvPath = "C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\train_stations_europe.csv"; // or full path
+        List<TrainStation> stations = loader.load(csvPath);
+
         System.out.println("✅ Loaded " + stations.size() + " stations from CSV\n");
 
         // Build index system
@@ -38,27 +40,42 @@ public class USEI06Demo {
     }
 
     /**
-     * Sample Query 1: Find all stations at Lisbon's latitude (38.7223°)
+     * Sample Query 1: Find all stations at a specific latitude
      * Demonstrates: Coordinate-based search with duplicate handling
      */
     private static void runSampleQuery1(TimeZoneIndexSystem system) {
         System.out.println("┌──────────────────────────────────────────────────────────┐");
-        System.out.println("│ QUERY 1: Find stations at Lisbon's latitude (38.7223°)  │");
+        System.out.println("│ QUERY 1: Find stations at specific latitude              │");
         System.out.println("└──────────────────────────────────────────────────────────┘");
 
-        double lisbonLat = 38.7223;
-        List<TrainStation> results = system.findByLatitude(lisbonLat);
+        // Try common latitudes
+        double[] testLatitudes = {38.7223, 51.5074, 48.8566};
 
-        System.out.println("📍 Searching for latitude: " + lisbonLat);
-        System.out.println("✅ Found " + results.size() + " station(s):");
+        for (double lat : testLatitudes) {
+            List<TrainStation> results = system.findByLatitude(lat);
 
-        for (TrainStation station : results) {
-            System.out.printf("   • %s (%s) - %.5f, %.5f%n",
-                    station.getStation(), station.getCountry(),
-                    station.getLatitude(), station.getLongitude());
+            if (!results.isEmpty()) {
+                System.out.printf("\n📍 Latitude: %.4f°%n", lat);
+                System.out.println("✅ Found " + results.size() + " station(s):");
+
+                int showCount = Math.min(5, results.size());
+                for (int i = 0; i < showCount; i++) {
+                    TrainStation station = results.get(i);
+                    System.out.printf("   • %s (%s) - [%.5f, %.5f]%n",
+                            station.getStation(),
+                            station.getCountry(),
+                            station.getLatitude(),
+                            station.getLongitude());
+                }
+
+                if (results.size() > 5) {
+                    System.out.printf("   ... and %d more%n", results.size() - 5);
+                }
+                break; // Show only first found
+            }
         }
 
-        System.out.println("⏱️  Complexity: O(log n)\n");
+        System.out.println("\n⏱️  Complexity: O(log n)\n");
     }
 
     /**
@@ -67,7 +84,7 @@ public class USEI06Demo {
      */
     private static void runSampleQuery2(TimeZoneIndexSystem system) {
         System.out.println("┌──────────────────────────────────────────────────────────┐");
-        System.out.println("│ QUERY 2: All CET stations grouped by country            │");
+        System.out.println("│ QUERY 2: All CET stations grouped by country             │");
         System.out.println("└──────────────────────────────────────────────────────────┘");
 
         String timeZone = "CET";
@@ -77,62 +94,83 @@ public class USEI06Demo {
         System.out.println("✅ Found stations in " + results.size() + " countries:");
 
         int totalStations = 0;
+        int countriesShown = 0;
+
         for (Map.Entry<String, List<TrainStation>> entry : results.entrySet()) {
             String country = entry.getKey();
             int count = entry.getValue().size();
             totalStations += count;
 
-            System.out.printf("   • %s: %d stations%n", country, count);
+            if (countriesShown < 10) { // Show first 10 countries
+                System.out.printf("   • %s: %d stations%n", country, count);
 
-            // Show first 3 stations as sample
-            if (count > 0) {
-                List<TrainStation> stations = entry.getValue();
-                int showCount = Math.min(3, count);
-                for (int i = 0; i < showCount; i++) {
-                    System.out.printf("      - %s%n", stations.get(i).getStation());
+                // Show first 3 stations as sample
+                if (count > 0 && countriesShown < 5) { // Detailed for first 5
+                    List<TrainStation> stations = entry.getValue();
+                    int showCount = Math.min(3, count);
+                    for (int i = 0; i < showCount; i++) {
+                        System.out.printf("      - %s%n", stations.get(i).getStation());
+                    }
+                    if (count > 3) {
+                        System.out.printf("      ... and %d more%n", count - 3);
+                    }
                 }
-                if (count > 3) {
-                    System.out.printf("      ... and %d more%n", count - 3);
-                }
+                countriesShown++;
             }
         }
 
-        System.out.println("📊 Total stations in CET: " + totalStations);
+        if (results.size() > 10) {
+            System.out.printf("   ... and %d more countries%n", results.size() - 10);
+        }
+
+        System.out.println("\n📊 Total stations in CET: " + totalStations);
         System.out.println("⏱️  Complexity: O(log n + m) where m = countries\n");
     }
 
     /**
-     * Sample Query 3: Find Portuguese stations in WET/GMT time zone
+     * Sample Query 3: Find stations in specific time zone and country
      * Demonstrates: Combined time zone + country filtering
      */
     private static void runSampleQuery3(TimeZoneIndexSystem system) {
         System.out.println("┌──────────────────────────────────────────────────────────┐");
-        System.out.println("│ QUERY 3: Portuguese stations in WET/GMT time zone       │");
+        System.out.println("│ QUERY 3: Stations by time zone and country               │");
         System.out.println("└──────────────────────────────────────────────────────────┘");
 
-        String timeZone = "WET/GMT";
-        String country = "PT";
-        List<TrainStation> results = system.findByTimeZoneAndCountry(timeZone, country);
+        // Try different combinations
+        String[][] queries = {
+                {"WET/GMT", "PT"}, // Portugal
+                {"CET", "FR"},     // France
+                {"CET", "DE"}      // Germany
+        };
 
-        System.out.printf("🇵🇹 Searching: %s, %s%n", timeZone, country);
-        System.out.println("✅ Found " + results.size() + " station(s):");
+        for (String[] query : queries) {
+            String timeZone = query[0];
+            String country = query[1];
+            List<TrainStation> results = system.findByTimeZoneAndCountry(timeZone, country);
 
-        // Show first 10 stations
-        int showCount = Math.min(10, results.size());
-        for (int i = 0; i < showCount; i++) {
-            TrainStation station = results.get(i);
-            System.out.printf("   %2d. %s", i + 1, station.getStation());
-            if (station.isMainStation()) System.out.print(" 🚉 [Main]");
-            if (station.isCity()) System.out.print(" 🏙️ [City]");
-            if (station.isAirport()) System.out.print(" ✈️ [Airport]");
-            System.out.println();
+            if (!results.isEmpty()) {
+                System.out.printf("\n🌍 Query: %s, %s%n", timeZone, country);
+                System.out.println("✅ Found " + results.size() + " station(s):");
+
+                // Show first 10 stations
+                int showCount = Math.min(10, results.size());
+                for (int i = 0; i < showCount; i++) {
+                    TrainStation station = results.get(i);
+                    System.out.printf("   %2d. %s", i + 1, station.getStation());
+                    if (station.isMainStation()) System.out.print(" 🚉");
+                    if (station.isCity()) System.out.print(" 🏙️");
+                    if (station.isAirport()) System.out.print(" ✈️");
+                    System.out.println();
+                }
+
+                if (results.size() > 10) {
+                    System.out.printf("   ... and %d more stations%n", results.size() - 10);
+                }
+                break; // Show only first successful query
+            }
         }
 
-        if (results.size() > 10) {
-            System.out.printf("   ... and %d more stations%n", results.size() - 10);
-        }
-
-        System.out.println("⏱️  Complexity: O(log n + log m)\n");
+        System.out.println("\n⏱️  Complexity: O(log n + log m)\n");
     }
 
     /**
@@ -141,10 +179,10 @@ public class USEI06Demo {
      */
     private static void runSampleQuery4(TimeZoneIndexSystem system) {
         System.out.println("┌──────────────────────────────────────────────────────────┐");
-        System.out.println("│ QUERY 4: Windowed query - CET and WET/GMT zones         │");
+        System.out.println("│ QUERY 4: Windowed query - Multiple time zones            │");
         System.out.println("└──────────────────────────────────────────────────────────┘");
 
-        String[] zones = {"CET", "WET/GMT"};
+        String[] zones = {"CET", "WET/GMT", "EET"};
         Map<String, Map<String, List<TrainStation>>> results =
                 system.windowedQuery(zones);
 
@@ -185,51 +223,65 @@ public class USEI06Demo {
     }
 
     /**
-     * Sample Query 5: Find stations in latitude range (Southern Portugal)
+     * Sample Query 5: Find stations in latitude range
      * Demonstrates: Range query capabilities
      */
     private static void runSampleQuery5(TimeZoneIndexSystem system) {
         System.out.println("┌──────────────────────────────────────────────────────────┐");
-        System.out.println("│ QUERY 5: Stations in latitude range (37°N - 38°N)       │");
+        System.out.println("│ QUERY 5: Stations in latitude range                      │");
         System.out.println("└──────────────────────────────────────────────────────────┘");
 
-        double minLat = 37.0;
-        double maxLat = 38.0;
-        List<TrainStation> results = system.findByLatitudeRange(minLat, maxLat);
+        // Different regions to try
+        double[][] ranges = {
+                {37.0, 39.0},  // Southern Europe (Portugal/Spain)
+                {51.0, 52.0},  // Central Europe (London/Amsterdam)
+                {48.0, 49.0}   // Central Europe (Paris/Munich)
+        };
 
-        System.out.printf("📐 Range: %.1f°N to %.1f°N (Southern Portugal/Spain)%n",
-                minLat, maxLat);
-        System.out.println("✅ Found " + results.size() + " station(s):");
+        for (double[] range : ranges) {
+            double minLat = range[0];
+            double maxLat = range[1];
+            List<TrainStation> results = system.findByLatitudeRange(minLat, maxLat);
 
-        // Group by country for better visualization
-        Map<String, Long> byCountry = new HashMap<>();
-        for (TrainStation station : results) {
-            byCountry.merge(station.getCountry(), 1L, Long::sum);
+            if (!results.isEmpty()) {
+                System.out.printf("\n📐 Range: %.1f°N to %.1f°N%n", minLat, maxLat);
+                System.out.println("✅ Found " + results.size() + " station(s):");
+
+                // Group by country for better visualization
+                Map<String, Long> byCountry = new HashMap<>();
+                for (TrainStation station : results) {
+                    byCountry.merge(station.getCountry(), 1L, Long::sum);
+                }
+
+                System.out.println("\n   Distribution by country:");
+                byCountry.entrySet().stream()
+                        .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
+                        .limit(5) // Top 5 countries
+                        .forEach(entry -> {
+                            System.out.printf("   • %s: %d stations%n",
+                                    entry.getKey(), entry.getValue());
+                        });
+
+                // Show sample stations
+                System.out.println("\n   Sample stations:");
+                results.stream()
+                        .limit(5)
+                        .forEach(station -> {
+                            System.out.printf("   • %s (%s) - %.4f°N%n",
+                                    station.getStation(),
+                                    station.getCountry(),
+                                    station.getLatitude());
+                        });
+
+                if (results.size() > 5) {
+                    System.out.printf("   ... and %d more%n", results.size() - 5);
+                }
+                break; // Show only first successful range
+            }
         }
 
-        System.out.println("\n   Distribution by country:");
-        byCountry.entrySet().stream()
-                .sorted((e1, e2) -> Long.compare(e2.getValue(), e1.getValue()))
-                .forEach(entry -> {
-                    System.out.printf("   • %s: %d stations%n",
-                            entry.getKey(), entry.getValue());
-                });
-
-        // Show sample stations
-        System.out.println("\n   Sample stations:");
-        results.stream()
-                .limit(5)
-                .forEach(station -> {
-                    System.out.printf("   • %s (%s) - %.4f°N%n",
-                            station.getStation(),
-                            station.getCountry(),
-                            station.getLatitude());
-                });
-
-        if (results.size() > 5) {
-            System.out.printf("   ... and %d more%n", results.size() - 5);
-        }
-
-        System.out.println("⏱️  Complexity: O(log n + k) where k = matches\n");
+        System.out.println("\n⏱️  Complexity: O(n) - full traversal required\n");
     }
 }
+
+
