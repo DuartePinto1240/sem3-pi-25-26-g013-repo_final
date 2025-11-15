@@ -30,6 +30,18 @@ public class Utils {
         }
     }
 
+    public static double readDoubleFromConsole(String prompt) {
+        while (true) {
+            try {
+                System.out.print(prompt);
+                String line = readLineFromConsole("");
+                return Double.parseDouble(line.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Valor inválido. Introduza um número (double).");
+            }
+        }
+    }
+
     /**
      * Displays a list of objects and prompts the user to select one of them.
      *

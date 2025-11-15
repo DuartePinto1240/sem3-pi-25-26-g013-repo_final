@@ -4,59 +4,49 @@
 
 ### 1.1. User Story Description
 
-Planners need to search for railway stations within specific **geographical areas** (rectangular regions defined by latitude and longitude bounds). The system must leverage the BST/AVL index structures created in **USEI06** to perform efficient spatial queries that return stations located within a given geographical bounding box.
-
-Unlike USEI06 which focuses on time-zone-based queries, USEI08 enables:
-- **Geographical area searches** using latitude and longitude ranges
-- **Rectangular bounding box queries** (minLat, maxLat, minLon, maxLon)
-- **Filtering and sorting** results by country or time-zone group
-- **Efficient range queries** on the latitude and longitude index trees
-
-Since the dataset contains ~64k stations across Europe, sequential scans are too slow. The indexed structures must support logarithmic-time range queries.
+Planners need to search for railway stations within specific **geographical areas** defined by latitude and longitude.  
+To support efficient spatial queries over ~62k European stations, the system must use a **2D KD-tree** (not the structures from USEI06), enabling pruning during range search and avoiding full dataset scans.
 
 **User Story:**
-> As a planner, I want to search for stations within a specific geographical area (defined by latitude and longitude bounds), using the indexed structures from USEI06, so I can efficiently identify all stations located in a rectangular region of interest without scanning the entire dataset.
+> As a planner, I want to query a 2D KD-tree for all stations in a latitude/longitude range, with optional filters, so I can extract relevant stations quickly.
+
+USEI08 expands previous work by enabling:
+- **Geographical bounding box queries**
+- **Efficient 2D spatial search using KD-tree pruning**
+- **Optional filters**: `isCity`, `isMainStation`, and `country`
+- **Complete result listing for interactive queries**
+- **Sample predefined queries** demonstrating usage
+- **Temporal complexity analysis**
 
 ---
 
 ### 1.2. Customer Specifications and Clarifications
 
-**From the specifications document:**
+**From the specification document:**
 
-> Geographical area searches are defined by a **rectangular bounding box** with:
-> - Minimum and maximum **latitude** bounds (`minLat`, `maxLat`)
-> - Minimum and maximum **longitude** bounds (`minLon`, `maxLon`)
+> Search region is a rectangular bounding box defined by:
+> - `latMin`, `latMax` (latitude range)
+> - `lonMin`, `lonMax` (longitude range)
 
-> A station is included in the results if:
-> - `minLat ≤ station.latitude ≤ maxLat` AND
-> - `minLon ≤ station.longitude ≤ maxLon`
+> A station matches if:  
+> `latMin ≤ station.lat ≤ latMax`  
+> AND  
+> `lonMin ≤ station.lon ≤ lonMax`
 
-> The search must use the **latitude and longitude BST/AVL trees** from USEI06 to perform efficient range queries.
+> The search must use a **2D spatial indexing structure** (KD-tree) to prune branches outside the search region.
 
-> Results must be sortable by:
-> - Latitude ASC/DESC
-> - Longitude ASC/DESC
-> - Country ASC, then station name ASC
-> - Time-zone group ASC, then country ASC, then name ASC
+**Optional filters:**
+- `isCity` → true / false / any
+- `isMainStation` → true / false / any
+- `country` → PT / ES / ALL
 
-> Multiple stations may share the same coordinates; all must be included in results.
-
-**From client clarifications:**
-
-> **Q:** How is the geographical area defined?  
-> **A:** As a rectangular bounding box: `(minLat, maxLat, minLon, maxLon)`. Example: stations in Portugal could use `minLat=36.0, maxLat=42.2, minLon=-9.5, maxLon=-6.2`.
-
-> **Q:** What happens if the bounding box crosses the -180/180 longitude boundary?  
-> **A:** In this version, assume bounding boxes do not cross the antimeridian. For crossing cases, split into two queries.
-
-> **Q:** How should results be sorted by default?  
-> **A:** By latitude ASC, then longitude ASC, then country ASC, then station name ASC.
-
-> **Q:** Can I filter results by country or time-zone after the geographical search?  
-> **A:** Yes. The system must support post-filtering of geographical results by country and/or time-zone group.
-
-> **Q:** What if no stations are found in the area?  
-> **A:** Return an empty list with a clear message: "No stations found in the specified geographical area."
+**Clarifications:**
+- Bounding boxes do **not** cross the antimeridian (no wrap-around).
+- Sorting is **not required** for USEI08; listing order is based on KD-tree traversal.
+- UI prompts are not part of the system behavior (excluded from SSD).
+- KD-tree must contain **full TrainStation objects**, not only coordinates.
+- All coordinates must be validated (`lat ∈ [-90,90]`, `lon ∈ [-180,180]`).
+- If no stations match, return **0 results**.
 
 ---
 
@@ -64,78 +54,70 @@ Since the dataset contains ~64k stations across Europe, sequential scans are too
 
 | ID | Requirement |
 |----|-------------|
-| **AC0** | The system must reuse the BST/AVL index structures (latitude tree, longitude tree, time-zone tree) created in **USEI06**. |
-| **AC1** | Geographical area searches must accept four parameters: `minLat`, `maxLat`, `minLon`, `maxLon` (all doubles). |
-| **AC2** | The search must return all stations where: `minLat ≤ latitude ≤ maxLat` AND `minLon ≤ longitude ≤ maxLon`. |
-| **AC3** | The search algorithm must leverage the latitude and longitude trees for efficient range queries (O(log n + k) where k is the number of results). |
-| **AC4** | Results must be sortable by latitude ASC/DESC, longitude ASC/DESC, country ASC, or time-zone group ASC. |
-| **AC5** | When sorting by default (latitude ASC → longitude ASC), stations must be deterministically ordered. |
-| **AC6** | The system must support optional filtering of geographical results by `country` (case-insensitive) and/or `timeZoneGroup`. |
-| **AC7** | If no stations match the geographical area, return an empty list with message: "No stations found in the specified geographical area." |
-| **AC8** | Boundary validation: `minLat ≤ maxLat` and `minLon ≤ maxLon` must be enforced. Invalid bounds return an error. |
-| **AC9** | Tests must validate: correct range query behavior, sorting correctness, filtering by country/TZ, edge cases (empty area, single point, boundary conditions). |
+| **AC1** | The system must build a **2D KD-tree** containing all stations from the CSV. |
+| **AC2** | Inputs: `latMin`, `latMax`, `lonMin`, `lonMax` must be validated. |
+| **AC3** | A station matches if inside the bounding box. |
+| **AC4** | Optional filters: `isCity`, `isMainStation`, `country`. |
+| **AC5** | Interactive query must display **all stations found**. |
+| **AC6** | Sample queries must display up to 10 stations + “…and X more”. |
+| **AC7** | Must print KD-tree temporal complexity analysis. |
+| **AC8** | Invalid ranges must be rejected (`latMin > latMax`, etc.). |
+| **AC9** | JUnit tests must load real CSV data (no mock data). |
 
 ---
 
 ### 1.4. Found Out Dependencies
 
-**Prerequisites:**
-- **USEI06** — Time-Zone Index and Windowed Queries: The BST/AVL trees for latitude, longitude, and time-zone must already be constructed and populated.
-
 **Uses:**
-- **Latitude BST/AVL Tree** — for efficient latitude range queries
-- **Longitude BST/AVL Tree** — for efficient longitude range queries
-- **Time-Zone BST/AVL Tree** — for optional post-filtering by time-zone group
+- `TrainStation`
+- `TrainStationLoader`
+- `KDTreeStations`
+- `USEI08Controller`
+- `USEI08UI`
 
-**Does NOT:**
-- Modify station data or index structures (read-only queries)
-- Create new index structures (reuses existing ones)
+**Does not use:**
+- USEI06 AVL/BST structures
+- USEI07 TwoDTree (cannot be modified, incomplete data)
 
 **Interacts with:**
-- **USEI06** — provides the index structures
-- **USEI09–USEI10** — future spatial queries (e.g., nearest neighbor, distance-based searches)
+- Console UI (only for input prompts; not part of system requirements)
 
 ---
 
 ### 1.5. Input and Output Data
 
-#### Input Data:
+#### Input Data
 
 **Query Parameters:**
-- `minLat` (double) — minimum latitude bound ∈ [-90, 90]
-- `maxLat` (double) — maximum latitude bound ∈ [-90, 90]
-- `minLon` (double) — minimum longitude bound ∈ [-180, 180]
-- `maxLon` (double) — maximum longitude bound ∈ [-180, 180]
-- `sortBy` (optional) — sorting criterion: `"LATITUDE"`, `"LONGITUDE"`, `"COUNTRY"`, `"TIMEZONE"` (default: `"LATITUDE"`)
-- `sortOrder` (optional) — `"ASC"` or `"DESC"` (default: `"ASC"`)
-- `filterCountry` (optional) — filter results by country name (case-insensitive)
-- `filterTimeZone` (optional) — filter results by time-zone group (case-insensitive)
+- `latMin` (double) — ∈ [-90, 90]
+- `latMax` (double) — ∈ [-90, 90]
+- `lonMin` (double) — ∈ [-180, 180]
+- `lonMax` (double) — ∈ [-180, 180]
+- Optional filters:
+  - `isCity` → Boolean or null
+  - `isMainStation` → Boolean or null
+  - `country` → `"PT"`, `"ES"`, or null
 
-**Index Data (from USEI06):**
-- Pre-built BST/AVL trees indexing stations by latitude, longitude, and time-zone group.
+#### Output Data
 
-#### Output Data:
+- **List\<TrainStation\>** inside the bounding box and satisfying filters
+- For interactive query: **all stations printed**
+- For sample queries: up to 10 stations
+- Complexity text block printed
 
-**Query Results:**
-- List of `Station` objects (or references) matching the geographical area.
+**Example:**
 
-**Each Station object contains:**
-- `stationId` (if applicable)
-- `name` (String)
-- `country` (String)
-- `timeZoneGroup` (String)
-- `latitude` (double)
-- `longitude` (double)
-
-**Result Format:**
-- Sorted collection (e.g., `List<Station>`) ordered according to `sortBy` and `sortOrder`
-- If empty: message "No stations found in the specified geographical area."
-
-**Example Query:**
 ```
-Input: minLat=40.0, maxLat=42.0, minLon=-9.0, maxLon=-6.0
-       filterCountry="Portugal", sortBy="LATITUDE", sortOrder="ASC"
-Output: List of stations in Portugal's mainland region, sorted by latitude ascending
+Input:
+  latMin = 37
+  latMax = 40
+  lonMin = -9
+  lonMax = -6
+  isCity = true
+  country = PT
+
+Output:
+  34 matching stations printed in full
 ```
 
 ---
@@ -148,34 +130,30 @@ Output: List of stations in Portugal's mainland region, sorted by latitude ascen
 
 ### 1.7. Other Relevant Remarks
 
-**Algorithm Design:**
-- Use **range queries** on the latitude and longitude trees to find candidate stations.
-- Perform **intersection** of latitude and longitude results to get stations within the bounding box.
-- Optimize by querying the smaller result set first (if lat range has fewer results, start there).
+#### Algorithm Design
+- KD-tree insertion: alternating dimension (lon/lat)
+- Range search with pruning:
+  - if splitting by longitude → prune subtrees outside `[lonMin, lonMax]`
+  - if splitting by latitude → prune subtrees outside `[latMin, latMax]`
 
-**Performance Requirements:**
-- Range queries must be **O(log n + k)** where n is the number of stations and k is the number of results.
-- For empty or very large bounding boxes, the algorithm should still perform efficiently.
-- Memory usage must be minimized (store references, not copies).
+#### Performance
+- Build: **O(N log N)**
+- Range search (average): **O(k + √N)**
+- Worst case: **O(N)**
+- Filter application: **O(k)**
 
-**Implementation Constraints:**
-- Must use **class-developed BST/AVL trees** from USEI06 (no Java built-in TreeMap or TreeSet).
-- No Java Stream API allowed — use loops, conditionals, and collections.
-- Sorting must be implemented using the tree structures or primitive sorting algorithms.
+#### Testing Requirements
+- Must load real CSV dataset
+- Cover cases:
+  - Empty results
+  - Large bounding box
+  - Single-point bounding box
+  - Country filter
+  - isCity/isMainStation filters
+  - Edge values (±90, ±180)
 
-**Testing Requirements:**
-- **TDD mandatory** — write tests before implementation.
-- Test cases must cover:
-  - Normal geographical area queries
-  - Edge cases: single point, empty area, boundary conditions
-  - Sorting by different criteria
-  - Filtering by country and time-zone
-  - Invalid input handling (e.g., minLat > maxLat)
-  - Performance with large result sets
-- **Code coverage ≥ 80%** (JaCoCo verification).
-
-**Error Handling:**
-- Invalid bounding box (minLat > maxLat or minLon > maxLon) → throw `IllegalArgumentException`
-- Invalid latitude/longitude values (outside [-90,90] or [-180,180]) → throw `IllegalArgumentException`
-- Empty index trees → return empty list with appropriate message
+#### Constraints
+- Cannot modify professor’s AVL/BST/TwoDTree classes
+- Must use project-provided TrainStation and loader
+- No Streams API (loop-based implementation expected)
 
