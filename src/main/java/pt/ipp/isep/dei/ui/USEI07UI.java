@@ -14,8 +14,12 @@ import java.util.Set;
  */
 public class USEI07UI implements Runnable {
 
-    // Defina o caminho para o seu ficheiro CSV aqui
-    private static final String CSV_PATH = "train_stations_europe.csv";
+    // --- CAMINHO ATUALIZADO AQUI ---
+    /**
+     * Define o caminho para o ficheiro CSV, assumindo que a pasta
+     * "train_station_dataset_v2" está na raiz do projeto.
+     */
+    private static final String CSV_PATH = "train_station_dataset_v2/train_stations_europe.csv";
 
     @Override
     public void run() {

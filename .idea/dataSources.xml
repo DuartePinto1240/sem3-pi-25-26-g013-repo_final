@@ -20,6 +20,9 @@
       <synchronize>true</synchronize>
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/docs/system-documentation/global-artifacts/01.requirements-engineering/Logical model/projeto.vpp</jdbc-url>
+      <jdbc-additional-properties>
+        <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
+      </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
     <data-source source="LOCAL" name="untitled.vpp [2]" uuid="485870ad-9ea8-4eed-83ce-b8db6b016c01">
