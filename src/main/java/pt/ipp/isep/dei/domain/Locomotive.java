@@ -1,48 +1,48 @@
 package main.java.pt.ipp.isep.dei.domain;
 
 /**
- * Represents a locomotive in the railway system.
- * <p>
- * A {@code Locomotive} has a unique identifier, model, maximum speed,
- * weight in tons, and a flag indicating whether it is electric.
- * </p>
+ * Represents a locomotive in the railway network.
+ *
+ * Fields supported by the current CSV:
+ *  - id
+ *  - model
+ *  - maxSpeedKmH
+ *  - weightTons
+ *  - electric (true/false)
+ *  - power (e.g. kW)
+ *
+ * Extra attributes in the CSV such as tractiveEffort / tractiveEffortStart
+ * are currently ignored by the domain, but can be added later if needed.
  */
 public class Locomotive {
 
-    /** Unique identifier for the locomotive. */
     private final String id;
-
-    /** Model name of the locomotive. */
     private final String model;
-
-    /** Maximum speed in kilometers per hour. */
     private final double maxSpeedKmH;
-
-    /** Weight of the locomotive in tons. */
     private final double weightTons;
-
-    /** Whether the locomotive is electric. */
     private final boolean electric;
 
+    /** Power of the locomotive (e.g. in kW). */
+    private final double power;
+
     /**
-     * Constructs a new {@code Locomotive} with the specified details.
-     *
-     * @param id           the unique identifier of the locomotive (must not be null or empty)
-     * @param model        the model name of the locomotive
-     * @param maxSpeedKmH  maximum speed in km/h (must be positive)
-     * @param weightTons   weight in tons (must be positive)
-     * @param electric     true if the locomotive is electric, false otherwise
-     * @throws IllegalArgumentException if {@code id} is null/empty, or if {@code maxSpeedKmH} or {@code weightTons} are non-positive
+     * Full constructor including power.
      */
-    public Locomotive(String id, String model, double maxSpeedKmH, double weightTons, boolean electric) {
-        if (id == null || id.trim().isEmpty()) {
-            throw new IllegalArgumentException("Locomotive ID must not be empty.");
+    public Locomotive(String id,
+                      String model,
+                      double maxSpeedKmH,
+                      double weightTons,
+                      boolean electric,
+                      double power) {
+
+        if (id == null || id.isBlank()) {
+            throw new IllegalArgumentException("Locomotive id must not be null or empty.");
         }
-        if (maxSpeedKmH <= 0) {
-            throw new IllegalArgumentException("Max Speed must be a positive value.");
+        if (model == null || model.isBlank()) {
+            throw new IllegalArgumentException("Locomotive model must not be null or empty.");
         }
-        if (weightTons <= 0) {
-            throw new IllegalArgumentException("Weight must be a positive value.");
+        if (maxSpeedKmH <= 0 || weightTons <= 0) {
+            throw new IllegalArgumentException("Max speed and weight must be positive.");
         }
 
         this.id = id;
@@ -50,41 +50,51 @@ public class Locomotive {
         this.maxSpeedKmH = maxSpeedKmH;
         this.weightTons = weightTons;
         this.electric = electric;
+        this.power = power;
     }
 
-    /** @return the unique identifier of the locomotive */
+    /**
+     * Backwards-compatible constructor without power.
+     * Power will default to 0.0.
+     */
+    public Locomotive(String id,
+                      String model,
+                      double maxSpeedKmH,
+                      double weightTons,
+                      boolean electric) {
+        this(id, model, maxSpeedKmH, weightTons, electric, 0.0);
+    }
+
     public String getId() {
         return id;
     }
 
-    /** @return the model name of the locomotive */
     public String getModel() {
         return model;
     }
 
-    /** @return the maximum speed of the locomotive in km/h */
     public double getMaxSpeedKmH() {
         return maxSpeedKmH;
     }
 
-    /** @return the weight of the locomotive in tons */
     public double getWeightTons() {
         return weightTons;
     }
 
-    /** @return true if the locomotive is electric, false otherwise */
     public boolean isElectric() {
         return electric;
     }
 
     /**
-     * Returns a string representation of the locomotive, including model, ID,
-     * maximum speed, weight, and electric status.
-     *
-     * @return string representation of the locomotive
+     * Returns the locomotive power (e.g. in kW). May be 0.0 if not provided by the CSV.
      */
+    public double getPower() {
+        return power;
+    }
+
     @Override
     public String toString() {
+        // Mantemos a mesma apresentação usada na UI para não mudar nada visualmente.
         return String.format("%s (%s, %.0f km/h, %.0f tons, electric=%s)",
                 model, id, maxSpeedKmH, weightTons, electric);
     }

@@ -1,7 +1,6 @@
 package main.java.pt.ipp.isep.dei.repository;
 
 import main.java.pt.ipp.isep.dei.domain.Locomotive;
-import main.java.pt.ipp.isep.dei.repository.LocomotiveRepository;
 import main.java.pt.ipp.isep.dei.util.CsvReaderUtil;
 
 import java.util.ArrayList;
@@ -10,78 +9,85 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Repository for {@link Locomotive} entities that loads data from a CSV file.
- * This class is responsible for reading locomotive data from a specified CSV file
- * and providing access to that data.
+ * CSV-based implementation of {@link LocomotiveRepository}.
+ *
+ * Expected CSV header (locomotives.csv):
+ *
+ *   id,model,maxSpeedKmH,weightTons,isElectric,power,tractiveEffort,tractiveEffortStart
+ *
+ * Only the first 6 columns are used at the moment. The last two are currently ignored
+ * but can be mapped in the domain later if needed.
  */
 public class CsvLocomotiveRepository implements LocomotiveRepository {
 
-    /**
-     * A map to store the locomotives, with the locomotive ID as the key.
-     */
-    private final Map<String, Locomotive> locomotives = new HashMap<>();
+    private final Map<String, Locomotive> locomotivesById = new HashMap<>();
 
-    /**
-     * Constructs a CsvLocomotiveRepository and initializes it by loading data
-     * from the given CSV file path.
-     *
-     * @param filePath The path to the CSV file containing locomotive data.
-     */
     public CsvLocomotiveRepository(String filePath) {
-        loadLocomotives(filePath);
+        loadFromCsv(filePath);
     }
 
-    /**
-     * Loads locomotive data from a CSV file into the repository.
-     * Each row in the CSV is expected to represent a locomotive.
-     * The method handles rows with incomplete data by creating a locomotive
-     * with default values.
-     *
-     * @param filePath The path to the CSV file.
-     */
-    private void loadLocomotives(String filePath) {
+    private void loadFromCsv(String filePath) {
         List<String[]> records = CsvReaderUtil.readCsvFile(filePath);
+
         for (String[] record : records) {
-            if (record.length == 0 || record[0].trim().isEmpty()) continue;
-
-            String id = record[0].trim();
-            Locomotive locomotive;
-
-            // --- LÓGICA DE ROBUSTEZ ---
-            if (record.length >= 5) {
-                String model = record[1].trim();
-                double maxSpeed = Double.parseDouble(record[2].trim());
-                double weight = Double.parseDouble(record[3].trim());
-                boolean isElectric = record[4].trim().equals("1");
-                locomotive = new Locomotive(id, model, maxSpeed, weight, isElectric);
-            } else {
-                // Valores padrão para uma locomotiva com dados incompletos
-                locomotive = new Locomotive(id, "Modelo Desconhecido", 120, 50, false);
+            // Linha muito curta → ignora
+            if (record.length < 5) {
+                continue;
             }
 
-            locomotives.put(id, locomotive);
+            String id = record[0].trim();
+            String model = record[1] != null ? record[1].trim() : "";
+
+            // Ignorar header ou linhas sem modelo
+            if ("id".equalsIgnoreCase(id) || "model".equalsIgnoreCase(model) || model.isBlank()) {
+                continue;
+            }
+
+            double maxSpeed = parseDoubleSafely(record[2].trim(), 120.0);
+            double weight = parseDoubleSafely(record[3].trim(), 50.0);
+
+            String electricStr = record[4].trim();
+            boolean isElectric =
+                    "1".equals(electricStr) ||
+                            "true".equalsIgnoreCase(electricStr);
+
+            // power é opcional (6ª coluna). Se não existir, fica 0.0
+            double power = 0.0;
+            if (record.length >= 6) {
+                String powerStr = record[5].trim();
+                if (!powerStr.isEmpty()) {
+                    power = parseDoubleSafely(powerStr, 0.0);
+                }
+            }
+
+            Locomotive locomotive = new Locomotive(
+                    id,
+                    model,
+                    maxSpeed,
+                    weight,
+                    isElectric,
+                    power
+            );
+
+            locomotivesById.put(id, locomotive);
         }
     }
 
-    /**
-     * Finds a locomotive by its unique identifier.
-     *
-     * @param id The unique ID of the locomotive to find.
-     * @return The {@link Locomotive} object if found, otherwise {@code null}.
-     */
-    @Override
-    public Locomotive findById(String id) {
-        return locomotives.get(id);
+    private double parseDoubleSafely(String text, double defaultValue) {
+        try {
+            return Double.parseDouble(text);
+        } catch (NumberFormatException ex) {
+            return defaultValue;
+        }
     }
 
-    /**
-     * Retrieves all locomotives stored in the repository.
-     *
-     * @return A {@link List} containing all {@link Locomotive} objects.
-     * The list will be empty if no locomotives are loaded.
-     */
     @Override
     public List<Locomotive> findAll() {
-        return new ArrayList<>(locomotives.values());
+        return new ArrayList<>(locomotivesById.values());
+    }
+
+    @Override
+    public Locomotive findById(String id) {
+        return locomotivesById.get(id);
     }
 }

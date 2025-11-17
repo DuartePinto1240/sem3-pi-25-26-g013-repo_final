@@ -6,3 +6,7 @@ lineId,startStationId,endStationId
 5,17,21
 6,21,16
 7,16,11
+21,13,43
+22,43,45
+23,45,48
+24,48,50

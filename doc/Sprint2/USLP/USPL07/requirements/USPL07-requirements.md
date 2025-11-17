@@ -29,28 +29,39 @@ The scheduler must support:
 > - An assigned locomotive (or set of locomotives)
 > - A route (simple or complex)
 > - A scheduled departure time
->
-> The scheduler must validate that:
-> - All stations in the route exist and are connected
-> - The locomotive(s) are compatible with the route's gauge requirements
-> - There are no scheduling conflicts (overlapping routes on the same line segments at the same time)
 
-**From the client clarifications:**
+> The system must compute **travel speed per line segment** based on:
+> - the **segment speed limit**,
+> - the **combined power of the locomotives**,
+> - the **total train weight** (locomotives + wagons, loaded or empty).
 
-> **Q:** What defines a simple route versus a complex route?  
-> **A:** A simple route has exactly two stations (origin and destination) with a direct connection. A complex route has three or more stations with intermediate stops.
+> The scheduler must indicate **estimated passage times** for each station or relevant point along the route and must also compute crossing operations when necessary.
 
-> **Q:** Can a train have multiple locomotives?  
-> **A:** Yes, multiple locomotives can be coupled together to provide sufficient power for the train.
+---
 
-> **Q:** What happens if a route validation fails?  
-> **A:** The train should not be added to the dispatch list, and an error message should be displayed indicating the validation failure reason.
+### Additional Clarifications (added for full alignment with the sprint requirement)
 
-> **Q:** Should the scheduler prevent conflicts automatically?  
-> **A:** In this version, the scheduler should warn about potential conflicts but allows the Freight Manager to make the final decision.
+#### **Single-track line behaviour**
+- A **single-track segment** cannot be occupied simultaneously by two trains in opposite directions.
+- When two trains would conflict on a single-track segment, a **crossing** must be scheduled.
+- A crossing may only occur at:
+  - a **siding**, or
+  - the **station immediately before** the conflicting segment.
 
-> **Q:** How is estimated travel time calculated for complex routes?  
-> **A:** The system should sum the travel times between consecutive stations in the route using the functionality from **USLP03**.
+#### **Crossing resolution**
+- When a conflict is detected:
+  - The scheduler must determine the correct crossing point.
+  - One train may need to **wait**.
+  - The waiting time must be **propagated forward**, adjusting all future passage times.
+  - The system must record the crossing as a **Crossing Operation**.
+
+#### **Passage Times**
+For every train, the scheduler must compute:
+- time of passage at each station,
+- time of passage at sidings,
+- estimated arrival time at final destination.
+
+These outputs must be shown clearly in the final schedule.
 
 ---
 
@@ -69,75 +80,83 @@ The scheduler must support:
 | **AC9** | The system must warn about potential scheduling conflicts (if multiple trains use the same line segment at overlapping times). |
 | **AC10** | Invalid trains (failed validation) must not be added to the dispatch list, and appropriate error messages must be shown. |
 
+#### ✔ **New Acceptance Criteria added (per sprint requirement)**
+
+| ID | Requirement |
+|----|-------------|
+| **AC11** | The scheduler must compute the **effective travel speed per segment** using: speed limit, combined locomotive power, and total train weight. |
+| **AC12** | The system must compute and display **passage times at all route points** (stations and sidings). |
+| **AC13** | The scheduler must detect **conflicts on single-track segments** and determine where the crossing must occur (siding or previous station). |
+| **AC14** | When a crossing is required, the system must compute **waiting time** and adjust the affected train’s schedule, propagating the delay. |
+| **AC15** | The system must output **Crossing Operations**, including location, trains involved, waiting train, and waiting duration. |
+
 ---
 
-### 1.4. Found Out Dependencies
+## 1.4. Found Out Dependencies
 
 **Prerequisites:**
-- **USLP03** — Calculate estimated travel time between two stations: This functionality must be reused to calculate travel times for each segment in a route.
+- **USLP03** — Calculate estimated travel time between two stations. Must be reused for segment-by-segment calculations.
 
 **Uses:**
 - Station data (from database or domain model)
 - Locomotive data (from domain model)
-- Line segment connectivity information
+- Line segment connectivity and speed limits
 - Route validation logic
-
-**Interacts with:**
-- Domain model entities: `Train`, `Route`, `Station`, `Locomotive`, `LineSegment`
-- USLP03 functionality for travel time estimation
+- Track type (single/double)
+- Siding information
 
 ---
 
-### 1.5. Input and Output Data
+## 1.5. Input and Output Data
 
-#### Input Data:
+### **Input Data**
 
 **For each train to be dispatched:**
-- `trainId` (String) — unique identifier for the train
-- `routeType` (String) — `"SIMPLE"` or `"COMPLEX"`
-- `originStation` (String) — starting station name or ID
-- `destinationStation` (String) — final destination station name or ID
-- `intermediateStations` (List<String>, optional) — list of intermediate stations (only for complex routes)
-- `locomotiveIds` (List<String>) — one or more locomotive identifiers
-- `departureTime` (LocalDateTime or String) — scheduled departure time
+- `trainId` (String)
+- `routeType` (String — "SIMPLE" or "COMPLEX")
+- `originStation`
+- `destinationStation`
+- `intermediateStations` (List<String>)
+- `locomotiveIds` (List<String>)
+- `departureTime`
 
-**Route Configuration:**
-- For simple routes: origin → destination
-- For complex routes: origin → [intermediate1, intermediate2, ...] → destination
+---
 
-#### Output Data:
+### **Output Data**
 
-**Dispatch Schedule:**
-- List of scheduled trains with:
-  - `trainId`
-  - `route` (complete path with all stations)
-  - `locomotives` (list of assigned locomotives)
-  - `departureTime`
-  - `estimatedArrivalTime` (calculated using USLP03)
-  - `totalEstimatedTravelTime`
-  - `status` (VALIDATED, CONFLICT_WARNING, INVALID)
+#### **Original Output (kept exactly as written)**
 
-**Validation Messages:**
-- Success: "Train [trainId] added to dispatch schedule."
-- Error: "Train [trainId] validation failed: [reason]"
-- Warning: "Potential scheduling conflict detected for train [trainId]"
+- `trainId`
+- `route`
+- `locomotives`
+- `departureTime`
+- `estimatedArrivalTime`
+- `totalEstimatedTravelTime`
+- `status` (VALIDATED, CONFLICT_WARNING, INVALID)
 
-**Example Output:**
+---
+
+### **Additional Required Output (added for sprint compliance)**
+
+#### **Passage Times**
 ```
-Dispatch Schedule:
-- Train T001: Porto → Lisboa (Simple)
-  Locomotives: L123, L124
-  Departure: 2025-10-15 08:00
-  Estimated Arrival: 2025-10-15 12:30
-  Travel Time: 4h 30m
-  Status: VALIDATED
+"passageTimes": [
+  { "point": "Station A", "time": "08:00" },
+  { "point": "Siding 12", "time": "08:18" },
+  { "point": "Station B", "time": "08:43" }
+]
+```
 
-- Train T002: Braga → Porto → Aveiro → Coimbra (Complex)
-  Locomotives: L125
-  Departure: 2025-10-15 09:00
-  Estimated Arrival: 2025-10-15 14:15
-  Travel Time: 5h 15m
-  Status: CONFLICT_WARNING
+#### **Crossing Operations**
+```
+"crossingOperations": [
+  {
+    "location": "Siding 12",
+    "involvedTrains": ["T002", "T005"],
+    "waitingTrainId": "T005",
+    "waitingDuration": "00:07:30"
+  }
+]
 ```
 
 ---
@@ -151,30 +170,42 @@ Dispatch Schedule:
 ### 1.7. Other Relevant Remarks
 
 **Route Validation:**
-- Simple routes: Check if origin and destination are directly connected via line segments.
-- Complex routes: Check if each consecutive pair of stations (origin→station1, station1→station2, ..., stationN→destination) is connected.
+- Simple routes: verify direct connection between origin and destination using existing line segments.
+- Complex routes: verify that every consecutive station pair in the route is connected.
+- All stations and line segments must exist in the system and match the locomotive gauge.
 
-**Travel Time Calculation:**
-- For simple routes: Use USLP03 directly (origin → destination).
-- For complex routes: Sum travel times for each segment:
-  - origin → intermediate1
-  - intermediate1 → intermediate2
-  - ...
-  - intermediateN → destination
+**Travel Time and Speed Model:**
+- Travel time for each segment is based on **USLP03**, but must respect the **effective speed** determined by:
+  - the segment’s speed limit,
+  - the combined locomotive power,
+  - the total train weight (locomotives + wagons).
+- The effective speed is the **minimum** imposed by these constraints.
+- For complex routes, total travel time is obtained by summing the travel time of each segment.
+
+**Single-Track Constraints and Crossings:**
+- On **single-track segments**, two trains cannot travel in opposite directions at overlapping times.
+- If a conflict exists, the system must determine a valid **crossing point**, which can only be:
+  - a **siding**, or
+  - the **station before** the conflicting segment.
+- One train may need to **wait**, and any waiting time must be propagated to all subsequent passage times.
+
+**Passage Times Output:**
+- For each train, the scheduler must output estimated times of passage at:
+  - all stations in the route,
+  - any sidings used,
+  - the final destination.
+
+**Crossing Operations:**
+- When a crossing is required, the scheduler must register:
+  - where the crossing occurs,
+  - which trains are involved,
+  - which train waits and for how long.
 
 **Scheduling Conflicts:**
-- Check if any two trains use the same line segment during overlapping time windows.
-- Warning only (not blocking) — Freight Manager decides whether to proceed.
+- Conflicts on double-track segments trigger warnings only.
+- Conflicts on single-track segments must be resolved through crossing logic.
+- If no valid crossing point exists, the train is marked as **INVALID**.
 
 **Implementation Notes:**
-- Use domain model classes from USLP01.
-- Reuse travel time calculation logic from USLP03.
-- Maintain a collection (List) of scheduled trains.
-- Display schedule in a clear, formatted table or list.
-
-**Error Handling:**
-- Invalid station names → display error and do not add train.
-- Non-existent route segments → display error indicating which segment is missing.
-- Incompatible locomotive gauge → display error and do not add train.
-- Invalid departure time format → prompt for correct format.
-
+- Logic for travel time must reuse USLP03.
+- The schedule should clearly present: route, times, locomotives, passage times, and crossings.

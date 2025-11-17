@@ -5,88 +5,164 @@ import main.java.pt.ipp.isep.dei.domain.RailwayLine;
 import main.java.pt.ipp.isep.dei.domain.Station;
 import main.java.pt.ipp.isep.dei.util.CsvReaderUtil;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Repository implementation for managing {@link RailwayLine} data, loading it from CSV files.
- * <p>
- * This repository is responsible for reading railway line definitions and their
- * constituent segments from separate CSV files and constructing the domain objects.
- * </p>
+ *
+ * CSVs atuais:
+ *
+ * railway_lines.csv
+ *   lineId,startStationId,endStationId
+ *
+ * line_segments.csv
+ *   ID,Line,Order,Electrified,Max Weight (kg/m),Length (m),NumberTracks,Siding Position,Siding Length
+ *
+ * Nesta implementação, cada linha (lineId) é tratada como uma ligação direta
+ * entre duas estações, com:
+ *  - origem = startStationId
+ *  - destino = endStationId
+ *  - distância = soma dos comprimentos (Length) de todos os segmentos dessa linha
+ *  - electrified = true se todos os segmentos dessa linha forem "Yes"
+ *  - numberTracks = mínimo dos NumberTracks dessa linha
  */
-public class CsvRailwayLineRepository implements RailwayLineRepository { // Assuming it implements an interface
+public class CsvRailwayLineRepository implements RailwayLineRepository {
+
+    private static class LineAggregate {
+        double totalLengthMeters = 0.0;
+        boolean allElectrified = true;
+        int minTracks = Integer.MAX_VALUE;
+    }
 
     /** Internal list storing all loaded railway lines. */
     private final List<RailwayLine> railwayLines = new ArrayList<>();
 
-    /**
-     * Constructs the repository and loads all railway lines and segments from CSV files.
-     *
-     * @param linesFilePath the path to the CSV file containing the main railway line definitions
-     * @param segmentsFilePath the path to the CSV file containing the line segment definitions
-     * @param stationRepo the {@link StationRepository} used to look up {@link Station} objects by ID
-     */
-    public CsvRailwayLineRepository(String linesFilePath, String segmentsFilePath, StationRepository stationRepo) {
+    public CsvRailwayLineRepository(String linesFilePath,
+                                    String segmentsFilePath,
+                                    StationRepository stationRepo) {
         loadLinesAndSegments(linesFilePath, segmentsFilePath, stationRepo);
     }
 
-    /**
-     * Loads the line segments, groups them by line ID, and then constructs the
-     * final {@link RailwayLine} objects by sequencing the segments.
-     *
-     * @param linesFilePath the path to the CSV file with line records
-     * @param segmentsFilePath the path to the CSV file with segment records
-     * @param stationRepo the repository to resolve Station IDs
-     */
-    private void loadLinesAndSegments(String linesFilePath, String segmentsFilePath, StationRepository stationRepo) {
-        Map<String, List<LineSegment>> segmentsByLine = new HashMap<>();
+    private void loadLinesAndSegments(String linesFilePath,
+                                      String segmentsFilePath,
+                                      StationRepository stationRepo) {
+
+        // 1) Agregar info de line_segments por cada Line
+        Map<String, LineAggregate> aggregateByLine = new HashMap<>();
         List<String[]> segmentRecords = CsvReaderUtil.readCsvFile(segmentsFilePath);
 
         for (String[] record : segmentRecords) {
-            if (record.length < 7) continue;
+            if (record == null || record.length == 0) continue;
 
-            String lineId = record[0].trim();
-            int sequenceNumber = Integer.parseInt(record[1].trim());
-            Station origin = stationRepo.findById(record[2].trim());
-            Station destination = stationRepo.findById(record[3].trim());
+            // Header: ID, Line, Order, Electrified, Max Weight (kg/m), Length (m), NumberTracks, Siding Position, Siding Length
+            // Ignorar header
+            String first = record[0].trim();
+            if (first.equalsIgnoreCase("ID")) {
+                continue;
+            }
+            if (record.length < 7) {
+                continue;
+            }
 
-            if (origin != null && destination != null) {
-                double distance = Double.parseDouble(record[4].trim());
-                double maxSpeed = Double.parseDouble(record[5].trim());
-                boolean isElectrified = record[6].trim().equals("1");
-                LineSegment segment = new LineSegment(sequenceNumber, origin, destination, distance, maxSpeed, isElectrified);
-                segmentsByLine.computeIfAbsent(lineId, k -> new ArrayList<>()).add(segment);
+            String lineId = record[1].trim();          // coluna "Line"
+            String electrifiedStr = record[3].trim();  // "Electrified"
+            String lengthStr = record[5].trim();       // "Length (m)"
+            String tracksStr = record[6].trim();       // "NumberTracks"
+
+            LineAggregate agg = aggregateByLine.computeIfAbsent(lineId, k -> new LineAggregate());
+
+            // comprimento
+            double lengthMeters = 0.0;
+            if (!lengthStr.isEmpty()) {
+                try {
+                    lengthMeters = Double.parseDouble(lengthStr);
+                } catch (NumberFormatException e) {
+                    // ignore, fica 0
+                }
+            }
+            agg.totalLengthMeters += lengthMeters;
+
+            // electrificada: se algum for "No", marcamos false
+            boolean isElectrified = electrifiedStr.equalsIgnoreCase("Yes");
+            if (!isElectrified) {
+                agg.allElectrified = false;
+            }
+
+            // número de vias: guardamos o mínimo
+            int tracks = 1;
+            if (!tracksStr.isEmpty()) {
+                try {
+                    tracks = Integer.parseInt(tracksStr);
+                } catch (NumberFormatException e) {
+                    tracks = 1;
+                }
+            }
+            if (tracks < agg.minTracks) {
+                agg.minTracks = tracks;
             }
         }
 
+        // 2) Construir RailwayLine para cada linha em railway_lines.csv
         List<String[]> lineRecords = CsvReaderUtil.readCsvFile(linesFilePath);
+
         for (String[] record : lineRecords) {
-            if (record.length < 3) continue;
+            if (record == null || record.length == 0) continue;
+
+            // header: lineId,startStationId,endStationId
+            String first = record[0].trim();
+            if (first.equalsIgnoreCase("lineId")) {
+                continue;
+            }
+            if (record.length < 3) {
+                continue;
+            }
 
             String lineId = record[0].trim();
-            List<LineSegment> segments = segmentsByLine.get(lineId);
+            String startId = record[1].trim();
+            String endId   = record[2].trim();
 
-            if (segments != null && !segments.isEmpty()) {
-                segments.sort(Comparator.comparingInt(LineSegment::getSequenceNumber));
-                railwayLines.add(new RailwayLine(segments));
+            Station start = stationRepo.findById(startId);
+            Station end   = stationRepo.findById(endId);
+
+            if (start == null || end == null) {
+                // Linha inválida se não encontrarmos as estações
+                continue;
             }
+
+            LineAggregate agg = aggregateByLine.get(lineId);
+
+            double distanceKm = 0.0;
+            boolean electrified = true;
+            int numberTracks = 1;
+
+            if (agg != null) {
+                distanceKm = agg.totalLengthMeters / 1000.0;
+                electrified = agg.allElectrified;
+                numberTracks = (agg.minTracks == Integer.MAX_VALUE) ? 1 : agg.minTracks;
+            }
+
+            // Não temos velocidade máx da infraestrutura -> usamos um default razoável (ex: 120 km/h)
+            double maxSpeedKmH = 120.0;
+
+            LineSegment segment = new LineSegment(
+                    1,           // sequenceNumber
+                    start,
+                    end,
+                    distanceKm,
+                    maxSpeedKmH,
+                    electrified,
+                    numberTracks
+            );
+
+            RailwayLine line = new RailwayLine(Collections.singletonList(segment));
+            railwayLines.add(line);
         }
     }
 
     /**
      * Finds a {@link RailwayLine} that directly runs between the specified start and end stations.
-     * <p>
-     * A "direct line" is one whose first segment starts at {@code start} and whose
-     * last segment ends at {@code end}.
-     * </p>
-     *
-     * @param start the starting {@link Station}
-     * @param end the ending {@link Station}
-     * @return the matching {@link RailwayLine}, or {@code null} if no such line exists
+     * A "direct line" is one whose first segment starts at {@code start}
+     * and whose last segment ends at {@code end}.
      */
     @Override
     public RailwayLine findDirectLine(Station start, Station end) {
