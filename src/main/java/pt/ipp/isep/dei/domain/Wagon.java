@@ -156,6 +156,36 @@ public class Wagon {
         return model != null ? model.getFullyLoadedWeightTons() : 0.0;
     }
 
+    /**
+     * Returns the current weight of the wagon in tons (railway domain).
+     * If the wagon has boxes (warehouse domain), it is considered loaded and returns fully loaded weight.
+     * Otherwise, returns the tare (empty) weight.
+     * If no model is associated, returns 0.0.
+     *
+     * @return current weight in tons (tare if empty, fully loaded if has boxes)
+     */
+    public double getCurrentWeightTons() {
+        if (model == null) {
+            return 0.0;
+        }
+        // Se tem boxes, assume que está carregado
+        if (!boxes.isEmpty()) {
+            return getFullyLoadedWeightTons();
+        }
+        // Caso contrário, assume que está vazio
+        return getTareWeightTons();
+    }
+
+    /**
+     * Returns the maximum allowed speed of the wagon in km/h (railway domain).
+     * If no model is associated, returns 0.0.
+     *
+     * @return maximum speed in km/h
+     */
+    public double getMaxSpeedKmH() {
+        return model != null ? model.getMaxSpeedKmH() : 0.0;
+    }
+
     @Override
     public String toString() {
         if (model != null) {

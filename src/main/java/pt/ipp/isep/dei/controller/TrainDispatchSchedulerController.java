@@ -39,6 +39,7 @@ public class TrainDispatchSchedulerController {
     private final TrainSchedulerService schedulerService;
 
     public TrainDispatchSchedulerController() {
+        // Paths iguais aos que usaste no USLP03 / CSVs do sprint
         final String CSV_FOLDER = "csv_data/";
         final String STATIONS_FILE = CSV_FOLDER + "stations.csv";
         final String LOCOMOTIVES_FILE = CSV_FOLDER + "locomotives.csv";
@@ -80,36 +81,34 @@ public class TrainDispatchSchedulerController {
      * Devolve a lista de locomotivas disponíveis.
      */
     public List<Locomotive> getAvailableLocomotives() {
-        return baseService.getAvailableLocomotives();
+        return locomotiveRepository.findAll();
     }
 
     /**
-     * Devolve a lista de wagons disponíveis (todos os wagons do CSV).
+     * Devolve a lista de wagons disponíveis.
      */
     public List<Wagon> getAvailableWagons() {
         return wagonRepository.findAll();
     }
 
     /**
-     * Devolve a lista de estações que têm uma linha direta a partir da estação de origem.
-     * Útil para a UI mostrar apenas rotas válidas e evitar erros no fim.
+     * Devolve a lista de estações que têm uma linha direta a partir da estação dada.
+     * É usado na UI para mostrar as "rotas possíveis" a partir de uma estação.
      */
-    public List<Station> getStationsDirectlyReachableFrom(Station origin) {
-        List<Station> allStations = getAvailableStations();
-        List<Station> reachable = new ArrayList<>();
+    public List<Station> getDirectDestinationsFrom(Station origin) {
+        List<Station> all = getAvailableStations();
+        List<Station> result = new ArrayList<>();
 
-        for (Station candidate : allStations) {
-            if (candidate.equals(origin)) {
-                continue;
-            }
+        for (Station candidate : all) {
+            if (candidate.equals(origin)) continue;
             RailwayLine line = railwayLineRepository.findDirectLine(origin, candidate);
             if (line != null) {
-                reachable.add(candidate);
+                result.add(candidate);
             }
         }
 
-        reachable.sort(Comparator.comparing(station -> Integer.parseInt(station.getId())));
-        return reachable;
+        result.sort(Comparator.comparing(st -> Integer.parseInt(st.getId())));
+        return result;
     }
 
     /**
@@ -119,10 +118,10 @@ public class TrainDispatchSchedulerController {
             String trainId,
             List<Station> route,
             List<Locomotive> locomotives,
-            LocalDateTime departureTime,
-            List<Wagon> wagons
+            List<Wagon> wagons,
+            LocalDateTime departureTime
     ) {
-        return new TrainDispatchRequest(trainId, route, locomotives, departureTime, wagons);
+        return new TrainDispatchRequest(trainId, route, locomotives, wagons, departureTime);
     }
 
     /**

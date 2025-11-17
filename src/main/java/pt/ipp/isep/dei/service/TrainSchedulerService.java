@@ -19,8 +19,19 @@ import java.util.List;
 /**
  * Service responsible for USLP07: scheduling multiple trains,
  * computing passage times, and handling crossings in single-track lines.
+ *
+ * Now also considers:
+ * - Multiple locomotives per train (total power, total locomotive mass)
+ * - Wagon mass (using WagonModel weights)
+ * - Effective speed based on power-per-ton, limited by track and loco max speeds.
  */
 public class TrainSchedulerService {
+
+    /**
+     * Reference power per ton (kW/ton) used to scale effective speed.
+     * Around this value the train can use (approx.) the full allowed speed.
+     */
+    private static final double REFERENCE_POWER_PER_TON = 20.0;
 
     private final StationRepository stationRepository;
     private final LocomotiveRepository locomotiveRepository;
@@ -42,21 +53,21 @@ public class TrainSchedulerService {
      */
     public static class TrainDispatchRequest {
         private final String trainId;
-        private final List<Station> route;        // ordered stations: [A, B, C, ...]
-        private final List<Locomotive> locomotives;
+        private final List<Station> route;           // ordered stations: [A, B, C, ...]
+        private final List<Locomotive> locomotives;  // one or more locomotives
+        private final List<Wagon> wagons;            // one or more wagons
         private final LocalDateTime departureTime;
-        private final List<Wagon> wagons;         // wagons that compose this train
 
         public TrainDispatchRequest(String trainId,
                                     List<Station> route,
                                     List<Locomotive> locomotives,
-                                    LocalDateTime departureTime,
-                                    List<Wagon> wagons) {
+                                    List<Wagon> wagons,
+                                    LocalDateTime departureTime) {
             this.trainId = trainId;
             this.route = route;
             this.locomotives = locomotives;
+            this.wagons = wagons;
             this.departureTime = departureTime;
-            this.wagons = wagons != null ? List.copyOf(wagons) : List.of();
         }
 
         public String getTrainId() {
@@ -71,15 +82,12 @@ public class TrainSchedulerService {
             return locomotives;
         }
 
-        public LocalDateTime getDepartureTime() {
-            return departureTime;
-        }
-
-        /**
-         * Returns the wagons that compose this train.
-         */
         public List<Wagon> getWagons() {
             return wagons;
+        }
+
+        public LocalDateTime getDepartureTime() {
+            return departureTime;
         }
     }
 
@@ -123,49 +131,64 @@ public class TrainSchedulerService {
 
         List<Station> route = request.getRoute();
         List<Locomotive> locomotives = request.getLocomotives();
-        List<Wagon> wagons = request.getWagons();
+        List<Wagon> wagons = request.getWagons() != null ? request.getWagons() : new ArrayList<>();
 
+        // Segurança: um comboio tem de ter pelo menos 1 locomotiva
         if (locomotives == null || locomotives.isEmpty()) {
             schedule.setStatus(TrainSchedule.Status.INVALID);
-            System.err.printf("Comboio %s não tem locomotivas associadas.%n", schedule.getTrainId());
             return schedule;
         }
 
-        // Locomotiva principal (para características base)
-        Locomotive mainLoco = locomotives.get(0);
+        // ------------------------------------------------------------
+        // 1) Agregar características do comboio (locos + wagons)
+        // ------------------------------------------------------------
+        double totalLocoPowerKw = 0.0;
+        double totalLocoWeightTons = 0.0;
+        double minLocoMaxSpeedKmH = Double.MAX_VALUE;
 
-        // --- Peso total do comboio (locos + wagons) ---
-        double totalLocoWeight = 0.0;
         for (Locomotive loco : locomotives) {
-            totalLocoWeight += loco.getWeightTons();
+            if (loco == null) continue;
+            totalLocoPowerKw += Math.max(0.0, loco.getPower());
+            totalLocoWeightTons += Math.max(0.0, loco.getWeightTons());
+            minLocoMaxSpeedKmH = Math.min(minLocoMaxSpeedKmH, loco.getMaxSpeedKmH());
         }
 
-        double totalWagonWeight = 0.0;
-        double wagonsSpeedLimit = Double.POSITIVE_INFINITY; // limite imposto pelos wagons
+        if (minLocoMaxSpeedKmH == Double.MAX_VALUE) {
+            // fallback defensivo
+            minLocoMaxSpeedKmH = 120.0;
+        }
 
+        // Calcular peso atual dos vagões (considerando se estão carregados ou não)
+        double totalWagonWeightTons = 0.0;
+        double minWagonMaxSpeedKmH = Double.MAX_VALUE;
+        
         for (Wagon w : wagons) {
-            if (w.getModel() != null) {
-                // assumimos que o modelo tem tara e velocidade máxima
-                totalWagonWeight += w.getModel().getTareWeightTons();
-                if (w.getModel().getMaxSpeedKmH() > 0) {
-                    wagonsSpeedLimit = Math.min(wagonsSpeedLimit, w.getModel().getMaxSpeedKmH());
-                }
+            if (w == null) continue;
+            // Usar peso atual (carregado ou vazio conforme tem boxes ou não)
+            double currentWeight = w.getCurrentWeightTons();
+            totalWagonWeightTons += Math.max(0.0, currentWeight);
+            
+            // Considerar também o limite de velocidade dos vagões
+            double wagonMaxSpeed = w.getMaxSpeedKmH();
+            if (wagonMaxSpeed > 0.0) {
+                minWagonMaxSpeedKmH = Math.min(minWagonMaxSpeedKmH, wagonMaxSpeed);
             }
         }
 
-        double totalTrainWeight = totalLocoWeight + totalWagonWeight;
-
-        // Se nenhum wagon tiver definido maxSpeed, ignoramos esse limite (ficará +∞)
-        if (Double.isInfinite(wagonsSpeedLimit)) {
-            wagonsSpeedLimit = mainLoco.getMaxSpeedKmH();
-        }
+        double totalTrainWeightTons = totalLocoWeightTons + totalWagonWeightTons;
+        
+        // Velocidade máxima do comboio = mínimo entre locomotivas e vagões
+        double minTrainMaxSpeedKmH = Math.min(minLocoMaxSpeedKmH, 
+                minWagonMaxSpeedKmH != Double.MAX_VALUE ? minWagonMaxSpeedKmH : Double.MAX_VALUE);
 
         // Passagem na estação inicial
         if (!route.isEmpty()) {
             schedule.addPassageTime(route.get(0), currentTime);
         }
 
-        // Para cada perna da rota (de estação i para i+1)
+        // ------------------------------------------------------------
+        // 2) Para cada perna da rota (de estação i para i+1)
+        // ------------------------------------------------------------
         for (int i = 0; i < route.size() - 1; i++) {
             Station from = route.get(i);
             Station to = route.get(i + 1);
@@ -183,36 +206,25 @@ public class TrainSchedulerService {
             // Para cada segmento da linha
             for (LineSegment segment : line.getSegments()) {
 
-                // --- Velocidade base (segmento + locomotiva + wagons) ---
-                double baseSpeed = segment.getMaxSpeedKmH();
-                baseSpeed = Math.min(baseSpeed, mainLoco.getMaxSpeedKmH());
-                baseSpeed = Math.min(baseSpeed, wagonsSpeedLimit);
+                double effectiveSpeedKmH = computeEffectiveSpeedKmH(
+                        segment,
+                        minTrainMaxSpeedKmH,
+                        totalLocoPowerKw,
+                        totalTrainWeightTons
+                );
 
-                // Segurança: evitar 0 ou negativo
-                if (baseSpeed <= 0) {
-                    baseSpeed = 10.0; // fallback mínimo
+                // Segurança: nunca permitir 0 (evita divisão por zero)
+                if (effectiveSpeedKmH <= 0.0) {
+                    // se cair aqui, algo está muito errado -> marcar inválido
+                    schedule.setStatus(TrainSchedule.Status.INVALID);
+                    System.err.printf(
+                            "Velocidade efetiva inválida (%.2f km/h) no segmento %s para o comboio %s%n",
+                            effectiveSpeedKmH, segment, schedule.getTrainId()
+                    );
+                    break;
                 }
 
-                // --- Penalização por peso total ---
-                double weightThreshold = 800.0; // tons
-                double minFactor = 0.5;
-
-                double factor;
-                if (totalTrainWeight <= 0) {
-                    factor = 1.0;
-                } else if (totalTrainWeight <= weightThreshold) {
-                    factor = 1.0;
-                } else {
-                    factor = weightThreshold / totalTrainWeight;
-                    if (factor < minFactor) {
-                        factor = minFactor;
-                    }
-                }
-
-                double effectiveSpeed = baseSpeed * factor;
-
-                // --- Cálculo do tempo ---
-                double timeHours = segment.getDistanceKm() / effectiveSpeed;
+                double timeHours = segment.getDistanceKm() / effectiveSpeedKmH;
                 double timeMinutes = timeHours * 60.0;
                 long minutesRounded = Math.round(timeMinutes);
 
@@ -245,6 +257,52 @@ public class TrainSchedulerService {
         return schedule;
     }
 
+    /**
+     * Calcula a velocidade efetiva do comboio neste segmento, tendo em conta:
+     * - Limite do segmento (track speed limit)
+     * - Limite do comboio (mínimo entre locomotivas e vagões)
+     * - Relação potência/tonelada (quanto maior, mais perto do limite anda)
+     * 
+     * A velocidade efetiva é calculada como o mínimo entre:
+     * 1. O limite do segmento
+     * 2. O limite do comboio (locomotivas e vagões)
+     * 3. A velocidade ajustada pela relação potência/peso
+     */
+    private double computeEffectiveSpeedKmH(LineSegment segment,
+                                            double minTrainMaxSpeedKmH,
+                                            double totalLocoPowerKw,
+                                            double totalTrainWeightTons) {
+
+        double trackLimitKmH = segment.getMaxSpeedKmH();
+        
+        // Velocidade máxima teórica = mínimo entre limite do segmento e limite do comboio
+        double baseSpeedKmH = Math.min(trackLimitKmH, minTrainMaxSpeedKmH);
+
+        // Se não tivermos potência ou peso, retornamos a velocidade base
+        if (totalLocoPowerKw <= 0.0 || totalTrainWeightTons <= 0.0) {
+            return baseSpeedKmH;
+        }
+
+        // Calcular relação potência/peso (kW por tonelada)
+        double powerPerTon = totalLocoPowerKw / totalTrainWeightTons;
+
+        // Fator de velocidade baseado na relação potência/peso:
+        // - powerPerTon >= REFERENCE_POWER_PER_TON -> factor = 1.0 (usa o máximo)
+        // - powerPerTon muito baixo -> factor = 0.4 (anda bem mais devagar)
+        // A fórmula usa uma função logarítmica suave para transição
+        double ratio = powerPerTon / REFERENCE_POWER_PER_TON;
+        
+        // Aplicar função de ajuste: ratio^0.5 para suavizar a transição
+        // Isso significa que com metade da potência de referência, temos ~70% da velocidade
+        double factor = clamp(Math.pow(Math.max(0.0, ratio), 0.5), 0.4, 1.0);
+
+        return baseSpeedKmH * factor;
+    }
+
+    private double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
+    }
+
     // -------------------------------------------------------------------------
     // Conflitos, cruzamentos e atrasos
     // -------------------------------------------------------------------------
@@ -252,7 +310,9 @@ public class TrainSchedulerService {
     private void detectAndResolveConflicts(List<TrainSchedule> schedules,
                                            List<ScheduledSegment> allSegments) {
 
-        // Filtrar só segmentos de via única
+        // Neste primeiro passo vamos assumir que TODOS os segmentos são single-track.
+        // Mais tarde podes substituir esta condição pela tua lógica real:
+        // ex: segment.getTrackType().equals("SINGLE")
         List<ScheduledSegment> singleTrackSegments = new ArrayList<>();
         for (ScheduledSegment seg : allSegments) {
             if (isSingleTrack(seg.getSegment())) {
