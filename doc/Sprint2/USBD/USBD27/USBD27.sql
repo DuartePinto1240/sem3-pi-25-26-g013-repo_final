@@ -8,10 +8,10 @@ BEGIN
         WITH trains_with_grain AS (
             SELECT DISTINCT t.train_id
             FROM Train t
-            JOIN TrainWagon tw ON t.train_id = tw.train_id
-            JOIN Wagon w ON tw.wagon_id = w.wagon_id
-            JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
-            JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
+            INNER JOIN TrainWagon tw ON t.train_id = tw.train_id
+            INNER JOIN Wagon w ON tw.wagon_id = w.wagon_id
+            INNER JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
+            INNER JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
             WHERE wc.code = 'GRAIN'
               AND t.planned_departure BETWEEN p_start_date AND p_end_date
         ),
@@ -20,10 +20,10 @@ BEGIN
                 w.wagon_id,
                 COUNT(DISTINCT t.train_id) AS usage_count
             FROM trains_with_grain t
-            JOIN TrainWagon tw ON t.train_id = tw.train_id
-            JOIN Wagon w ON tw.wagon_id = w.wagon_id
-            JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
-            JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
+            INNER JOIN TrainWagon tw ON t.train_id = tw.train_id
+            INNER JOIN Wagon w ON tw.wagon_id = w.wagon_id
+            INNER JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
+            INNER JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
             WHERE wc.code = 'GRAIN'
             GROUP BY w.wagon_id
         ),
@@ -43,15 +43,16 @@ BEGIN
             wm.payload_t,
             wm.volume_m3
         FROM grain_wagon_usage gwu
-        CROSS JOIN total_trains tt
-        JOIN Wagon w ON gwu.wagon_id = w.wagon_id
-        JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
-        JOIN Model m ON wm.model_id = m.model_id
-        JOIN WagonType wt ON wm.wagontype_id = wt.wagontype_id
-        JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
-        JOIN Operator op ON w.operator_id = op.operator_id
-        JOIN Company c ON op.operator_id = c.company_id
-        WHERE gwu.usage_count = tt.total   -- APARECEU EM TODOS OS COMBOIOS
+        INNER JOIN Wagon w ON gwu.wagon_id = w.wagon_id
+        INNER JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
+        INNER JOIN Model m ON wm.model_id = m.model_id
+        INNER JOIN WagonType wt ON wm.wagontype_id = wt.wagontype_id
+        INNER JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
+        INNER JOIN Operator op ON w.operator_id = op.operator_id
+        INNER JOIN Company c ON op.operator_id = c.company_id
+        WHERE gwu.usage_count = (
+            SELECT COUNT(*) FROM trains_with_grain
+        )
         ORDER BY
             w.wagon_id;
 
