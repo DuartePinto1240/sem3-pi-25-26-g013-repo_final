@@ -36,7 +36,7 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("Picking Plans - USEI03", new USEI03UI()));
         options.add(new MenuItem("Pick Path Sequencing - USEI04", new USEI04UI()));
         options.add(new MenuItem("Returns & Quarantine - USEI05", new USEI05UI()));
-        options.add(new MenuItem("USEI07", new USEI07UI()));
+        options.add(new MenuItem("Build a balanced 2D-Tree - USEI07", new USEI07UI()));
         options.add(new MenuItem("Search Stations by Geographical Area - USEI08", new USEI08UI()));
         options.add(new MenuItem("Proximity Search - USEI09", new USEI09UI()));
         options.add(new MenuItem("Radius search and density summary - USEI10", new USEI10UI()));
