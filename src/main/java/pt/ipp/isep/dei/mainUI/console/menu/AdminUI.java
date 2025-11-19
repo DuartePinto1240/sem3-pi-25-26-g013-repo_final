@@ -3,6 +3,7 @@ package main.java.pt.ipp.isep.dei.mainUI.console.menu;
 import main.java.pt.ipp.isep.dei.ui.*;
 import main.java.pt.ipp.isep.dei.util.Utils;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +40,7 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("Search Stations by Geographical Area - USEI08", new USEI08UI()));
         options.add(new MenuItem("Proximity Search - USEI09", new USEI09UI()));
         options.add(new MenuItem("Estimated Travel Time - USPL03",new USLP03UI()));
+        options.add(new MenuItem("Train Schedule - USPL07",new USLP07UI()));
 
         int option = 0;
         do {
