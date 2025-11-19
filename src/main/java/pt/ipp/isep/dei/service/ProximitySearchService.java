@@ -6,18 +6,17 @@ import main.java.pt.ipp.isep.dei.dto.ProximitySearchResult;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
+// Removed unused import for java.util.stream.Collectors
 
 /**
  * Service class for USEI09.
- * Orchestrates the proximity search, applies filtering, and packages
- * the results, including performance metrics.
+ * Orchestrates the proximity search and packages the results, ensuring
+ * the filter is handled correctly by the KD-Tree during the search.
  */
 public class ProximitySearchService {
 
     /**
-     * Finds the nearest N stations, with optional filtering.
-     * Follows the algorithm in Section 2.3 of the requirements.
+     * Finds the nearest N stations that match the filter (AC3).
      *
      * @param stationTree The 2D-Tree of stations (from USEI07)
      * @param lat Target latitude
@@ -32,32 +31,18 @@ public class ProximitySearchService {
         long startTime = System.currentTimeMillis();
         AtomicInteger visitedNodes = new AtomicInteger(0);
 
-        // 1. & 2. Perform nearest-neighbour search in the KD-Tree (AC1)
-        // This gets the N-nearest *unfiltered* candidates.
-        List<StationDistance> allCandidates = stationTree.nearestN(lat, lon, N, visitedNodes);
-
-        // 3. & 5. Apply filter (if any) and final sort (AC3, AC4)
-        // This follows the pseudocode logic: search first, then filter.
-        List<StationDistance> finalResults;
-
+        // Prepare filter string (null if empty or null)
         String filterToApply = (timeZoneFilter == null || timeZoneFilter.trim().isEmpty()) ? null : timeZoneFilter.trim();
 
-        if (filterToApply != null) {
-            finalResults = allCandidates.stream()
-                    .filter(sd -> {
-                        // **ASSUMPTION**: TrainStation class has getTimeZoneGroup()
-                        String tz = sd.getStation().getTimeZoneGroup();
-                        return tz != null && tz.equalsIgnoreCase(filterToApply);
-                    })
-                    .collect(Collectors.toList());
-            // List is already sorted by compareTo, filter preserves order.
-        } else {
-            finalResults = allCandidates;
-        }
-
-        // Note: AC4 says "Return exactly N". Section 8 clarifies:
-        // "When fewer than N stations satisfy the filter, return all that match".
-        // This implementation follows Section 8.
+        // 1. Perform nearest-neighbour search in the KD-Tree.
+        // The tree's nearestN method now internally applies the filter.
+        List<StationDistance> finalResults = stationTree.nearestN(
+                lat,
+                lon,
+                N,
+                filterToApply, // Pass the filter for processing during search
+                visitedNodes
+        );
 
         long endTime = System.currentTimeMillis();
         long searchTimeMs = endTime - startTime;
