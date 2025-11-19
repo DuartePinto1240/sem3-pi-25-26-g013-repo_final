@@ -29,9 +29,8 @@ public class TravelSectionTest {
     public void setUp() {
         origin = new Station("ST001", "Porto", 41.15, -8.61);
         destination = new Station("ST002", "Lisboa", 38.72, -9.14);
-        // The LineSegment includes distance, max speed, and electrification flag.
-        segment = new LineSegment(1, origin, destination, 313.0, 160.0, true);
-
+        // The LineSegment includes distance, max speed, electrification flag, and number of tracks.
+        segment = new LineSegment(1, origin, destination, 313.0, 160.0, true, 2);
     }
 
 
@@ -57,5 +56,14 @@ public class TravelSectionTest {
         TravelSection section = new TravelSection(segment, 100.0, 188.0);
         assertSame(segment, section.getSegment());
     }
-}
 
+    /**
+     * Verifies that the segment's number of tracks is accessible through
+     * the TravelSection's getSegment() method.
+     */
+    @Test
+    public void testSegmentNumberOfTracks_ShouldBeAccessible() {
+        TravelSection section = new TravelSection(segment, 120.0, 156.5);
+        assertEquals(2, section.getSegment().getNumberTracks());
+    }
+}
