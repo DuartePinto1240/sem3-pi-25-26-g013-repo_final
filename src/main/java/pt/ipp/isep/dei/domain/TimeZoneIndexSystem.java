@@ -321,19 +321,23 @@ public class TimeZoneIndexSystem {
     }
 
     public void printComplexityAnalysis() {
-        System.out.println("\n╔═══════════════════════════════════════════════════════════╗");
-        System.out.println("║        TEMPORAL COMPLEXITY ANALYSIS (ULTRA-OPTIMIZED)    ║");
-        System.out.println("╠═══════════════════════════════════════════════════════════╣");
-        System.out.println("║ Operation                          │ Complexity           ║");
-        System.out.println("╟────────────────────────────────────┼──────────────────────╢");
-        System.out.println("║ Validation (parallel)              │ O(n/p)               ║");
-        System.out.println("║ Index building (parallel)          │ O(n log n / p)       ║");
-        System.out.println("║ Find by latitude/longitude         │ O(1) - HashMap       ║");
-        System.out.println("║ Find by time zone group            │ O(m) - m countries   ║");
-        System.out.println("║ Find by time zone & country        │ O(1) - HashMap       ║");
-        System.out.println("║ Windowed query (k zones)           │ O(k * m)             ║");
-        System.out.println("║ Range query (parallel)             │ O(k/p) - parallel    ║");
-        System.out.println("╚════════════════════════════════════╧══════════════════════╝");
+        System.out.println("\n╔═══════════════════════════════════════════════════════════════════════════════╗");
+        System.out.println("║              TEMPORAL COMPLEXITY ANALYSIS (ULTRA-OPTIMIZED)                  ║");
+        System.out.println("╠═══════════════════════════════════════════════════════════════════════════════╣");
+        System.out.println("║ Operation                     │ Best Case    │ Average Case │ Worst Case     ║");
+        System.out.println("╟───────────────────────────────┼──────────────┼──────────────┼────────────────╢");
+        System.out.println("║ Validation                    │ O(1)         │ O(1)         │ O(1)           ║");
+        System.out.println("║ Build Index (sequential)      │ O(n)         │ O(n log n)   │ O(n log n)     ║");
+        System.out.println("║ Build Index (parallel, p)     │ O(n/p)       │ O(n log n/p) │ O(n log n/p)   ║");
+        System.out.println("║ Find by latitude/longitude    │ O(1)         │ O(1+k)       │ O(1+k)         ║");
+        System.out.println("║ Find by time zone group       │ O(1)         │ O(m log m)   │ O(m log m+n)   ║");
+        System.out.println("║ Find by TZ + country          │ O(1)         │ O(1+k)       │ O(1+k)         ║");
+        System.out.println("║ Windowed query (w zones)      │ O(w)         │ O(w·m log m) │ O(w·(m log m+n))║");
+        System.out.println("║ Range query (sequential)      │ O(c)         │ O(c+r·k)     │ O(c+n)         ║");
+        System.out.println("║ Range query (parallel, p)     │ O(c/p)       │ O((c+r·k)/p) │ O((c+n)/p)     ║");
+        System.out.println("║ Get AVL height (cached)       │ O(1)         │ O(1)         │ O(1)           ║");
+        System.out.println("║ Get AVL height (1st call)     │ O(t log t)   │ O(t log t)   │ O(t log t)     ║");
+        System.out.println("╚═══════════════════════════════╧══════════════╧══════════════╧════════════════╝");
         System.out.println("\nWhere:");
         System.out.println("  n = total stations (" + validStations + ")");
         System.out.println("  p = CPU cores (" + Runtime.getRuntime().availableProcessors() + ")");
