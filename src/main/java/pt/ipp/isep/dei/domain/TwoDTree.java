@@ -1,6 +1,6 @@
 package main.java.pt.ipp.isep.dei.domain;
 
-import main.java.pt.ipp.isep.dei.util.GeoUtils; // Import the new GeoUtils
+import main.java.pt.ipp.isep.dei.util.GeoUtils;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -8,18 +8,17 @@ import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Comparator;
-import java.util.PriorityQueue; // For the heap
-import java.util.Collections; // For sorting
-import java.util.concurrent.atomic.AtomicInteger; // To count visited nodes
+import java.util.PriorityQueue;
+import java.util.Collections;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Implementação da 2D-Tree (KD-Tree, k=2) para a USEI07
- *.
  *
  * Esta classe ESTENDE a classe BST e usa TwoDNode como
  * o seu elemento.
  *
- * MODIFIED for USEI09: Added nearest-neighbour search methods.
+ * MODIFIED for USEI09: Added nearest-neighbour search methods with proper filtering logic.
  */
 public class TwoDTree extends BST<TwoDNode> {
 
@@ -34,7 +33,6 @@ public class TwoDTree extends BST<TwoDNode> {
         super(); // Chama o construtor da BST (que faz root = null)
 
         // 1. Pré-processamento: Agrupar estações por coordenada
-        //
         Map<String, TwoDNode> nodesMap = new HashMap<>();
         for (TrainStation station : allStations) {
             String coordKey = station.getLatitude() + "," + station.getLongitude();
@@ -58,7 +56,6 @@ public class TwoDTree extends BST<TwoDNode> {
 
     /**
      * O coração da "balanced build strategy"
-     *.
      * Constrói a árvore recursivamente, dividindo pela mediana.
      */
     private Node<TwoDNode> buildRecursive(List<TwoDNode> nodes, int depth) {
@@ -124,35 +121,38 @@ public class TwoDTree extends BST<TwoDNode> {
         collectBucketSizes(node.getRight(), bucketSizes);
     }
 
-    // ============================
-    // === MÉTODOS PARA A USEI09
-    // ============================
+    // =========================================================================
+    // === MÉTODOS ADICIONADOS PARA A USEI09 - CORRECTED FOR FILTERING
+    // =========================================================================
 
     /**
-     * Public entry point for the Nearest-N search (AC1).
+     * Public entry point for the Nearest-N search (AC1, AC3).
+     *
+     * IMPORTANT: The previous single-argument nearestN signature (used by the flawed service logic)
+     * is functionally replaced by this two-argument method that includes the filter.
      *
      * @param lat Target latitude
      * @param lon Target longitude
      * @param N Number of stations to find
+     * @param timeZoneFilter Optional filter by timeZoneGroup (NEW PARAM)
      * @param visitedNodes (out) An atomic counter to track visited nodes (AC6)
-     * @return A sorted list of the N nearest StationDistance objects.
+     * @return A sorted list of the N nearest StationDistance objects that match the filter.
      */
-    public List<StationDistance> nearestN(double lat, double lon, int N, AtomicInteger visitedNodes) {
+    public List<StationDistance> nearestN(double lat, double lon, int N,
+                                          String timeZoneFilter, AtomicInteger visitedNodes) {
         validateInputs(lat, lon, N); // AC0: Validate inputs
 
         // Use a PriorityQueue as a Max-Heap to store the N best candidates.
-        // The heap stores the N *smallest* distances found so far.
-        // The "head" of this heap (peek()) is the *largest* of those N smallest.
         PriorityQueue<StationDistance> maxHeap = new PriorityQueue<>(N,
                 (sd1, sd2) -> Double.compare(sd2.getDistanceKm(), sd1.getDistanceKm())
         );
 
-        // Start the recursive search
-        recursiveSearch(this.root, lat, lon, N, maxHeap, 0, visitedNodes);
+        // Start the recursive search, passing the filter.
+        recursiveSearch(this.root, lat, lon, N, timeZoneFilter, maxHeap, 0, visitedNodes);
 
         // Convert heap to sorted list (AC4)
         List<StationDistance> results = new ArrayList<>(maxHeap);
-        Collections.sort(results); // Uses StationDistance.compareTo
+        Collections.sort(results); // Uses StationDistance.compareTo (distance ascending, name tie-breaker)
         return results;
     }
 
@@ -161,6 +161,7 @@ public class TwoDTree extends BST<TwoDNode> {
      */
     private void recursiveSearch(Node<TwoDNode> node,
                                  double lat, double lon, int N,
+                                 String timeZoneFilter, // ADDED PARAMETER
                                  PriorityQueue<StationDistance> maxHeap,
                                  int depth, AtomicInteger visitedNodes) {
 
@@ -172,14 +173,17 @@ public class TwoDTree extends BST<TwoDNode> {
         int axis = depth % 2; // 0 for latitude, 1 for longitude
         TwoDNode currentNode = node.getElement();
 
-        // 1. Calculate distance from target to current node and update heap
+        // 1. Calculate distance from target to current node
         double distKm = GeoUtils.haversineDistance(lat, lon,
                 currentNode.getLatitude(),
                 currentNode.getLongitude());
 
         // Add all stations at this location as candidates
         for (TrainStation station : currentNode.getStations()) {
-            handleCandidate(station, distKm, maxHeap, N);
+            // *** THE FIX (AC3) ***: Apply filter here before processing candidate
+            if (isFilterMatch(station, timeZoneFilter)) {
+                handleCandidate(station, distKm, maxHeap, N);
+            }
         }
 
         // 2. Determine which child subtree to visit first
@@ -190,23 +194,29 @@ public class TwoDTree extends BST<TwoDNode> {
         Node<TwoDNode> fartherChild = (targetCoord < nodeCoord) ? node.getRight() : node.getLeft();
 
         // 3. Visit nearer child first
-        recursiveSearch(nearerChild, lat, lon, N, maxHeap, depth + 1, visitedNodes);
+        recursiveSearch(nearerChild, lat, lon, N, timeZoneFilter, maxHeap, depth + 1, visitedNodes); // Pass filter
 
-        // 4. Pruning: Check if the farther child's bounding box *could*
-        //    have a better candidate (AC5).
-
-        // Get the best distance found *so far*.
-        // This is the distance of the farthest station in our "N-best" heap.
+        // 4. Pruning: Check if the farther child's bounding box *could* have a better candidate (AC5).
         double bestDistSoFar = maxHeap.isEmpty() ? Double.MAX_VALUE : maxHeap.peek().getDistanceKm();
 
-        // If heap isn't full, we *must* visit the farther child.
-        // If heap *is* full, we only visit if the *splitting plane* is
-        // closer than our current worst-best distance.
+        // Visit farther child if necessary
         if (maxHeap.size() < N ||
                 distanceToSplittingPlane(lat, lon, nodeCoord, axis) < bestDistSoFar) {
 
-            recursiveSearch(fartherChild, lat, lon, N, maxHeap, depth + 1, visitedNodes);
+            recursiveSearch(fartherChild, lat, lon, N, timeZoneFilter, maxHeap, depth + 1, visitedNodes); // Pass filter
         }
+    }
+
+    /**
+     * Helper method to check if a station matches the time zone filter. (AC3)
+     */
+    private boolean isFilterMatch(TrainStation station, String timeZoneFilter) {
+        if (timeZoneFilter == null || timeZoneFilter.trim().isEmpty()) {
+            return true; // No filter applied, always matches
+        }
+        // Apply filter check (case-insensitive comparison)
+        String stationTimeZoneGroup = station.getTimeZoneGroup();
+        return stationTimeZoneGroup != null && stationTimeZoneGroup.equalsIgnoreCase(timeZoneFilter);
     }
 
     /**
@@ -227,17 +237,14 @@ public class TwoDTree extends BST<TwoDNode> {
     }
 
     /**
-     * Calculates the "distance" from the target point to the splitting plane
-     * represented by the current node.
+     * Calculates the "distance" from the target point to the splitting plane.
      */
     private double distanceToSplittingPlane(double lat, double lon, double planeCoord, int axis) {
         if (axis == 0) {
             // Plane is horizontal (constant latitude)
-            // Distance is Haversine from (lat, lon) to (planeCoord, lon)
             return GeoUtils.haversineDistance(lat, lon, planeCoord, lon);
         } else {
             // Plane is vertical (constant longitude)
-            // Distance is Haversine from (lat, lon) to (lat, planeCoord)
             return GeoUtils.haversineDistance(lat, lon, lat, planeCoord);
         }
     }
