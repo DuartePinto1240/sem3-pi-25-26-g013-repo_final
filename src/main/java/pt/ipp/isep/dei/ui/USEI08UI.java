@@ -19,43 +19,48 @@ import java.util.List;
  */
 public class USEI08UI implements Runnable {
 
+    // Caminho para o ficheiro CSV
     private static final String CSV_PATH = "train_station_dataset_v2/train_stations_europe.csv";
 
-    private final USEI08Controller controller;
-    private final List<TrainStation> allStations;
-    private final long buildTimeMs;
-
-    /**
-     * Creates the UI for USEI08.
-     * <p>
-     * Loads all stations from the CSV file, builds the KD-tree index
-     * and instantiates the controller.
-     */
-    public USEI08UI() {
-        List<TrainStation> loadedStations = loadStationsForEsinf();
-        this.allStations = loadedStations;
-
-        long start = System.nanoTime();
-        KDTreeStations kdTreeStations = new KDTreeStations();
-        kdTreeStations.buildFromStations(loadedStations);
-        long end = System.nanoTime();
-        this.buildTimeMs = (end - start) / 1_000_000;
-
-        this.controller = new USEI08Controller(kdTreeStations);
-    }
-
+    // Variáveis de instância (agora sem 'final' porque são iniciadas no run)
+    private USEI08Controller controller;
+    private List<TrainStation> allStations;
+    private long buildTimeMs;
     /**
      * Executes the console flow for USEI08:
      * <ol>
-     *     <li>Prints KD-tree index statistics</li>
-     *     <li>Reads an interactive query from the user</li>
-     *     <li>Executes the search and prints results</li>
-     *     <li>Runs the three sample queries and prints complexity analysis</li>
+     * <li>Loads data and builds KD-Tree (Lazy Loading)</li>
+     * <li>Prints KD-tree index statistics</li>
+     * <li>Reads an interactive query from the user</li>
+     * <li>Executes the search and prints results</li>
+     * <li>Runs the three sample queries and prints complexity analysis</li>
      * </ol>
      */
     @Override
     public void run() {
         System.out.println("\n=== USEI08 — Search Stations by Geographical Area ===");
+
+        // --- 1. CARREGAMENTO DOS DADOS (Movido do Construtor) ---
+        this.allStations = loadStationsForEsinf();
+
+        // Se falhar o carregamento, sai do run() para não crashar
+        if (this.allStations == null || this.allStations.isEmpty()) {
+            return;
+        }
+
+        System.out.println("A construir KD-Tree...");
+        long start = System.nanoTime();
+
+        // Instanciar a estrutura (KDTreeStations)
+        KDTreeStations kdTreeStations = new KDTreeStations();
+        kdTreeStations.buildFromStations(this.allStations);
+
+        long end = System.nanoTime();
+        this.buildTimeMs = (end - start) / 1_000_000;
+
+        // Inicializar o controller
+        this.controller = new USEI08Controller(kdTreeStations);
+        // --------------------------------------------------------
 
         System.out.println("\n🏗️  KD-tree index ready");
         System.out.printf("📊 Stations indexed: %d%n", allStations.size());
@@ -97,11 +102,7 @@ public class USEI08UI implements Runnable {
     }
 
     /**
-     * Loads all train stations to be used in ESINF, using the same loader
-     * as other use cases (e.g. USEI07).
-     *
-     * @return list of all stations loaded from the CSV file, or an empty list
-     * if loading fails
+     * Loads all train stations to be used in ESINF.
      */
     private List<TrainStation> loadStationsForEsinf() {
         System.out.printf("A carregar estações do ficheiro: %s...%n", CSV_PATH);
@@ -116,13 +117,8 @@ public class USEI08UI implements Runnable {
         return stations;
     }
 
-    /**
-     * Reads and validates a latitude range from the console.
-     * The user must provide values in the interval [-90, 90] and
-     * latMin must be less than or equal to latMax.
-     *
-     * @return an array [latMin, latMax] with a valid range
-     */
+    // --- Métodos auxiliares de leitura e output (Mantêm-se iguais) ---
+
     private double[] readLatitudeRange() {
         while (true) {
             double latMin = readLatitude("Latitude mínima (-90 a 90): ");
@@ -136,13 +132,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Reads and validates a longitude range from the console.
-     * The user must provide values in the interval [-180, 180] and
-     * lonMin must be less than or equal to lonMax.
-     *
-     * @return an array [lonMin, lonMax] with a valid range
-     */
     private double[] readLongitudeRange() {
         while (true) {
             double lonMin = readLongitude("Longitude mínima (-180 a 180): ");
@@ -156,13 +145,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Reads a single latitude value from the console and validates
-     * that it is in the interval [-90, 90].
-     *
-     * @param prompt message displayed to the user
-     * @return a valid latitude
-     */
     private double readLatitude(String prompt) {
         while (true) {
             double value = Utils.readDoubleFromConsole(prompt);
@@ -174,13 +156,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Reads a single longitude value from the console and validates
-     * that it is in the interval [-180, 180].
-     *
-     * @param prompt message displayed to the user
-     * @return a valid longitude
-     */
     private double readLongitude(String prompt) {
         while (true) {
             double value = Utils.readDoubleFromConsole(prompt);
@@ -192,15 +167,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Asks the user whether a boolean filter should be applied and, if so,
-     * which value (true or false) it should take.
-     *
-     * @param askUseFilterMsg message asking if the filter should be used
-     * @param askValueMsg     message asking for the filter value (S/N)
-     * @return {@code Boolean.TRUE} or {@code Boolean.FALSE} if the filter is applied,
-     * or {@code null} if no filter should be used
-     */
     private Boolean askBooleanFilter(String askUseFilterMsg, String askValueMsg) {
         String useFilter = Utils.readLineFromConsole(askUseFilterMsg).trim().toUpperCase();
         if (!useFilter.equals("S")) {
@@ -219,16 +185,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Asks the user for the country filter according to the USEI08 specification:
-     * <ul>
-     *     <li>PT → returns "PT"</li>
-     *     <li>ES → returns "ES"</li>
-     *     <li>ALL or empty → returns null (no filter applied)</li>
-     * </ul>
-     *
-     * @return "PT", "ES" or {@code null} if all countries should be included
-     */
     private String askCountryFilter() {
         System.out.println("\nFiltro de país:");
         System.out.println("  PT  - Portugal");
@@ -252,21 +208,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Prints the header, filters and stations of a single query execution.
-     * The list of stations may be truncated depending on the {@code showAll} flag.
-     *
-     * @param title         title of the query block
-     * @param latMin        minimum latitude
-     * @param latMax        maximum latitude
-     * @param lonMin        minimum longitude
-     * @param lonMax        maximum longitude
-     * @param isCity        isCity filter used, or null
-     * @param isMainStation isMainStation filter used, or null
-     * @param country       country filter used, or null
-     * @param result        list of stations returned by the query
-     * @param showAll       if true, prints all stations; if false, prints only the first 10
-     */
     private void printQueryResults(String title,
                                    double latMin, double latMax,
                                    double lonMin, double lonMax,
@@ -310,13 +251,6 @@ public class USEI08UI implements Runnable {
         }
     }
 
-    /**
-     * Pads a text on the right with spaces until the given width.
-     *
-     * @param text  original text
-     * @param width target width
-     * @return the padded text
-     */
     private String padRight(String text, int width) {
         if (text.length() >= width) return text;
         StringBuilder sb = new StringBuilder(text);
@@ -324,10 +258,6 @@ public class USEI08UI implements Runnable {
         return sb.toString();
     }
 
-    /**
-     * Executes and prints the three sample queries required by USEI08
-     * and prints a final table summarizing the temporal complexity.
-     */
     private void printSampleQueriesAndComplexity() {
         System.out.println("\n\n╔═══════════════════════════════════════════════════════════╗");
         System.out.println("║                 USEI08 - SAMPLE QUERIES                   ║");
