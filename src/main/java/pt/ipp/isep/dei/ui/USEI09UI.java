@@ -1,7 +1,7 @@
 package main.java.pt.ipp.isep.dei.ui;
 
 import main.java.pt.ipp.isep.dei.domain.TrainStation;
-import main.java.pt.ipp.isep.dei.domain.TrainStationLoader; // Correct loader
+import main.java.pt.ipp.isep.dei.domain.TrainStationLoader;
 import main.java.pt.ipp.isep.dei.domain.TwoDTree;
 import main.java.pt.ipp.isep.dei.domain.StationDistance;
 import main.java.pt.ipp.isep.dei.dto.ProximitySearchResult;
@@ -9,35 +9,34 @@ import main.java.pt.ipp.isep.dei.service.ProximitySearchService;
 
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.Scanner;
 
 /**
- * Console UI for USEI09 - Proximity Search.
+ * Console UI for USEI09 - Proximity Search (Nearest-N with Filters).
  *
- * This UI has an empty constructor and loads its own data
- * when run() is executed, following the project's standard.
+ * This version includes pre-search validation for the timeZoneGroup filter.
  */
 public class USEI09UI implements Runnable {
 
     private TwoDTree stationTree;
+    private Set<String> validTimeZones; // NEW: Stores unique time zones for validation
     private final ProximitySearchService searchService;
     private static final String STATION_FILE_PATH = "train_station_dataset_v2/train_stations_europe.csv";
 
     /**
      * Constructs a USEI09UI with no arguments.
-     * Data will be loaded when run() is called.
      */
     public USEI09UI() {
         this.searchService = new ProximitySearchService();
-        // this.stationTree is null until loadData() is called
     }
 
     @Override
     public void run() {
-        // 1. Load data
+        // 1. Load data and extract available time zones
         if (!loadData()) {
             System.out.println("Error: Failed to load station data for USEI09. Aborting.");
-            System.out.println("Please ensure '" + STATION_FILE_PATH + "' is available.");
             return;
         }
 
@@ -45,20 +44,20 @@ public class USEI09UI implements Runnable {
         System.out.println("\n--- USEI09: Proximity Search (Nearest-N) ---");
 
         try {
-            // 2. Get Inputs (from requirements Section 1.5)
+            // 2. Get Coordinates and N (AC0 validation is handled by helper methods)
             double lat = readDouble(scanner, "Enter target latitude [-90, 90]: ", -90, 90);
             double lon = readDouble(scanner, "Enter target longitude [-180, 180]: ", -180, 180);
             int n = readInt(scanner, "Enter N (number of stations to find): ", 1, Integer.MAX_VALUE);
 
-            System.out.print("Enter optional timeZoneGroup filter (or press Enter for none): ");
-            String timeZoneFilter = scanner.nextLine();
+            // 3. Get Time Zone Filter with Validation Loop (FIX)
+            String timeZoneFilter = readTimeZoneFilter(scanner);
 
-            // 3. Call Service
+            // 4. Call Service
             ProximitySearchResult result = searchService.findNearestStations(
                     this.stationTree, lat, lon, n, timeZoneFilter
             );
 
-            // 4. Display Results (from requirements Section 1.5 & 4)
+            // 5. Display Results
             printResults(result);
 
         } catch (IllegalArgumentException e) {
@@ -67,6 +66,50 @@ public class USEI09UI implements Runnable {
             System.err.println("An unexpected error occurred: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Reads and validates the timeZoneGroup filter input.
+     * @param scanner The Scanner object.
+     * @return A valid time zone string (matching case of the set) or null if empty.
+     */
+    private String readTimeZoneFilter(Scanner scanner) {
+        String filterInput;
+        String normalizedFilter = null;
+        boolean isValid = false;
+
+        System.out.println("\nAvailable Time Zone Groups: " + this.validTimeZones.stream().collect(Collectors.joining(", ")));
+
+        do {
+            System.out.print("Enter optional timeZoneGroup filter (or press Enter for none): ");
+            filterInput = scanner.nextLine().trim();
+
+            if (filterInput.isEmpty()) {
+                // Case 1: Empty input (No filter)
+                normalizedFilter = null;
+                isValid = true;
+            } else {
+                // Case 2: Check if input matches any valid time zone group (case-insensitive)
+                String upperInput = filterInput.toUpperCase();
+
+                // Find the exact (correctly cased) match in the valid set
+                normalizedFilter = this.validTimeZones.stream()
+                        .filter(tz -> tz.equals(upperInput))
+                        .findFirst()
+                        .orElse(null);
+
+                if (normalizedFilter != null) {
+                    isValid = true;
+                } else {
+                    System.out.println("⚠️ Invalid time zone group: '" + filterInput + "'. Please enter one of the available options or press Enter.");
+                }
+            }
+        } while (!isValid);
+
+        // We return the value in the correct case for the KD-Tree (e.g., "CET" instead of "cet")
+        // Note: The KD-Tree's isFilterMatch converts this back to upper case, but consistency is best.
+        // Since the UI normalized the input case, we return the user's input, or null if empty.
+        return filterInput.isEmpty() ? null : filterInput;
     }
 
     /**
@@ -86,14 +129,13 @@ public class USEI09UI implements Runnable {
 
             for (StationDistance sd : result.getNearestStations()) {
                 TrainStation s = sd.getStation();
-                // **ASSUMPTION**: TrainStation has getCountry() and getTimeZoneGroup()
                 System.out.printf("%-25s | %-7s | %-10.6f | %-10.6f | %-8s | %.2f%n",
-                        s.getStation(),     // stationName
-                        s.getCountry(),     // country
-                        s.getLatitude(),    // latitude
-                        s.getLongitude(),   // longitude
-                        s.getTimeZoneGroup(),// timeZoneGroup
-                        sd.getDistanceKm()  // distanceKm
+                        s.getStation(),
+                        s.getCountry(),
+                        s.getLatitude(),
+                        s.getLongitude(),
+                        s.getTimeZoneGroup(),
+                        sd.getDistanceKm()
                 );
             }
         }
@@ -108,11 +150,11 @@ public class USEI09UI implements Runnable {
     }
 
     /**
-     * Loads the station data using the TrainStationLoader.
-     * This is the correct pattern for your project.
+     * Loads the station data, builds the TwoDTree, and extracts valid time zones.
      */
     private boolean loadData() {
         try {
+            // Correctly calling the 'load' method on TrainStationLoader
             List<TrainStation> allStations = new TrainStationLoader().load(STATION_FILE_PATH);
 
             if (allStations == null || allStations.isEmpty()) {
@@ -120,8 +162,15 @@ public class USEI09UI implements Runnable {
                 return false;
             }
 
+            // NEW: Extract all unique time zone groups (case-normalized to upper)
+            this.validTimeZones = allStations.stream()
+                    .map(s -> s.getTimeZoneGroup().toUpperCase())
+                    .collect(Collectors.toSet());
+
+            // Builds the TwoDTree
             this.stationTree = new TwoDTree(allStations);
 
+            // Checks if the inherited BST/AVL base class is empty
             if (this.stationTree.isEmpty()) {
                 System.err.println("Station 2D-Tree was created but is empty.");
                 return false;
@@ -135,6 +184,7 @@ public class USEI09UI implements Runnable {
     }
 
     // --- Input Validation Helpers ---
+    // (Ensure these methods are available, or use the Utils class if it exists elsewhere)
 
     private double readDouble(Scanner scanner, String prompt, double min, double max) {
         double value;
@@ -165,7 +215,7 @@ public class USEI09UI implements Runnable {
                 if (value >= min && value <= max) {
                     break;
                 } else {
-                    System.out.printf("Error: Value must be between %d and %d.%n", min, max);
+                    System.out.printf("Error: Value must be between %d and %d (N > 0 is enforced here).%n", min, max);
                 }
             } catch (InputMismatchException e) {
                 System.out.println("Error: Please enter a valid integer.");
