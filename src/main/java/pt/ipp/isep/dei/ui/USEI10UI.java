@@ -27,6 +27,7 @@ public class USEI10UI implements Runnable{
 
         USEI10Controller.Result res = controller.radiusSearch(csvPath, lat, lon, radius);
 
+        System.out.println("");
         System.out.printf("  Total stations indexed: %d%n", res.totalIndexedStations);
         System.out.printf("  Stations within %.3f km: %d%n%n", radius, res.matchedCount);
 
@@ -52,10 +53,10 @@ public class USEI10UI implements Runnable{
         }
 
         System.out.println("\n--- Temporal Complexity ---");
-        System.out.println("  1) Load stations (TrainStationLoader): O(N)");
-        System.out.println("  2) Bounding-box filter: O(N)");
-        System.out.println("  3) Haversine on candidates (k): O(k)");
-        System.out.println("  4) AVL insertions (k log k)");
+        System.out.println(" Load stations (TrainStationLoader): O(N)");
+        System.out.println(" Bounding-box filter: O(N)");
+        System.out.println(" Haversine on candidates (k): O(k)");
+        System.out.println(" AVL insertions (k log k)");
         System.out.println("Overall: O(N + k log k) where k = #candidates inside bounding box.");
     }
 
