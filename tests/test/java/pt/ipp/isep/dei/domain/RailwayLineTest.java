@@ -39,7 +39,7 @@ public class RailwayLineTest {
      * @return a new LineSegment object
      */
     private LineSegment createSegment(int sequenceNumber, String origin, String destination, double dist) {
-        return new LineSegment(sequenceNumber, createStation(origin), createStation(destination), dist, 100.0, false);
+        return new LineSegment(sequenceNumber, createStation(origin), createStation(destination), dist, 100.0, false, 1);
     }
 
     /**
