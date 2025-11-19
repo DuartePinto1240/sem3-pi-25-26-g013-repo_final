@@ -34,13 +34,14 @@ public class LineSegmentTest {
         Station s1 = createStation("A");
         Station s2 = createStation("B");
 
-        LineSegment segment = new LineSegment(1, s1, s2, 12.5, 120.0, true);
+        LineSegment segment = new LineSegment(1, s1, s2, 12.5, 120.0, true, 2);
 
         assertEquals(s1, segment.getOrigin());
         assertEquals(s2, segment.getDestination());
         assertEquals(12.5, segment.getDistanceKm());
         assertEquals(120.0, segment.getMaxSpeedKmH());
         assertTrue(segment.isElectrified());
+        assertEquals(2, segment.getNumberTracks());
     }
 
     /**
@@ -51,7 +52,7 @@ public class LineSegmentTest {
     public void testToStringFormat() {
         Station origin = createStation("Lisboa");
         Station destination = createStation("Porto");
-        LineSegment seg = new LineSegment(1, origin, destination, 313.0, 200.0, true);
+        LineSegment seg = new LineSegment(1, origin, destination, 313.0, 200.0, true, 2);
 
         String text = seg.toString();
         System.out.println("toString() => " + text);
@@ -71,11 +72,11 @@ public class LineSegmentTest {
         Station s1 = createStation("Valid");
 
         Exception ex1 = assertThrows(IllegalArgumentException.class, () ->
-                new LineSegment(1, null, s1, 10.0, 100.0, true));
+                new LineSegment(1, null, s1, 10.0, 100.0, true, 1));
         assertTrue(ex1.getMessage().contains("Origin"));
 
         Exception ex2 = assertThrows(IllegalArgumentException.class, () ->
-                new LineSegment(1, s1, null, 10.0, 100.0, true));
+                new LineSegment(1, s1, null, 10.0, 100.0, true, 1));
         assertTrue(ex2.getMessage().contains("Destination"));
     }
 
@@ -88,7 +89,7 @@ public class LineSegmentTest {
         Station s2 = createStation("B");
 
         Exception ex = assertThrows(IllegalArgumentException.class, () ->
-                new LineSegment(1, s1, s2, 0, 100.0, false));
+                new LineSegment(1, s1, s2, 0, 100.0, false, 1));
         assertTrue(ex.getMessage().contains("Distance"));
     }
 
@@ -101,7 +102,7 @@ public class LineSegmentTest {
         Station s2 = createStation("B");
 
         Exception ex = assertThrows(IllegalArgumentException.class, () ->
-                new LineSegment(1, s1, s2, 10.0, -50.0, false));
+                new LineSegment(1, s1, s2, 10.0, -50.0, false, 1));
         assertTrue(ex.getMessage().contains("Max Speed"));
     }
 
@@ -112,9 +113,32 @@ public class LineSegmentTest {
     public void testElectrifiedFalse() {
         Station s1 = createStation("X");
         Station s2 = createStation("Y");
-        LineSegment segment = new LineSegment(2, s1, s2, 8.0, 80.0, false);
+        LineSegment segment = new LineSegment(2, s1, s2, 8.0, 80.0, false, 1);
 
         assertFalse(segment.isElectrified());
     }
-}
 
+    /**
+     * Verifies that single-track segments are handled correctly.
+     */
+    @Test
+    public void testSingleTrackSegment() {
+        Station s1 = createStation("A");
+        Station s2 = createStation("B");
+        LineSegment segment = new LineSegment(1, s1, s2, 10.0, 100.0, true, 1);
+
+        assertEquals(1, segment.getNumberTracks());
+    }
+
+    /**
+     * Verifies that multi-track segments are handled correctly.
+     */
+    @Test
+    public void testMultiTrackSegment() {
+        Station s1 = createStation("A");
+        Station s2 = createStation("B");
+        LineSegment segment = new LineSegment(1, s1, s2, 10.0, 100.0, true, 3);
+
+        assertEquals(3, segment.getNumberTracks());
+    }
+}

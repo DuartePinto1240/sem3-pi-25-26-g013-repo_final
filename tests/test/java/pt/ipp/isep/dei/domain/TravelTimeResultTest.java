@@ -41,8 +41,8 @@ public class TravelTimeResultTest {
         lisboa = new Station("ST02", "Lisboa");
 
         // Create two line segments representing the Porto–Lisboa route via Coimbra
-        segment1 = new LineSegment(1, porto, new Station("STX", "Coimbra"), 120.0, 160.0, true);
-        segment2 = new LineSegment(2, new Station("STX", "Coimbra"), lisboa, 193.0, 160.0, true);
+        segment1 = new LineSegment(1, porto, new Station("STX", "Coimbra"), 120.0, 160.0, true, 2);
+        segment2 = new LineSegment(2, new Station("STX", "Coimbra"), lisboa, 193.0, 160.0, true, 2);
 
         loco = new Locomotive("L001", "Siemens Vectron", 160.0, 85.0, true);
 
@@ -114,6 +114,3 @@ public class TravelTimeResultTest {
         }
     }
 }
-
-
-

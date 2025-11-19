@@ -37,18 +37,19 @@ public class WagonTest {
     }
 
     /**
-     * Verifies that the {@link Wagon} constructor correctly stores
-     * the provided list of {@link Box} objects.
+     * Verifies that boxes can be added to a {@link Wagon} after construction
+     * and that they are correctly stored.
      */
     @Test
-    public void testConstructorWithBoxesList() {
+    public void testConstructorWithBoxesAdded() {
         // Arrange
         Box box1 = new Box("BOX001", "SKU001", 10, null, LocalDateTime.now());
         Box box2 = new Box("BOX002", "SKU002", 20, LocalDate.of(2025, 12, 31), LocalDateTime.now());
-        List<Box> boxes = List.of(box1, box2);
 
         // Act
-        Wagon wagon = new Wagon("WGN002", boxes);
+        Wagon wagon = new Wagon("WGN002");
+        wagon.addBox(box1);
+        wagon.addBox(box2);
 
         // Assert
         assertEquals("WGN002", wagon.getWagonId());
@@ -112,5 +113,85 @@ public class WagonTest {
         // Assert
         assertTrue(text.contains("WGN999"));
         assertTrue(text.contains("boxes=1"));
+    }
+
+    /**
+     * Verifies that {@link Wagon#getBoxes()} returns an unmodifiable list
+     * to prevent external modification of the wagon's box collection.
+     */
+    @Test
+    public void testGetBoxesReturnsUnmodifiableList() {
+        // Arrange
+        Wagon wagon = new Wagon("WGN005");
+        Box box = new Box("BOX500", "SKU500", 10, null, LocalDateTime.now());
+        wagon.addBox(box);
+
+        // Act & Assert
+        List<Box> boxes = wagon.getBoxes();
+        assertThrows(UnsupportedOperationException.class, () ->
+                boxes.add(new Box("BOX501", "SKU501", 5, null, LocalDateTime.now()))
+        );
+    }
+
+    /**
+     * Verifies that adding the same box multiple times is allowed.
+     */
+    @Test
+    public void testAddSameBoxMultipleTimes() {
+        // Arrange
+        Wagon wagon = new Wagon("WGN006");
+        Box box = new Box("BOX600", "SKU600", 10, null, LocalDateTime.now());
+
+        // Act
+        wagon.addBox(box);
+        wagon.addBox(box);
+
+        // Assert
+        assertEquals(2, wagon.getBoxes().size());
+        // Both entries should reference the same box object
+        assertSame(wagon.getBoxes().get(0), wagon.getBoxes().get(1));
+    }
+
+    /**
+     * Tests that a wagon with no boxes has a toString that reflects zero boxes.
+     */
+    @Test
+    public void testToStringWithNoBoxes() {
+        // Arrange
+        Wagon wagon = new Wagon("WGN007");
+
+        // Act
+        String text = wagon.toString();
+
+        // Assert
+        assertTrue(text.contains("WGN007"));
+        assertTrue(text.contains("boxes=0"));
+    }
+
+    /**
+     * Tests that adding a null box is safely ignored.
+     */
+    @Test
+    public void testAddNullBoxIsIgnored() {
+        // Arrange
+        Wagon wagon = new Wagon("WGN008");
+
+        // Act
+        wagon.addBox(null);
+
+        // Assert
+        assertEquals(0, wagon.getBoxes().size());
+    }
+
+    /**
+     * Verifies that getNumber() returns the same value as getWagonId().
+     */
+    @Test
+    public void testGetNumberReturnsSameAsGetWagonId() {
+        // Arrange
+        Wagon wagon = new Wagon("WGN009");
+
+        // Assert
+        assertEquals(wagon.getWagonId(), wagon.getNumber());
     }
 }
