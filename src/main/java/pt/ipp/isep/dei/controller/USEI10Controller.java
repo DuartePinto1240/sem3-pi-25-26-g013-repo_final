@@ -7,13 +7,51 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * Controller for the USEI10 use case:
+ * <strong>Search train stations within a radius from a target coordinate,
+ * order results, and compute summaries.</strong>
+ *
+ * <p>This controller loads all stations, performs a bounding-box preliminary filter,
+ * computes accurate Haversine distances, sorts candidates, inserts them into
+ * an {@link AVLTree}, and generates summaries by country and by city flag.</p>
+ */
 public class USEI10Controller {
+
+    /** Loader responsible for reading the CSV dataset of train stations. */
     private final TrainStationLoader loader;
 
+    /** Earth radius in kilometers, used by the Haversine formula. */
+    private static final double EARTH_RADIUS_KM = 6371.0088;
+
+    /**
+     * Constructs a controller using a default {@link TrainStationLoader}.
+     */
     public USEI10Controller() {
         this.loader = new TrainStationLoader();
     }
 
+    /**
+     * Performs a radius search around a target latitude/longitude.
+     *
+     * <p>Algorithm:</p>
+     * <ol>
+     *   <li>Load all stations from CSV</li>
+     *   <li>Compute latitude/longitude bounding box</li>
+     *   <li>Filter stations inside bounding box</li>
+     *   <li>Compute Haversine distance for candidates</li>
+     *   <li>Keep only stations ≤ radius</li>
+     *   <li>Sort by distance ascending, name descending</li>
+     *   <li>Insert into AVL tree using {@link DistanceNameKey}</li>
+     *   <li>Compute summaries (country, city)</li>
+     * </ol>
+     *
+     * @param csvPath   path to the CSV file
+     * @param lat       target latitude
+     * @param lon       target longitude
+     * @param radiusKm  search radius in kilometers
+     * @return a {@link Result} object containing the AVL tree and summaries
+     */
     public Result radiusSearch(String csvPath, double lat, double lon, double radiusKm) {
         List<TrainStation> allStations = loader.load(csvPath);
 
@@ -62,13 +100,30 @@ public class USEI10Controller {
         return new Result(tree, byCountry, byIsCity, allStations.size(), candidates.size());
     }
 
+    /**
+     * Container class returned by {@link USEI10Controller#radiusSearch}.
+     * Holds the AVL tree of results and the computed summary statistics.
+     */
     public static class Result {
+
+        /** AVL tree containing matched stations, keyed by sorted composite distance key. */
         public final AVLTree<DistanceNameKey, TrainStation> tree;
+
+        /** Summary: count stations by country. */
         public final Map<String, Long> countByCountry;
+
+        /** Summary: count stations by whether they belong to a city. */
         public final Map<Boolean, Long> countByIsCity;
+
+        /** Total number of stations loaded from the dataset. */
         public final int totalIndexedStations;
+
+        /** Number of stations that matched the radius filter. */
         public final int matchedCount;
 
+        /**
+         * Constructs a result container.
+         */
         public Result(AVLTree<DistanceNameKey, TrainStation> tree,
                       Map<String, Long> countByCountry,
                       Map<Boolean, Long> countByIsCity,
@@ -82,9 +137,15 @@ public class USEI10Controller {
         }
     }
 
-
-    private static final double EARTH_RADIUS_KM = 6371.0088;
-
+    /**
+     * Computes geographic distance between two coordinates using the Haversine formula.
+     *
+     * @param lat1 latitude of point 1
+     * @param lon1 longitude of point 1
+     * @param lat2 latitude of point 2
+     * @param lon2 longitude of point 2
+     * @return distance in kilometers
+     */
     private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
         double r = EARTH_RADIUS_KM;
         double phi1 = Math.toRadians(lat1);
