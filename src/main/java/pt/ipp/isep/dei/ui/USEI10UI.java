@@ -6,13 +6,30 @@ import main.java.pt.ipp.isep.dei.util.Utils;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * User interface for executing the USEI10 use case:
+ * <strong>Radius-based station search and density summary.</strong>
+ *
+ * <p>This UI is console-driven and interacts with {@link USEI10Controller}
+ * to perform the spatial search and display results, including sorted listings,
+ * country summary, and city/non-city summary.</p>
+ */
+
 public class USEI10UI implements Runnable{
+
+    /** Controller responsible for executing the radius search logic. */
     private final USEI10Controller controller;
 
+    /** Constructs the UI and initializes its controller.*/
     public USEI10UI() {
         this.controller = new USEI10Controller();
     }
 
+    /**
+     * Entry point for running the console-based UI.
+     * <p>Prompts the user for coordinates and search radius, runs the search,
+     * and prints formatted results including totals, sorted listing, and summaries.</p>
+     */
     @Override
     public void run() {
         System.out.println("=== USEI10 - Radius search and density summary ===");
@@ -27,6 +44,7 @@ public class USEI10UI implements Runnable{
 
         USEI10Controller.Result res = controller.radiusSearch(csvPath, lat, lon, radius);
 
+        System.out.println("");
         System.out.printf("  Total stations indexed: %d%n", res.totalIndexedStations);
         System.out.printf("  Stations within %.3f km: %d%n%n", radius, res.matchedCount);
 
@@ -52,13 +70,20 @@ public class USEI10UI implements Runnable{
         }
 
         System.out.println("\n--- Temporal Complexity ---");
-        System.out.println("  1) Load stations (TrainStationLoader): O(N)");
-        System.out.println("  2) Bounding-box filter: O(N)");
-        System.out.println("  3) Haversine on candidates (k): O(k)");
-        System.out.println("  4) AVL insertions (k log k)");
+        System.out.println(" Load stations (TrainStationLoader): O(N)");
+        System.out.println(" Bounding-box filter: O(N)");
+        System.out.println(" Haversine on candidates (k): O(k)");
+        System.out.println(" AVL insertions (k log k)");
         System.out.println("Overall: O(N + k log k) where k = #candidates inside bounding box.");
     }
 
+    /**
+     * Reads a double value from the console, repeatedly prompting the user
+     * until a valid number is entered.
+     *
+     * @param prompt text displayed to the user
+     * @return the parsed double value
+     */
     private double readDouble(String prompt) {
         while (true) {
             String line = Utils.readLineFromConsole(prompt);
