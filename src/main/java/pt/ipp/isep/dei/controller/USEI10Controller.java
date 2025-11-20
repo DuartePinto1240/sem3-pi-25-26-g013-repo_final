@@ -55,8 +55,10 @@ public class USEI10Controller {
     public Result radiusSearch(String csvPath, double lat, double lon, double radiusKm) {
         List<TrainStation> allStations = loader.load(csvPath);
 
-        double latDegDiff = Math.toDegrees(radiusKm / EARTH_RADIUS_KM);
-        double lonDegDiff = Math.toDegrees(radiusKm / (EARTH_RADIUS_KM * Math.cos(Math.toRadians(lat))));
+        double safetyFactor = 1.02; // 2% de margem
+
+        double latDegDiff = Math.toDegrees((radiusKm * safetyFactor) / EARTH_RADIUS_KM);
+        double lonDegDiff = Math.toDegrees((radiusKm * safetyFactor) / (EARTH_RADIUS_KM * Math.cos(Math.toRadians(lat))));
 
         double latMin = lat - latDegDiff;
         double latMax = lat + latDegDiff;

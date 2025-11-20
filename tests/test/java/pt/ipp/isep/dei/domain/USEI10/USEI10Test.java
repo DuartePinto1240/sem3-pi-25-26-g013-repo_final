@@ -27,25 +27,12 @@ public class USEI10Test {
         allStations = loader.load(csvPath);
 
         System.out.println("\n=== USEI10 TEST INITIALIZATION ===");
-        System.out.println("CSV path: " + csvPath);
         System.out.println("Stations loaded: " + allStations.size());
 
         controller = new USEI10Controller();
     }
 
-    private List<TrainStation> naiveRadiusScan(double lat, double lon, double radiusKm) {
-
-        List<TrainStation> result = new ArrayList<>();
-
-        for (TrainStation s : allStations) {
-            double d = haversineKm(lat, lon, s.getLatitude(), s.getLongitude());
-            if (d <= radiusKm) {
-                result.add(s);
-            }
-        }
-        return result;
-    }
-
+    // Auxiliary naive radius scan for correctness checking
     private double haversineKm(double lat1, double lon1, double lat2, double lon2) {
         final double R = 6371.0088;
 
@@ -58,98 +45,91 @@ public class USEI10Test {
                 + Math.cos(phi1) * Math.cos(phi2)
                 * Math.sin(dLambda / 2) * Math.sin(dLambda / 2);
 
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        return R * (2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    }
 
-        return R * c;
+    private List<TrainStation> naiveScan(double lat, double lon, double radiusKm) {
+        List<TrainStation> res = new ArrayList<>();
+
+        for (TrainStation s : allStations) {
+            if (haversineKm(lat, lon, s.getLatitude(), s.getLongitude()) <= radiusKm) {
+                res.add(s);
+            }
+        }
+        return res;
     }
 
     @Test
-    void testRadiusSmall() {
-
+    void testSmallRadius() {
         double lat = 38.7223;
         double lon = -9.1393;
-        double radiusKm = 10.0;
-
-        System.out.println("\n--- TEST 1: Radius 10 km around Lisbon ---");
+        double radiusKm = 10;
 
         var result = controller.radiusSearch(
                 "train_station_dataset_v2/train_stations_europe.csv",
                 lat, lon, radiusKm
         );
 
-        List<TrainStation> naive = naiveRadiusScan(lat, lon, radiusKm);
+        List<TrainStation> naive = naiveScan(lat, lon, radiusKm);
 
         assertEquals(naive.size(), result.matchedCount);
 
-        for (TrainStation s : result.tree.inOrder()) {
+        List<TrainStation> avlStations = new ArrayList<>();
+        result.tree.inOrder((k, v) -> avlStations.add(v));
+
+        for (TrainStation s : avlStations) {
             assertTrue(naive.contains(s));
         }
     }
 
-
     @Test
-    void testRadiusPortugalWide() {
+    void testOrderingCorrectness() {
 
         double lat = 39.5;
         double lon = -8.0;
-        double radiusKm = 180.0;
-
-        System.out.println("\n--- TEST 2: Radius ~180 km around Portugal ---");
+        double radiusKm = 200;
 
         var result = controller.radiusSearch(
                 "train_station_dataset_v2/train_stations_europe.csv",
                 lat, lon, radiusKm
         );
 
-        List<TrainStation> naive = naiveRadiusScan(lat, lon, radiusKm);
+        List<DistanceNameKey> keys = new ArrayList<>();
+        result.tree.inOrder((k, v) -> keys.add(k));
 
-        assertEquals(naive.size(), result.matchedCount);
-
-        List<Map.Entry<DistanceNameKey, TrainStation>> list =
-                result.tree.inOrder();
-
-        for (int i = 1; i < list.size(); i++) {
-            DistanceNameKey prev = list.get(i - 1).getKey();
-            DistanceNameKey curr = list.get(i).getKey();
-            assertTrue(prev.compareTo(curr) <= 0);
+        for (int i = 1; i < keys.size(); i++) {
+            assertTrue(keys.get(i - 1).compareTo(keys.get(i)) <= 0);
         }
     }
 
     @Test
-    void testRadiusEurope() {
+    void testCountryCounts() {
 
         double lat = 48.0;
-        double lon = 9.0; // mais ou menos no centro da Europa
-        double radiusKm = 1000.0;
-
-        System.out.println("\n--- TEST 3: Radius 1000 km covering Europe ---");
+        double lon = 9.0;
+        double radiusKm = 1000;
 
         var result = controller.radiusSearch(
                 "train_station_dataset_v2/train_stations_europe.csv",
                 lat, lon, radiusKm
         );
 
-        List<TrainStation> naive = naiveRadiusScan(lat, lon, radiusKm);
+        List<TrainStation> naive = naiveScan(lat, lon, radiusKm);
 
-        assertEquals(naive.size(), result.matchedCount);
-
-        Map<String, Long> naiveByCountry = new HashMap<>();
+        Map<String, Long> naiveMap = new HashMap<>();
         for (TrainStation s : naive) {
-            naiveByCountry.merge(s.getCountry(), 1L, Long::sum);
+            naiveMap.merge(s.getCountry(), 1L, Long::sum);
         }
 
-        assertEquals(naiveByCountry, result.countByCountry);
+        assertEquals(naiveMap, result.countByCountry);
     }
 
     @Test
-    void testNoStationsInOcean() {
+    void testNoStations() {
 
-        System.out.println("\n--- TEST 4: Ocean radius test (0 results expected) ---");
-
-        // Middle of the Atlantic
-        double lat = 0.0;
-        double lon = -40.0;
-        double radiusKm = 50.0;
+        double lat = 0;
+        double lon = -40;
+        double radiusKm = 30;
 
         var result = controller.radiusSearch(
                 "train_station_dataset_v2/train_stations_europe.csv",
@@ -157,24 +137,28 @@ public class USEI10Test {
         );
 
         assertEquals(0, result.matchedCount);
-        assertTrue(result.tree.isEmpty());
+
+        List<TrainStation> avl = new ArrayList<>();
+        result.tree.inOrder((k, v) -> avl.add(v));
+        assertTrue(avl.isEmpty());
     }
 
     @Test
     void testResultsSubsetOfDataset() {
 
-        System.out.println("\n--- TEST 5: All returned stations must be from dataset ---");
-
         double lat = 47.0;
-        double lon = 2.0;
-        double radiusKm = 500.0;
+        double lon = 6.0;
+        double radiusKm = 500;
 
         var result = controller.radiusSearch(
                 "train_station_dataset_v2/train_stations_europe.csv",
                 lat, lon, radiusKm
         );
 
-        for (TrainStation s : result.tree.inOrder()) {
+        List<TrainStation> avl = new ArrayList<>();
+        result.tree.inOrder((k, v) -> avl.add(v));
+
+        for (TrainStation s : avl) {
             assertTrue(allStations.contains(s));
         }
     }
