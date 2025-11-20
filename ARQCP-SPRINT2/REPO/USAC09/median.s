@@ -14,7 +14,7 @@ median:
 
     blez a1, invalid     # if (length <= 0) return 0
 
-    li a2, 1             # atribui 1 a a2 para passar como argumento
+    li a2, 1             # a2 = 1 para passar como argumento
     jal sort_array       # chama função sort_array
 
     # restaura parâmetros originais
