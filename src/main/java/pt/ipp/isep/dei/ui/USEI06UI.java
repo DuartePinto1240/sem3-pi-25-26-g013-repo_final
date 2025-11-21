@@ -68,6 +68,7 @@ public class USEI06UI implements Runnable {
     }
 
 
+
     /**
      * Sample Query 1: Find all stations at a specific latitude.
      * Demonstrates: Coordinate-based search with duplicate handling.
