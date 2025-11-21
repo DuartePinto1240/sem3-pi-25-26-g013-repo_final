@@ -4,21 +4,21 @@
 
 ### 1.1. User Story Description
 
-To support route planning and intermodal logistics optimization, the system must provide efficient nearest-facility search capabilities over the indexed dataset of railway stations, airports, and seaports.  
-This functionality allows planners to quickly identify the closest facility of a given transport mode to a specific location or to another facility, enabling cost-efficient route combinations between rail, air, and sea transportation.
+To support route planning and intermodal logistics optimization, the system must provide efficient nearest-facility 
+search capabilities over the indexed dataset of railway stations.    
+This functionality allows planners to quickly identify the closest facility to another facility, enabling cost-efficient
+route combinations.
 
 **User Story:**
-> As a planner, I want to query the nearest facility (station, airport, or seaport) to a given location or reference node, so that I can efficiently determine intermodal transfer points and optimize transportation routes.
+> As a planner, I want to query the nearest facility (station) to a given location or reference node, so that I can 
+> efficiently determine intermodal transfer points and optimize transportation routes.
 ---
 
 ### 1.2. Customer Specifications and Clarifications
 
 **From the specifications document:**
 
-> The query must allow searching for the nearest facility of a specific type, such as:
-    - The closest airport to a railway station
-    - The closest seaport to a given latitude/longitude point
-    - The closest railway terminal to an airport
+> The query must allow searching for facilities within a radius of a target (lat, lon)
   
 > The search must rely on spatial indexes (KD-Trees or equivalent) built in previous user stories (USEI07–USEI09).  
 A sequential scan through all facilities is not acceptable.
