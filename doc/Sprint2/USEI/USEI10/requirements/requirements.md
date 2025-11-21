@@ -1,4 +1,4 @@
-# USEI10 — Multi-Modal Nearest Facility Queries
+# USEI10 — Queries for locating facilities within a specific radius.
 
 ## 1. Requirements Engineering
 
