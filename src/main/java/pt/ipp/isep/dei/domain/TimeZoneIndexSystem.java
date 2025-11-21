@@ -34,6 +34,7 @@ public class TimeZoneIndexSystem {
         public int hashCode() {
             return Double.hashCode(coordinate);
         }
+
     }
 
     public static class TimeZoneEntry implements Comparable<TimeZoneEntry> {
@@ -43,6 +44,7 @@ public class TimeZoneIndexSystem {
         public TimeZoneEntry(String timeZoneGroup) {
             this.timeZoneGroup = timeZoneGroup;
         }
+
 
         @Override
         public int compareTo(TimeZoneEntry other) {
@@ -133,6 +135,7 @@ public class TimeZoneIndexSystem {
             for (TimeZoneEntry e : inOrder()) list.add(e);
             return list;
         }
+
     }
 
     // ========== INDICES ==========
@@ -231,6 +234,12 @@ public class TimeZoneIndexSystem {
         }
         return result;
     }
+    public List<String> getAllTimeZones() {
+        return timeZoneIndex.inOrderEntries().stream()
+                .map(tze -> tze.timeZoneGroup)
+                .toList();
+    }
+
 
     public List<TrainStation> findByTimeZoneAndCountry(String timeZoneGroup, String country) {
         TimeZoneEntry tz = timeZoneIndex.getOrCreate(timeZoneGroup);
