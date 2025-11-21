@@ -12,7 +12,7 @@ BEGIN
             INNER JOIN Wagon w ON tw.wagon_id = w.wagon_id
             INNER JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
             INNER JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
-            WHERE wc.code = 'GRAIN'
+            WHERE wc.code = 'CER'
               AND t.planned_departure BETWEEN p_start_date AND p_end_date
         ),
         grain_wagon_usage AS (
@@ -24,7 +24,7 @@ BEGIN
             INNER JOIN Wagon w ON tw.wagon_id = w.wagon_id
             INNER JOIN WagonModel wm ON w.wagonmodel_id = wm.wagonmodel_id
             INNER JOIN WagonCategory wc ON wm.wagoncategory_id = wc.wagoncategory_id
-            WHERE wc.code = 'GRAIN'
+            WHERE wc.code = 'CER'
             GROUP BY w.wagon_id
         ),
         total_trains AS (

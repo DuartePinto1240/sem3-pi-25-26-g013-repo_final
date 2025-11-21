@@ -22,7 +22,7 @@ BEGIN
     );
 
     DBMS_OUTPUT.PUT_LINE('=======================================================');
-    DBMS_OUTPUT.PUT_LINE('Grain wagons used in ALL trains - October 2025');
+    DBMS_OUTPUT.PUT_LINE('Grain wagons used in all trains - october 2025');
     DBMS_OUTPUT.PUT_LINE('=======================================================');
 
     LOOP
