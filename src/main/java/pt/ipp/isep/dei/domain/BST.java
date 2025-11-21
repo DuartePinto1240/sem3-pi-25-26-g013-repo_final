@@ -123,17 +123,44 @@ public class BST<E extends Comparable<E>> implements BSTInterface<E> {
 
     @Override
     public Iterable<E> inOrder() {
-        return null;
+        List<E> result = new ArrayList<>();
+        inOrderRec(root, result);
+        return result;
+    }
+
+    private void inOrderRec(Node<E> node, List<E> result) {
+        if (node == null) return;
+        inOrderRec(node.getLeft(), result);
+        result.add(node.getElement());
+        inOrderRec(node.getRight(), result);
     }
 
     @Override
     public Iterable<E> preOrder() {
-        return null;
+        List<E> result = new ArrayList<>();
+        preOrderRec(root, result);
+        return result;
+    }
+
+    private void preOrderRec(Node<E> node, List<E> result) {
+        if (node == null) return;
+        result.add(node.getElement());
+        preOrderRec(node.getLeft(), result);
+        preOrderRec(node.getRight(), result);
     }
 
     @Override
     public Iterable<E> posOrder() {
-        return null;
+        List<E> result = new ArrayList<>();
+        posOrderRec(root, result);
+        return result;
+    }
+
+    private void posOrderRec(Node<E> node, List<E> result) {
+        if (node == null) return;
+        posOrderRec(node.getLeft(), result);
+        posOrderRec(node.getRight(), result);
+        result.add(node.getElement());
     }
 
     protected E smallestElement(Node<E> node) {

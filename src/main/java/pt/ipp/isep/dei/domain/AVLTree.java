@@ -150,7 +150,7 @@ public class AVLTree<K extends Comparable<K>, V> {
     }
 
     /**
-     * Inserts a key-value pair into the tree.
+     * Inserts.sql a key-value pair into the tree.
      * If key exists, updates the value.
      *
      * Temporal Complexity: O(log n)

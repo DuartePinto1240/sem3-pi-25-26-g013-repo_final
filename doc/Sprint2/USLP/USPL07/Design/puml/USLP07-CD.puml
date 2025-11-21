@@ -1,0 +1,298 @@
+@startuml
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+
+' ===================== UI =====================
+class USLP07UI {
+  - controller: TrainDispatchSchedulerController
+  - scanner: Scanner
+  --
+  + USLP07UI()
+  + run(): void
+  - chooseNumberOfTrains(max: int): int
+  - configureTrain(...): TrainDispatchRequest
+  - printSchedules(schedules: List<TrainSchedule>): void
+  - printHeader(title: String): void
+  - printError(msg: String): void
+  - formatStatus(status: TrainScheduleStatus): String
+}
+
+' ===================== Controller =====================
+class TrainDispatchSchedulerController {
+  - stationRepository: StationRepository
+  - locomotiveRepository: LocomotiveRepository
+  - railwayLineRepository: RailwayLineRepository
+  - wagonModelRepository: WagonModelRepository
+  - wagonRepository: WagonRepository
+  - schedulerService: TrainSchedulerService
+  --
+  + TrainDispatchSchedulerController()
+  + getAvailableStations(): List<Station>
+  + getAvailableLocomotives(): List<Locomotive>
+  + getAvailableWagons(): List<Wagon>
+  + buildDispatchRequest(
+        trainId: String,
+        route: List<Station>,
+        locomotives: List<Locomotive>,
+        wagons: List<Wagon>,
+        departureTime: LocalDateTime
+    ): TrainDispatchRequest
+  + scheduleTrains(
+        requests: List<TrainDispatchRequest>
+    ): List<TrainSchedule>
+}
+
+' ===================== Services =====================
+class TrainSchedulerService {
+  - stationRepository: StationRepository
+  - locomotiveRepository: LocomotiveRepository
+  - railwayLineRepository: RailwayLineRepository
+  --
+  + TrainSchedulerService(
+        stationRepository: StationRepository,
+        locomotiveRepository: LocomotiveRepository,
+        railwayLineRepository: RailwayLineRepository
+    )
+  + scheduleTrains(
+        requests: List<TrainDispatchRequest>
+    ): List<TrainSchedule>
+  - scheduleSingleTrain(
+        request: TrainDispatchRequest,
+        segmentsOut: List<ScheduledSegment>
+    ): TrainSchedule
+  - detectAndResolveConflicts(
+        schedules: List<TrainSchedule>,
+        allSegments: List<ScheduledSegment>
+    ): void
+  - computeEffectiveSpeedKmH(
+        segment: LineSegment,
+        minTrainMaxSpeedKmH: double,
+        totalLocoPowerKw: double,
+        totalTrainWeightTons: double
+    ): double
+  - isSingleTrack(segment: LineSegment): boolean
+}
+
+class TrainDispatchRequest {
+  - trainId: String
+  - route: List<Station>
+  - locomotives: List<Locomotive>
+  - wagons: List<Wagon>
+  - departureTime: LocalDateTime
+  --
+  + TrainDispatchRequest(
+        trainId: String,
+        route: List<Station>,
+        locomotives: List<Locomotive>,
+        wagons: List<Wagon>,
+        departureTime: LocalDateTime
+    )
+  + getTrainId(): String
+  + getRoute(): List<Station>
+  + getLocomotives(): List<Locomotive>
+  + getWagons(): List<Wagon>
+  + getDepartureTime(): LocalDateTime
+}
+
+' ===================== Domain – Scheduling =====================
+
+enum TrainScheduleStatus {
+  VALIDATED
+  CONFLICT_WARNING
+  INVALID
+}
+
+class TrainSchedule {
+  - trainId: String
+  - route: List<Station>
+  - departureTime: LocalDateTime
+  - estimatedArrivalTime: LocalDateTime
+  - status: TrainScheduleStatus
+  - passageTimes: List<PassageTime>
+  - crossingOperations: List<CrossingOperation>
+  --
+  + TrainSchedule(
+        trainId: String,
+        route: List<Station>,
+        departureTime: LocalDateTime
+    )
+  + getTrainId(): String
+  + getRoute(): List<Station>
+  + getDepartureTime(): LocalDateTime
+  + getEstimatedArrivalTime(): LocalDateTime
+  + setEstimatedArrivalTime(time: LocalDateTime): void
+  + getStatus(): TrainScheduleStatus
+  + setStatus(status: TrainScheduleStatus): void
+  + addPassageTime(
+        station: Station,
+        time: LocalDateTime
+    ): void
+  + addCrossingOperation(
+        locationName: String,
+        otherTrainId: String,
+        waitingTrainId: String,
+        waitingDuration: Duration
+    ): void
+  + applyDelay(
+        fromTime: LocalDateTime,
+        delay: Duration
+    ): void
+}
+
+class PassageTime {
+  - station: Station
+  - time: LocalDateTime
+  --
+  + PassageTime(station: Station, time: LocalDateTime)
+}
+
+class CrossingOperation {
+  - locationName: String
+  - otherTrainId: String
+  - waitingTrainId: String
+  - waitingDuration: Duration
+  --
+  + CrossingOperation(
+        locationName: String,
+        otherTrainId: String,
+        waitingTrainId: String,
+        waitingDuration: Duration
+    )
+}
+
+class ScheduledSegment {
+  - trainId: String
+  - segment: LineSegment
+  - entryTime: LocalDateTime
+  - exitTime: LocalDateTime
+  - directionAB: boolean
+  --
+  + ScheduledSegment(
+        trainId: String,
+        segment: LineSegment,
+        entryTime: LocalDateTime,
+        exitTime: LocalDateTime,
+        directionAB: boolean
+    )
+  + getTrainId(): String
+  + getSegment(): LineSegment
+  + getEntryTime(): LocalDateTime
+  + getExitTime(): LocalDateTime
+}
+
+' ===================== Domain – Railway =====================
+class Station {
+  - id: String
+  - name: String
+  --
+  + getId(): String
+  + getName(): String
+}
+
+class RailwayLine {
+  - id: int
+  - startStation: Station
+  - endStation: Station
+  - segments: List<LineSegment>
+  --
+  + getSegments(): List<LineSegment>
+}
+
+class LineSegment {
+  - lineId: int
+  - sequenceNumber: int
+  - originStationId: String
+  - destinationStationId: String
+  - distanceKm: double
+  - maxSpeedKmH: double
+  - isElectric: boolean
+  - numberTracks: int
+  --
+  + getNumberTracks(): int
+  + getDistanceKm(): double
+  + getMaxSpeedKmH(): double
+}
+
+class Locomotive {
+  - id: String
+  - model: String
+  - power: double
+  - maxSpeedKmH: double
+  - weightTons: double
+  --
+  + getModel(): String
+  + getPower(): double
+  + getMaxSpeedKmH(): double
+  + getWeightTons(): double
+}
+
+class Wagon {
+  - id: String
+  - maxSpeedKmH: double
+  - tareWeightTons: double
+  - maxLoadTons: double
+  --
+  + getMaxSpeedKmH(): double
+  + getTareWeightTons(): double
+  + getMaxLoadTons(): double
+}
+
+' ===================== Repositories =====================
+interface StationRepository {
+  + findAll(): List<Station>
+  + findById(id: String): Station
+}
+
+interface LocomotiveRepository {
+  + findAll(): List<Locomotive>
+}
+
+interface RailwayLineRepository {
+  + findDirectLine(
+        start: Station,
+        end: Station
+    ): RailwayLine
+}
+
+interface WagonModelRepository {
+}
+
+interface WagonRepository {
+  + findAll(): List<Wagon>
+}
+
+' ===================== Ligações =====================
+USLP07UI --> TrainDispatchSchedulerController : controller
+
+TrainDispatchSchedulerController --> TrainSchedulerService : schedulerService
+
+TrainDispatchSchedulerController --> StationRepository
+TrainDispatchSchedulerController --> LocomotiveRepository
+TrainDispatchSchedulerController --> RailwayLineRepository
+TrainDispatchSchedulerController --> WagonRepository
+TrainDispatchSchedulerController --> WagonModelRepository
+
+TrainSchedulerService --> StationRepository
+TrainSchedulerService --> LocomotiveRepository
+TrainSchedulerService --> RailwayLineRepository
+
+TrainSchedulerService --> TrainSchedule
+TrainSchedulerService --> ScheduledSegment
+TrainSchedulerService --> TrainDispatchRequest
+
+TrainSchedule --> PassageTime
+TrainSchedule --> CrossingOperation
+
+RailwayLine "1" o-- "*" LineSegment
+RailwayLine --> Station : startStation
+RailwayLine --> Station : endStation
+
+ScheduledSegment "*" --> "1" LineSegment
+
+TrainDispatchRequest --> "*" Station : route
+TrainDispatchRequest --> "*" Locomotive : locomotives
+TrainDispatchRequest --> "*" Wagon : wagons
+
+@enduml

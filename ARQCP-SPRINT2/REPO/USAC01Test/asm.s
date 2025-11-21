@@ -1,9 +1,9 @@
-    .text
+.text
     .global encrypt_data
 
 # int encrypt_data(char* in, int key, char *out)
 # a0 = input string pointer
-# a1 = key (0-26)
+# a1 = key (1-26)
 # a2 = output string pointer
 # Returns: a0 = 1 (success) or 0 (failure)
 
@@ -21,9 +21,9 @@ encrypt_data:
     # Check if output pointer is NULL
     beqz a2, error_exit
 
-    # Validate key range [0, 26]
-    li t0, 0
-    blt a1, t0, error_exit       # key < 0 → error
+    # Validate key range [1, 26]
+    li t0, 1
+    blt a1, t0, error_exit       # key < 1 → error
     li t0, 26
     bgt a1, t0, error_exit       # key > 26 → error
 
@@ -33,7 +33,7 @@ encrypt_data:
     mv s2, a1                    # s2 = key
 
 encrypt_loop:
-    # Load current character (unsigned)
+    # Load current character (unsigned!)
     lbu t1, 0(s0)
 
     # End of string?
