@@ -9,20 +9,16 @@ BEGIN
 OPEN rc_result FOR
 SELECT
     l.loco_id,
-    l.name AS locomotive_name,
-    c.short_name AS operator_short_name,
-    m.name AS model_name,
-    COUNT(lg.gauge_id) AS number_of_gauges_supported
+    l.name              AS locomotive_name,
+    c.short_name        AS operator_short_name,
+    m.name              AS model_name,
+    COUNT(lg.gauge_id)  AS number_of_gauges_supported
 FROM
     Locomotive l
-        JOIN
-    LocomotiveGauge lg ON l.loco_id = lg.loco_id
-        JOIN
-    Company c ON l.operator_id = c.company_id
-        JOIN
-    LocomotiveModel lm ON l.locomotive_model_id = lm.locomotive_model_id
-        JOIN
-    Model m ON lm.model_id = m.model_id
+        INNER JOIN LocomotiveGauge lg ON l.loco_id = lg.loco_id
+        INNER JOIN Company c ON l.operator_id = c.company_id
+        INNER JOIN LocomotiveModel lm ON l.locomotive_model_id = lm.locomotive_model_id
+        INNER JOIN Model m ON lm.model_id = m.model_id
 WHERE
     l.operator_id = p_operator_id
 GROUP BY
