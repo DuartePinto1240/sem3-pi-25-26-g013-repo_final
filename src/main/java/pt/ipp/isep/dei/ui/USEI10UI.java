@@ -71,7 +71,8 @@ public class USEI10UI implements Runnable{
 
         System.out.println("\n--- Temporal Complexity ---");
         System.out.println(" Load stations (TrainStationLoader): O(N)");
-        System.out.println(" Bounding-box filter: O(N)");
+        System.out.println(" KD-Tree Construction: O(N)");
+        System.out.println(" KD prune + candidate collection: O(log N + K)");
         System.out.println(" Haversine on candidates (k): O(k)");
         System.out.println(" AVL insertions (k log k)");
         System.out.println("Overall: O(N + k log k) where k = #candidates inside bounding box.");

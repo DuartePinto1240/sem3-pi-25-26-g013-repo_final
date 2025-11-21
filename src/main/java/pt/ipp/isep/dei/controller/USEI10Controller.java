@@ -55,7 +55,10 @@ public class USEI10Controller {
     public Result radiusSearch(String csvPath, double lat, double lon, double radiusKm) {
         List<TrainStation> allStations = loader.load(csvPath);
 
-        double safetyFactor = 1.02; // 2% de margem
+        KDTreeStations treeStations = new KDTreeStations();
+        treeStations.buildFromStations(allStations);
+
+        final double safetyFactor = 1.02; // 2% de margem
 
         double latDegDiff = Math.toDegrees((radiusKm * safetyFactor) / EARTH_RADIUS_KM);
         double lonDegDiff = Math.toDegrees((radiusKm * safetyFactor) / (EARTH_RADIUS_KM * Math.cos(Math.toRadians(lat))));
@@ -65,16 +68,11 @@ public class USEI10Controller {
         double lonMin = lon - lonDegDiff;
         double lonMax = lon + lonDegDiff;
 
+        List<TrainStation> kdCandidates = treeStations.rangeSearch(latMin, latMax, lonMin, lonMax, null, null, null);
+
         List<StationDistance> candidates = new ArrayList<>();
-
-        for (TrainStation s : allStations) {
-            double sLat = s.getLatitude();
-            double sLon = s.getLongitude();
-
-            if (sLat < latMin || sLat > latMax) continue;
-            if (sLon < lonMin || sLon > lonMax) continue;
-
-            double d = haversineKm(lat, lon, sLat, sLon);
+        for (TrainStation s : kdCandidates) {
+            double d = haversineKm(lat, lon, s.getLatitude(), s.getLongitude());
             if (d <= radiusKm) {
                 candidates.add(new StationDistance(s, d));
             }
