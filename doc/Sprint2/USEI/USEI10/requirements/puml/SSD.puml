@@ -1,54 +1,20 @@
 @startuml
 skinparam monochrome true
-skinparam packageStyle rectangle
 skinparam shadowing false
 autonumber
 
-actor "Planner" as Planner
-participant ":System" as System
-participant "KD-Tree Indexes\n(Stations / Airports / Seaports)" as KDTree
-participant "Distance Calculator\n(Haversine)" as Distance
+actor User
+participant "USEI10 System" as System
 
-activate Planner
-
-Planner -> System : request nearest facility\n(latitude, longitude, facilityType)
+User -> System : input(lat, lon, radiusKm)
 activate System
 
-System -> KDTree : search nearest node\nmatching facilityType
-activate KDTree
-KDTree --> System : candidate nearest facility\n(facilityId, name, type, coords)
-deactivate KDTree
+System -> System : validateParameters()
+System -> System : performRadiusSearch()
+System -> System : computeStatistics()
+System --> User : displayOrderedResults()
+System --> User : displaySummaryStats()
 
-System -> Distance : compute precise distance\n(using Haversine formula)
-activate Distance
-Distance --> System : distanceKm
-deactivate Distance
-
-System --> Planner : return nearest facility info\n(facilityId, name, type, country, coords, distanceKm)
 deactivate System
-
-== Facility-to-Facility Query ==
-
-Planner -> System : request nearest facility\nto another facility (refFacilityId, facilityType)
-activate System
-
-System -> KDTree : locate reference facility coordinates
-activate KDTree
-KDTree --> System : refLat, refLon
-deactivate KDTree
-
-System -> KDTree : find nearest facility of type = facilityType
-activate KDTree
-KDTree --> System : nearest candidate (coords, metadata)
-deactivate KDTree
-
-System -> Distance : compute final distance between facilities
-activate Distance
-Distance --> System : distanceKm
-deactivate Distance
-
-System --> Planner : display nearest facility and distance
-deactivate System
-deactivate Planner
 
 @enduml

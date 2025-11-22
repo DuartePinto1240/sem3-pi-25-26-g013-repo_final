@@ -4,18 +4,22 @@
 
 ### 1.1. User Story Description
 
-To analyze specialized wagon utilization and operational consistency, the system must identify grain wagons that were used in every train where grain wagons appeared during a specified time period.  
-This information allows planners to assess which wagons are systematically employed in all grain-related operations, supporting maintenance prioritization and resource allocation.
+To analyze specialized wagon utilization and operational consistency, the system must identify grain wagons that were 
+used in every train where grain wagons appeared during a specified time period.  
+This information allows planners to assess which wagons are systematically employed in all grain-related operations, 
+supporting maintenance prioritization and resource allocation.
 
 **User Story:**
-> As a planner, I want a list of grain wagons that were used in every train that used grain wagons during a given period, so that I can identify wagons with high operational consistency and critical usage in grain transport.
+> As a planner, I want a list of grain wagons that were used in every train that used grain wagons during a given 
+> period, so that I can identify wagons with high operational consistency and critical usage in grain transport.
 ---
 
 ### 1.2. Customer Specifications and Clarifications
 
 **From the specifications document:**
 
-> The query must return only those wagons of type ‘grain’ that have participated in all trains (within a given period) that included at least one grain wagon.
+> The query must return only those wagons of type ‘grain’ that have participated in all trains (within a given period) 
+> that included at least one grain wagon.
 
 > The comparison is limited to trains whose scheduled or executed time intersects the specified period.
 
@@ -82,13 +86,7 @@ It interacts with:
 
 ### 1.6. System Sequence Diagram (SSD)
 
-📌 *To be created when UI interaction is defined — currently a direct PL/SQL execution.*
-
-Placeholder:
-
-
 ![System Sequence Diagram](svg/SSD.svg)
-
 
 ---
 

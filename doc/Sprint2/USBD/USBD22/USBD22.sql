@@ -1,7 +1,5 @@
--- ========================================
--- SCRIPT FINAL - 100% FUNCIONAL
+-- SCRIPT FINAL
 -- CORRIGIDO: ORA-01747, ORA-00933, ORA-02291
--- ========================================
 
 -- 1. GAUGE
 INSERT INTO Gauge (width_mm) VALUES (1668);
@@ -160,8 +158,10 @@ INSERT INTO Diesel_Locomotive (loco_id, fuel_capacity) VALUES (8, 6700);
 
 -- 14. LOCOMOTIVE GAUGE - APÓS LOCOMOTIVE
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (1, 1);
+INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (1, 2);
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (2, 1);
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (3, 1);
+INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (3, 2);
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (4, 1);
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (5, 1);
 INSERT INTO LocomotiveGauge (loco_id, gauge_id) VALUES (6, 1);
@@ -259,9 +259,15 @@ INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 4);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 14);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 15);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 16);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 17);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 20);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (1, 24);
 
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (2, 34);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (2, 38);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (2, 17);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (2, 20);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (2, 24);
 
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 32);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 33);
@@ -274,6 +280,9 @@ INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 1);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 2);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 3);
 INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 4);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 17);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 20);
+INSERT INTO TrainWagon (train_id, wagon_id) VALUES (3, 24);
 
 -- 20. ROUTES (3)
 INSERT INTO Route (train_id, name) VALUES (1, 'Leixões - Valença via Contumil');

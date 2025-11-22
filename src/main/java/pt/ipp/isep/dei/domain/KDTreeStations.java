@@ -64,7 +64,7 @@ public class KDTreeStations {
     }
 
     /**
-     * Inserts a station into the KD-tree.
+     * Inserts.sql a station into the KD-tree.
      *
      * @param current current node in recursion
      * @param station station to insert

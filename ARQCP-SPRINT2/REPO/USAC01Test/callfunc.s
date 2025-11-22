@@ -117,4 +117,3 @@ reg_error:
     li a0, 33       # 0 signals success # 33 was chosen randomly
     li a7, EXIT
     ecall
-
