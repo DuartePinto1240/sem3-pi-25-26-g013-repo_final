@@ -7,71 +7,118 @@ hide circle
 hide methods
 left to right direction
 
-package "Geographic Query Engine" {
+package "USEI10: Radius Search Engine" {
 
-    class Station {
+    class TrainStation {
         +stationId
-        +name
+        +station
         +country
         +latitude
         +longitude
-        +timeZoneGroup
+        +isCity
     }
 
-    class StationIndex {
-        +byLatitude
-        +byLongitude
-        +byTimeZoneGroup
-        +searchByWindow()
-        +searchByRadius()
+    class TrainStationLoader {
+        +load()
     }
 
-    class GeoQuery {
-        +queryId
-        +queryType  ' radius | window | nearest
-        +parameters
-        +resultSet
+    class KDTreeStations {
+        +root
+        +buildFromStations()
+        +rangeSearch()
     }
 
-    class GeoQueryEngine {
-        +executeQuery()
-        +applyFilters()
-        +computeDistance()
-        +formatResults()
+    class StationDistance {
+        +station
+        +distanceKm
     }
 
-    class Planner {
-        +submitQuery()
-        +viewResults()
+    class DistanceNameKey {
+        +distance
+        +stationName
+        +seq
     }
 
+    class AVLTree {
+        +insert()
+        +inOrder()
+    }
+
+    class USEI10Controller {
+        +radiusSearch()
+        -haversineKm()
+    }
+
+    class Result {
+        +tree
+        +countByCountry
+        +countByIsCity
+        +totalIndexedStations
+        +matchedCount
+    }
+
+    class USEI10UI {
+        +readInputs()
+        +displayResults()
+    }
 }
 
-Planner "1" --> "1" GeoQueryEngine : uses >
-GeoQueryEngine "1" --> "1" GeoQuery : executes >
-GeoQueryEngine "1" --> "1" StationIndex : accesses >
-StationIndex "1" --> "0..*" Station : references >
+' RELATIONSHIPS
 
-note bottom of GeoQuery
-A GeoQuery defines the type "of" spatial search:
-- radius (stations within X km)
-- window (stations between lat/lon bounds)
-- nearest (closest N stations)
-Results are sorted deterministically.
+USEI10UI --> USEI10Controller : invokes >
+USEI10Controller --> TrainStationLoader : loads stations >
+USEI10Controller --> KDTreeStations : builds KD-tree >
+KDTreeStations --> TrainStation : contains >
+USEI10Controller --> StationDistance : creates >
+USEI10Controller --> DistanceNameKey : builds AVL keys >
+USEI10Controller --> AVLTree : inserts sorted results >
+USEI10Controller --> Result : returns >
+Result --> TrainStation : contains >
+Result --> DistanceNameKey : ordered by >
+
+' NOTES
+
+note right of KDTreeStations
+KD-Tree performs spatial pruning
+using a rectangular bounding box:
+lat ∈ [min,max], lon ∈ [min,max].
+Only candidates in this box are visited.
 end note
 
-note right of StationIndex
-StationIndex wraps multiple AVL/BST trees:
-- byLatitude
-- byLongitude
-- byTimeZoneGroup
-Used for efficient spatial lookups.
+note bottom of USEI10Controller
+USEI10 workflow:
+1. Load CSV dataset
+2. Build KD-tree from stations
+3. Compute bounding-box for circle
+4. KD-tree rangeSearch retrieves candidates
+5. Exact Haversine filter for radius
+6. Sort by (distance ASC, name DESC)
+7. Insert into AVLTree
+8. Compute summaries (country, isCity)
 end note
 
-note right of GeoQueryEngine
-Combines results from multiple indexes,
-applies geographic filters and distance
-computations (e.g., Haversine).
+note right of DistanceNameKey
+Composite AVL key:
+1. distance (ASC)
+2. stationName (DESC)
+3. seq (ASC)
+Ensures strict ordering
+and uniqueness inside AVL.
+end note
+
+note bottom of AVLTree
+AVL maintains stable ordering:
+inOrder traversal = final result
+sorted deterministically.
+end note
+
+note bottom of USEI10UI
+UI only orchestrates:
+- reads inputs
+- calls controller
+- prints ordered results
+- prints summaries
+- prints complexity O(log N + k log k)
 end note
 
 @enduml

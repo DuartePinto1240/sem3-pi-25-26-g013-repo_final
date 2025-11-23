@@ -22,30 +22,31 @@ median:
     lw a1, 4(sp)
     lw a2, 8(sp)
 
-    rem t0, a1, 2        # length % 2
-    beqz t0, even_case   # if (length % 2 == 0)
+    li t0,2              # div = 2
+    rem t1, a1, t0       # length % 2
+    beqz t1, even_case   # if (length % 2 == 0)
 
 odd_case:
-    div t1, a1, 2        # t1 = length / 2
-    slli t1, t1, 2       # offset * 4
-    add t2, a0, t1       # &vec[length/2]
-    lw t3, 0(t2)         # vec[length/2]
-    sw t3, 0(a2)         # *me = valor
+    div t2, a1, t0       # length / 2
+    slli t3, t2, 2       # offset * 4
+    add t4, a0, t3       # &vec[length/2]
+    lw t5, 0(t4)         # vec[length/2]
+    sw t5, 0(a2)         # *me = valor
     li a0, 1             # return 1
     j end
 
 even_case:
-    div t1, a1, 2        # t1 = length / 2
-    addi t2, t1, -1      # t2 = lenght/2 -1
-    slli t1, t1, 2       # offset upper
-    slli t2, t2, 2       # offset lower
-    add t3, a0, t1       # &vec[length/2]
-    add t4, a0, t2       # &vec[length/2 -1]
-    lw t5, 0(t3)         # vec[length/2]
-    lw t6, 0(t4)         # vec[length/2 -1]
-    add t5, t5, t6       # soma
-    srai t5, t5, 1       # divide por 2
-    sw t5, 0(a2)         # *me = mediana
+    div t2, a1, t0       # length / 2
+    addi t3, t2, -1      # lenght/2 -1
+    slli t4, t2, 2       # offset upper
+    slli t5, t3, 2       # offset lower
+    add t6, a0, t4       # &vec[length/2]
+    lw t4, 0(t6)         # vec[length/2]
+    add t6, a0, t5       # &vec[length/2 -1]
+    lw t5, 0(t6)         # vec[length/2 -1]
+    add t4, t4, t5       # soma
+    srai t4, t4, 1       # divide por 2
+    sw t4, 0(a2)         # *me = mediana
     li a0, 1
     j end
 
