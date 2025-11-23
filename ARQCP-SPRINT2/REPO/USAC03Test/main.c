@@ -1,45 +1,72 @@
-#include <stdio.h>
-
-// Declarar a função Assembly para que o C a conheça
-extern int extract_data(char* str, char* token, char* unit, int* value);
-
-int main() {
-    // Caso de Teste 1: Sucesso (Exemplo da US)
-    // [cite: 225-230]
-    char str[] = "TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80";
-    char token1[] = "TEMP";
-    char unit1[20];
-    int value1;
-
-    int res1 = extract_data(str, token1, unit1, &value1);
-    printf("--- Teste 1 (TEMP) ---\n");
-    printf("Esperado: 1:celsius,20\n");
-    printf("Recebido: %d:%s,%d\n", res1, unit1, value1);
-    printf("--------------------------------\n");
-
-    // Caso de Teste 2: Sucesso (Segundo token)
-    char token2[] = "HUM";
-    char unit2[20];
-    int value2;
-
-    int res2 = extract_data(str, token2, unit2, &value2);
-    printf("--- Teste 2 (HUM) ---\n");
-    printf("Esperado: 1:percentage,80\n");
-    printf("Recebido: %d:%s,%d\n", res2, unit2, value2);
-    printf("--------------------------------\n");
+#include <string.h>
+#include "../../unity.h"
+#include "asm.h"
 
 
-    // Caso de Teste 3: Falha (Token não existe)
-    // [cite: 232-237]
-    char token3[] = "AAA";
-    char unit3[20];
-    int value3;
+int callfunc ( int (*f)(char* str,char* tok, char* unit, int* value),char* str,char *tok, char* unit, int* value);
 
-    int res3 = extract_data(str, token3, unit3, &value3);
-    printf("--- Teste 3 (AAA) ---\n");
-    printf("Esperado: 0:,0\n");
-    printf("Recebido: %d:%s,%d\n", res3, unit3, value3);
-    printf("--------------------------------\n");
-
-    return 0;
+void setUp(void) {
+    // set stuff up here
 }
+void tearDown(void) {
+    // clean stuff up here
+}
+
+
+
+void run_test(char * str, char* tok, int exp_res, char * exp_unit, int exp_value)
+{
+	int vec[3]={0x55555555,0x55555555,0x55555555};
+	char unit[100];
+	int  res;
+	memset(unit,'@',sizeof(unit));
+	res=callfunc(extract_data,str,tok,&unit[1],&vec[1]);
+	TEST_ASSERT_EQUAL_INT(exp_res,res);
+    	TEST_ASSERT_EQUAL_INT(0x55555555, vec[2]);    // check sentinel
+	TEST_ASSERT_EQUAL_INT(0x55555555, vec[0]);    // check sentinel
+	TEST_ASSERT_EQUAL_INT(exp_value, vec[1]);    // check value
+
+	TEST_ASSERT_EQUAL_INT8('@',unit[0]);       // check sentinel
+	TEST_ASSERT_EQUAL_STRING(exp_unit,&unit[1]);
+        TEST_ASSERT_EQUAL_INT8('@',unit[strlen(exp_unit)+2]); // check sentinel -> sentinel at [0] + '\0' + strlen !!!
+}
+
+
+void test_Null()
+{
+    run_test("","",0,"",0);
+}
+void test_One()
+{
+    run_test("TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80","TEMP",1,"celsius",20);
+}
+void test_Zero()
+{
+    run_test("TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80","HUM",1,"percentage",80);
+}
+void test_Three()
+{
+    run_test("TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80","LEN",0,"",0);
+}
+void test_Four()
+{
+    run_test("TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80","EMP",0,"",0);
+}
+void test_Five()
+{
+    run_test("TEMP&unit:celsius&value:20#HUM&unit:percentage&value:80","UM",0,"",0);
+}
+
+int main()
+  {
+
+    UNITY_BEGIN();
+    RUN_TEST(test_Null);
+    RUN_TEST(test_One);
+    RUN_TEST(test_Zero);
+    RUN_TEST(test_Three);
+    RUN_TEST(test_Four);
+    RUN_TEST(test_Five);
+    return UNITY_END();
+
+  }
