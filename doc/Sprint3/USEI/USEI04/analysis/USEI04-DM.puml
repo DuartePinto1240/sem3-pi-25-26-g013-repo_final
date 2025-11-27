@@ -1,0 +1,84 @@
+@startuml
+' https://plantuml.com/class-diagram
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+package "Pick Path Sequencing" {
+
+    class PickingPlan {
+        +planId
+        +trolleys
+        +allocations
+    }
+
+    class PickPath {
+        +pathId
+        +strategyType     ' ASCENDING | NEAREST_NEIGHBOUR
+        +totalDistance
+        +sequence
+    }
+
+    class Bay {
+        +aisle
+        +bayNumber
+        +coordinate
+    }
+
+    class Coordinate {
+        +aisle
+        +bay
+    }
+
+    class DistanceCalculator {
+        +calculateDistance(a1, b1, a2, b2)
+    }
+
+    class Strategy {
+        +name
+        +description
+    }
+
+    class Picker {
+        +planPath()
+        +executePickSequence()
+    }
+}
+
+' --- Relationships ---
+PickingPlan "1" --> "1" PickPath : generates >
+PickPath "1" --> "1..*" Bay : visits >
+Bay "1" --> "1" Coordinate : has >
+Picker "1" --> "1" PickPath : uses >
+PickPath "1" --> "1" Strategy : applies >
+DistanceCalculator "1" --> "1" PickPath : computes >
+Strategy <|-- DistanceCalculator
+
+' --- Behavioral notes ---
+note right of Strategy
+Sequencing Strategies:
+1. Deterministic Sweep (Ascending by aisle)
+2. Nearest-Neighbour (Greedy)
+end note
+
+note bottom of DistanceCalculator
+Distance D:
+- Same aisle: |b1 - b2|
+- Different aisles: b1 + |a1 - a2| * 3 + b2
+Entrance = (0,0)
+end note
+
+note right of PickPath
+Total Distance = Σ D(ci, ci+1)
+Duplicate bays merged into one stop.
+end note
+
+@enduml
+
+
+
+

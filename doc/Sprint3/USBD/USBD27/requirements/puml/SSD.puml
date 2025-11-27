@@ -1,0 +1,23 @@
+@startuml USBD27-SSD
+title SSD - USBD27: Grain Wagons Used in Every Train that Used Grain Wagons (Given Period)
+
+actor PLANNER
+participant "System" as APP
+participant "SQL Database" as DB
+
+activate PLANNER
+
+PLANNER -> APP : request list of grain wagons used in every grain train\n(startDate, endDate)
+activate APP
+
+APP -> DB : execute SQL query\n(find grain wagons present in all trains\nthat included grain wagons within the given period)
+activate DB
+
+DB --> APP : return result set (wagonId, type='grain', operator, gauge)
+deactivate DB
+
+APP --> PLANNER : display list of grain wagons\nused in all relevant trains
+deactivate APP
+
+deactivate PLANNER
+@enduml

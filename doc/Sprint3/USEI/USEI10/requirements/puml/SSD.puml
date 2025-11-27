@@ -1,0 +1,20 @@
+@startuml
+skinparam monochrome true
+skinparam shadowing false
+autonumber
+
+actor User
+participant "USEI10 System" as System
+
+User -> System : input(lat, lon, radiusKm)
+activate System
+
+System -> System : validateParameters()
+System -> System : performRadiusSearch()
+System -> System : computeStatistics()
+System --> User : displayOrderedResults()
+System --> User : displaySummaryStats()
+
+deactivate System
+
+@enduml

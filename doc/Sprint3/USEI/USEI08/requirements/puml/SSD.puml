@@ -1,0 +1,12 @@
+@startuml
+actor Planner
+participant System
+
+Planner -> System : searchStationsInArea(\nlatMin, latMax,\nlonMin, lonMax,\nfilters)
+
+alt Invalid input
+    System --> Planner : error message
+else Valid input
+    System --> Planner : List<TrainStation> OR "0 stations"
+end
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Terminal Operator" as OPERATOR
+participant ":System" as System
+participant "WMS" as WMS
+
+activate OPERATOR
+
+OPERATOR -> System : requests to unload wagons (wagons.csv)
+activate System
+System --> OPERATOR : confirms file loaded successfully
+
+System -> WMS : parse wagons.csv (read SKU, expiryDate, receivedAt, boxId)
+activate WMS
+WMS --> System : returns structured wagon data
+deactivate WMS
+
+System -> WMS : assign boxes to aisles/bays by FEFO/FIFO rules
+activate WMS
+note right
+    Sorting priority:
+    (a) expiryDate (earliest first; null last)
+    (b) receivedAt (oldest first)
+    (c) boxId ASC (tie-break)
+end note
+WMS --> System : stores box locations and updates inventory
+deactivate WMS
+
+System -> WMS : record unloading operation in movement log
+activate WMS
+WMS --> System : confirms movement registered
+deactivate WMS
+
+System --> OPERATOR : informs successful unloading and storage summary
+deactivate System
+deactivate OPERATOR
+
+@enduml
+
