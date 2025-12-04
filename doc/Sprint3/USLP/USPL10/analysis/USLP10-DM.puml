@@ -1,0 +1,116 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+' ===== Core Management =====
+class TrafficManager {
+    +managerId : int
+    +name : String
+    +email : String
+    +experienceLevel : String
+    +assignedRegion : String
+}
+
+class TrainSchedule {
+    +id : int
+    +scheduled : boolean
+    +departureTime : TimeStamp
+    +arrivalTime : TimeStamp
+    +status : String
+}
+
+TrafficManager "1" --> "*" TrainSchedule : manages >
+
+' ===== Railway Network =====
+class Route {
+    +id : int
+    +totalDistance : int
+}
+
+class RouteSegment {
+    +segmentOrder : int
+    +distance : int
+    +speedLimit : int
+    +trackType : String
+}
+
+class Station {
+    +stationId : int
+    +name : String
+    +location
+    +hasSideLine : boolean
+}
+
+class Facility {
+    +id : int
+    +name : String
+    +location
+}
+
+Facility <|-- Station
+Route "1" --> "*" RouteSegment : composed of >
+RouteSegment "*" --> "1" Facility : connects >
+
+TrainSchedule "1" --> "1" Route : uses >
+TrainSchedule "1" --> "1" Station : departure >
+TrainSchedule "1" --> "1" Station : arrival >
+
+' ===== Rolling Stock =====
+class Train {
+    +id : int
+    +totalWeight : double
+}
+
+class Locomotive {
+    +locomotiveId : String
+    +model : String
+    +type : String
+    +power : double
+}
+
+class Wagon {
+    +wagonId : String
+    +tareWeight : double
+    +cargoWeight : double
+    +loaded : boolean
+}
+
+Train "*" --> "*" Locomotive : uses >
+Train "*" --> "*" Wagon : composed of >
+TrainSchedule "1" --> "1" Train : references >
+
+' ===== Operations =====
+class CrossingOperation {
+    +crossingId : int
+    +time : TimeStamp
+}
+
+CrossingOperation "*" --> "2" TrainSchedule : involves >
+CrossingOperation "*" --> "1" Station : occurs at >
+
+' ===== Scheduler Functionality =====
+class PathCalculation {
+    +mode : String  'MANUAL or AUTOMATIC'
+    +calculateOptimalPath()
+    +validatePath()
+}
+
+class SpeedCalculation {
+    +calculateEffectiveSpeed(segment, train)
+}
+
+class ConflictDetection {
+    +detectConflicts()
+    +resolveCrossings()
+}
+
+TrainSchedule "1" --> "1" PathCalculation
+TrainSchedule "1" --> "1" SpeedCalculation
+TrainSchedule "1" --> "1" ConflictDetection
+
+@enduml

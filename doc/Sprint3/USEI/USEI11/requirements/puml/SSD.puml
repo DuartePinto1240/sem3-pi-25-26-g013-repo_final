@@ -1,0 +1,39 @@
+@startuml
+title USEI11 – Directed Line Upgrade Plan
+
+actor "Infrastructure Planner" as P
+participant "System Controller" as SC
+participant "UpgradePlannerService" as UPS
+participant "DirectedGraph" as G
+
+P -> SC : 1. Request upgrade plan(dependencyGraph)
+activate SC
+
+SC -> SC : 2. Validate graph structure\n(vertices, edges)
+
+SC -> UPS : 3. computeUpgradePlan(graph)
+activate UPS
+
+UPS -> G : 4. calculateInDegrees()
+activate G
+G --> UPS : 5. Return in-degree map
+deactivate G
+
+UPS -> G : 6. getZeroInDegreeVertices()
+activate G
+G --> UPS : 7. Return initial candidates
+deactivate G
+
+UPS -> UPS : 8. Perform topological sort\n(Kahn's Algorithm)
+
+UPS -> UPS : 9. Detect cycle if vertices remain unprocessed
+
+UPS --> SC : 10. Return upgrade order\nor cycle error
+deactivate UPS
+
+SC --> P : 11. Present upgrade plan\nor dependency conflict
+deactivate SC
+
+P -> P : 12. Analyze and confirm upgrade sequence
+
+@enduml

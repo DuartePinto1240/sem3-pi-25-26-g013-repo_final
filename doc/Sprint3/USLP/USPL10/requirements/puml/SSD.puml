@@ -1,0 +1,49 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+autonumber
+
+actor "Traffic Manager" as TM
+participant ":Scheduler System" as System
+participant "Database (PL/SQL)" as DB
+
+activate TM
+
+TM -> System : createTrainList()
+TM -> System : addTrain(trainId, routeId, locomotives, wagons, departureTime)
+activate System
+
+System -> DB : fn_get_route_details(routeId)
+DB --> System : routeData
+System -> DB : fn_get_stations()
+DB --> System : stationList
+System -> DB : fn_get_line_segments()
+DB --> System : segmentList
+System -> DB : fn_get_locomotive_details(locomotiveIds)
+DB --> System : locomotiveData
+System -> DB : fn_get_wagon_details(wagonIds)
+DB --> System : wagonData
+
+alt if pathDefinitionMode == AUTOMATIC
+    System -> System : calculateOptimalPath() using graph algorithms
+end
+
+System -> System : validatePath()
+System -> System : calculateSpeeds() per segment
+System -> System : calculatePassageTimes() per station
+System -> System : detectConflicts() on single-track segments
+System -> System : resolveCrossings() (propagate delays, record Crossing Operations)
+
+System --> TM : trainValidated
+
+TM -> System : dispatchSchedule()
+System -> DB : fn_save_train_schedule(schedule)
+System -> DB : fn_save_crossing_operation(crossings)
+DB --> System : confirmation
+System --> TM : scheduleReport (train list with route, path, speeds, passage times, crossings)
+
+deactivate System
+deactivate TM
+
+@enduml

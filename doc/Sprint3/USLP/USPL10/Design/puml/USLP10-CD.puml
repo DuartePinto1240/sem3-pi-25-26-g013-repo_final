@@ -1,0 +1,88 @@
+@startuml
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam linetype polyline
+skinparam classAttributeIconSize 0
+
+' ===================== UI =====================
+class USLP07UI {
+  - controller: TrainDispatchSchedulerController
+  - scanner: Scanner
+  --
+  + USLP07UI()
+  + run(): void
+}
+
+' ===================== Controller =====================
+class TrainDispatchSchedulerController {
+  - stationRepository: StationRepository
+  - locomotiveRepository: LocomotiveRepository
+  - railwayLineRepository: RailwayLineRepository
+  - wagonModelRepository: WagonModelRepository
+  - wagonRepository: WagonRepository
+  - schedulerService: TrainSchedulerService
+}
+
+' ===================== Services =====================
+class TrainSchedulerService {
+  - stationRepository: StationRepository
+  - locomotiveRepository: LocomotiveRepository
+  - railwayLineRepository: RailwayLineRepository
+}
+
+class TrainDispatchRequest {
+  - trainId: String
+}
+
+' ===================== Domain – Scheduling =====================
+enum TrainScheduleStatus {
+  VALIDATED
+  CONFLICT_WARNING
+  INVALID
+}
+
+class TrainSchedule {
+  - trainId: String
+  - status: TrainScheduleStatus
+}
+
+class PassageTime {}
+class CrossingOperation {}
+class ScheduledSegment {}
+
+' ===================== Domain – Railway =====================
+class Station {
+  - id: String
+  - name: String
+}
+
+class RailwayLine {}
+class LineSegment {}
+class Locomotive {}
+class Wagon {}
+
+' ===================== Repositories =====================
+interface StationRepository {}
+interface LocomotiveRepository {}
+interface RailwayLineRepository {}
+interface WagonModelRepository {}
+interface WagonRepository {}
+
+' ===================== Relações =====================
+USLP07UI --> TrainDispatchSchedulerController
+TrainDispatchSchedulerController --> TrainSchedulerService
+
+TrainDispatchSchedulerController --> StationRepository
+TrainDispatchSchedulerController --> LocomotiveRepository
+TrainDispatchSchedulerController --> RailwayLineRepository
+TrainDispatchSchedulerController --> WagonRepository
+TrainDispatchSchedulerController --> WagonModelRepository
+
+TrainSchedulerService --> TrainSchedule
+TrainSchedulerService --> ScheduledSegment
+TrainSchedulerService --> TrainDispatchRequest
+
+TrainSchedule --> PassageTime
+TrainSchedule --> CrossingOperation
+
+@enduml
