@@ -1,0 +1,35 @@
+@startuml
+title USEI12 – Minimal Backbone Network
+
+actor "Infrastructure Planner" as P
+participant "System Controller" as SC
+participant "BackboneService" as BS
+participant "RailwayNetwork" as G
+
+P -> SC : 1. Request minimal backbone network()
+activate SC
+
+SC -> SC : 2. Validate network data\n(ensure loaded)
+
+SC -> BS : 3. computeMinimalBackbone(network)
+activate BS
+
+BS -> G : 4. getVerticesAndEdges()
+activate G
+
+deactivate G
+
+BS -> BS : 6. Execute MST Algorithm\n(Prim's or Kruskal's)
+
+BS -> BS : 7. Generate DOT format\n(map XY to 'pos' attribute)
+
+BS -> BS : 8. Execute external process\n(run 'neato' for SVG)
+
+BS --> SC : 9. Return MST Graph\nand SVG file path
+deactivate BS
+
+SC --> P : 10. Display Backbone visualization (SVG)\nand total track length
+deactivate SC
+
+
+@enduml
