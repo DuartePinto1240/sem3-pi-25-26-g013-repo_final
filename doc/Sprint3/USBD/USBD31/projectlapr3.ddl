@@ -57,6 +57,7 @@ CREATE TABLE Gauge
     CONSTRAINT PK_Gauge PRIMARY KEY (gauge_id)
 );
 
+
 CREATE TABLE RailwayLine
 (
     line_id           NUMBER(10) GENERATED AS IDENTITY,
@@ -105,6 +106,7 @@ CREATE TABLE LineSegment
     CONSTRAINT PK_LineSegment PRIMARY KEY (line_segment_id),
     CONSTRAINT UQ_LineSegment_Line_Order UNIQUE (line_id, segment_order)
 );
+
 
 CREATE TABLE Model
 (
@@ -190,6 +192,7 @@ CREATE TABLE WagonModel
     CONSTRAINT PK_WagonModel PRIMARY KEY (wagonmodel_id)
 );
 
+
 CREATE TABLE Locomotive
 (
     loco_id             NUMBER(10) GENERATED AS IDENTITY,
@@ -242,6 +245,7 @@ CREATE TABLE LocomotiveGauge
     CONSTRAINT PK_LocomotiveGauge PRIMARY KEY (loco_id, gauge_id)
 );
 
+
 CREATE TABLE Train
 (
     train_id    NUMBER(10) GENERATED AS IDENTITY,
@@ -276,9 +280,37 @@ CREATE TABLE Freight
     depart_time             DATE
         CONSTRAINT NN_Freight_Depart NOT NULL,
     arrival_time            DATE
-        CONSTRAINT NN_Freight_Arrival NOT NULL
-        CONSTRAINT CHK_Freight_Dates CHECK (arrival_time >= depart_time),
+        CONSTRAINT NN_Freight_Arrival NOT NULL,
+    CONSTRAINT CHK_Freight_Dates
+        CHECK (arrival_time >= depart_time),
     CONSTRAINT PK_Freight PRIMARY KEY (freight_id)
+);
+
+CREATE TABLE FreightWagon
+(
+    freight_id NUMBER(10)
+        CONSTRAINT NN_FreightWagon_Freight NOT NULL,
+    wagon_id   NUMBER(10)
+        CONSTRAINT NN_FreightWagon_Wagon NOT NULL,
+    CONSTRAINT PK_FreightWagon PRIMARY KEY (freight_id, wagon_id)
+);
+
+CREATE TABLE TrainLocomotive
+(
+    train_id NUMBER(10)
+        CONSTRAINT NN_TL_Train NOT NULL,
+    loco_id  NUMBER(10)
+        CONSTRAINT NN_TL_Loco NOT NULL,
+    CONSTRAINT PK_TrainLocomotive PRIMARY KEY (train_id, loco_id)
+);
+
+CREATE TABLE TrainWagon
+(
+    train_id NUMBER(10)
+        CONSTRAINT NN_TW_Train NOT NULL,
+    wagon_id NUMBER(10)
+        CONSTRAINT NN_TW_Wagon NOT NULL,
+    CONSTRAINT PK_TrainWagon PRIMARY KEY (train_id, wagon_id)
 );
 
 CREATE TABLE Cargo
@@ -304,24 +336,6 @@ CREATE TABLE Cargo
     CONSTRAINT PK_Cargo PRIMARY KEY (cargo_id)
 );
 
-CREATE TABLE TrainLocomotive
-(
-    train_id NUMBER(10)
-        CONSTRAINT NN_TL_Train NOT NULL,
-    loco_id  NUMBER(10)
-        CONSTRAINT NN_TL_Loco NOT NULL,
-    CONSTRAINT PK_TrainLocomotive PRIMARY KEY (train_id, loco_id)
-);
-
-CREATE TABLE TrainWagon
-(
-    train_id NUMBER(10)
-        CONSTRAINT NN_TW_Train NOT NULL,
-    wagon_id NUMBER(10)
-        CONSTRAINT NN_TW_Wagon NOT NULL,
-    CONSTRAINT PK_TrainWagon PRIMARY KEY (train_id, wagon_id)
-);
-
 CREATE TABLE BuildingType
 (
     buildingtype_id NUMBER(10) GENERATED AS IDENTITY,
@@ -337,15 +351,6 @@ CREATE TABLE FacilityBuilding
     buildingtype_id NUMBER(10)
         CONSTRAINT NN_FacB_BType NOT NULL,
     CONSTRAINT PK_FacilityBuilding PRIMARY KEY (facility_id, buildingtype_id)
-);
-
-CREATE TABLE FreightWagon
-(
-    freight_id NUMBER(10)
-        CONSTRAINT NN_FreightWagon_Freight NOT NULL,
-    wagon_id   NUMBER(10)
-        CONSTRAINT NN_FreightWagon_Wagon NOT NULL,
-    CONSTRAINT PK_FreightWagon PRIMARY KEY (freight_id, wagon_id)
 );
 
 
@@ -460,9 +465,6 @@ ALTER TABLE Freight
 ALTER TABLE Cargo
     ADD CONSTRAINT FK_Cargo_Wagon
         FOREIGN KEY (wagon_id) REFERENCES Wagon (wagon_id);
-
-ALTER TABLE BuildingType
--- sem FK, é tabela raiz
 
 ALTER TABLE FacilityBuilding
     ADD CONSTRAINT FK_FacB_Facility
