@@ -1,4 +1,3 @@
-
 # USAC11 — Initial Setup from Text File
 
 ## 1. User Story Description
