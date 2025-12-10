@@ -1,0 +1,30 @@
+@startuml
+title USBD41 – Remove Freight from Planned Train
+
+actor "Freight Manager" as FM
+participant "System Controller" as SC
+participant "FreightService" as FS
+participant "Database" as DB
+
+FM -> SC : 1. request removeFreight(trainId, freightId)
+activate SC
+
+SC -> FS : 2. validateAndRemove(trainId, freightId)
+activate FS
+
+FS -> DB : 3. verify train exists
+DB --> FS : 4. train ok
+
+FS -> DB : 5. verify freight exists and is associated with train
+DB --> FS : 6. association details
+
+FS -> DB : 7. remove all wagon associations for freight from train
+DB --> FS : 8. confirmation
+
+FS --> SC : 9. SYS_REFCURSOR with removal details
+deactivate FS
+
+SC --> FM : 10. present removal result
+deactivate SC
+
+@enduml
