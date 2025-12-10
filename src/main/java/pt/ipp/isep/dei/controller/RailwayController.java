@@ -72,12 +72,11 @@ public class RailwayController {
         try (FileWriter writer = new FileWriter(filename)) {
             writer.write("graph backbone {\n");
             writer.write("  layout=neato;\n"); // Motor de layout geográfico
-            writer.write("  node [shape=circle, style=filled, fillcolor=lightblue, fontsize=10];\n");
-            writer.write("  edge [fontsize=8];\n");
+            writer.write("  node [shape=circle, style=filled, fillcolor=lightblue, width=15, height=15, fontsize=100];\n");
+            writer.write("  edge [penwidth=10, fontsize=80];\n");
 
             // 1. Escrever Nós com a posição (pos="x,y!")
             for (Station s : graph.vertices()) {
-                // O '!' no fim força a posição exata
                 writer.write(String.format(Locale.US, "  \"%s\" [pos=\"%.4f,%.4f!\", label=\"%s\"];\n",
                         s.getId(), s.getX(), s.getY(), s.getName()));
             }
