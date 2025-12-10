@@ -28,7 +28,8 @@ public class Station {
 
     /** Geographical longitude of the station (may be 0.0 if unknown). */
     private final double longitude;
-
+    private final double x;
+    private final double y;
     /**
      * Constructs a station without geographical coordinates.
      *
@@ -37,7 +38,7 @@ public class Station {
      * @throws IllegalArgumentException if {@code id} or {@code name} are null or empty
      */
     public Station(String id, String name) {
-        this(id, name, 0.0, 0.0);
+        this(id, name, 0.0, 0.0,0.0,0.0);
     }
 
     /**
@@ -49,7 +50,7 @@ public class Station {
      * @param longitude station longitude (decimal degrees)
      * @throws IllegalArgumentException if {@code id} or {@code name} are invalid
      */
-    public Station(String id, String name, double latitude, double longitude) {
+    public Station(String id, String name, double latitude, double longitude, double x ,double y ) {
         if (id == null || id.trim().isEmpty() || name == null || name.trim().isEmpty()) {
             throw new IllegalArgumentException("Station ID and Name must not be empty.");
         }
@@ -57,6 +58,8 @@ public class Station {
         this.name = name;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.x = x;
+        this.y = y;
     }
 
     /** @return the unique identifier of the station */
@@ -78,7 +81,8 @@ public class Station {
     public double getLongitude() {
         return longitude;
     }
-
+    public double getX() { return x; }
+    public double getY() { return y; }
     /**
      * Textual representation of the station, containing the name and the identifier.
      *
