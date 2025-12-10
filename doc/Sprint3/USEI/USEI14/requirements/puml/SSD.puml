@@ -1,0 +1,41 @@
+@startuml
+title USEI14 – Maximum Throughput Between Two Hubs
+
+actor "Operations Analyst" as OA
+participant "System Controller" as SC
+participant "MaxFlowService" as MFS
+participant "RailwayGraph" as G
+
+OA -> SC : 1. Request max flow\n(source, target)
+activate SC
+
+SC -> SC : 2. Validate station identifiers\nand graph availability
+
+SC -> MFS : 3. computeMaxFlow(source, target)
+activate MFS
+
+MFS -> G : 4. loadCapacities()
+activate G
+G --> MFS : 5. Return capacity structure
+deactivate G
+
+MFS -> G : 6. getAdjacencyData()
+activate G
+G --> MFS : 7. Return adjacency lists
+deactivate G
+
+MFS -> MFS : 8. Build residual network
+
+MFS -> MFS : 9. Execute max-flow algorithm\n(Dinic or Edmonds–Karp)
+
+MFS -> MFS : 10. Aggregate final flow value\nand edge usage
+
+MFS --> SC : 11. Return maxFlow result
+deactivate MFS
+
+SC --> OA : 12. Present throughput value\n(and optional flow summary)
+deactivate SC
+
+OA -> OA : 13. Analyze corridor capacity
+
+@enduml

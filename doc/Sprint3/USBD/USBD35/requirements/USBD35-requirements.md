@@ -75,7 +75,7 @@ As an **operator**, I want to **register a new facility** (e.g., station, depot,
 
 ### 1.6. System Sequence Diagram (SSD)
 
-![System Sequence Diagram](svg/SSD_USBD35.svg)
+![System Sequence Diagram](../../USBD34/requirements/svg/SSD_USBD35.svg)
 
 ---
 
