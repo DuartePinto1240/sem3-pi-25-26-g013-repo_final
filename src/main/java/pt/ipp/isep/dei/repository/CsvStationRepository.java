@@ -58,7 +58,7 @@ public class CsvStationRepository implements StationRepository {
             }
 
             // Cria o objeto Station com o nome correto. Latitude e longitude são 0.0.
-            Station station = new Station(id, name, 0.0, 0.0);
+            Station station = new Station(id, name, 0.0, 0.0,0.0,0.0);
             stations.put(id, station);
         }
     }

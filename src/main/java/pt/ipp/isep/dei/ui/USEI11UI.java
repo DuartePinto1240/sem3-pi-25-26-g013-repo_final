@@ -16,8 +16,8 @@ import java.io.IOException;
 public class USEI11UI implements Runnable {
 
     // 🛑 ATENÇÃO: SUBSTITUA ESTES CAMINHOS PELOS CAMINHOS REAIS DOS SEUS FICHEIROS CSV!
-    private static final String STATIONS_FILE = "C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\stations.csv";
-    private static final String TRACKS_FILE = "C:\\Users\\duart\\IdeaProjects\\sem3-pi-25-26-g013-repo\\train_station_dataset_v2\\lines.csv";
+    private static final String STATIONS_FILE = "train_station_dataset_v2/stations.csv";
+    private static final String TRACKS_FILE = "train_station_dataset_v2/lines.csv";
     private static final String OUTPUT_FILE = "upgrade_order.csv";
 
     /**

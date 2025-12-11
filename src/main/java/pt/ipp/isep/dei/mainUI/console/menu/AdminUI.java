@@ -29,13 +29,8 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("Search Stations by Geographical Area - USEI08", new USEI08UI()));
         options.add(new MenuItem("Proximity Search - USEI09", new USEI09UI()));
         options.add(new MenuItem("Radius search and density summary - USEI10", new USEI10UI()));
-
-        // ✅ NOVA OPÇÃO — USEI11
-        options.add(new MenuItem(
-                "Directed Line Upgrade Plan - USEI11",
-                new USEI11UI()
-        ));
-
+        options.add(new MenuItem("Directed Line Upgrade Plan - USEI11", new USEI11UI()));
+        options.add(new MenuItem("Minimal Backbone Network - USEI12", new USEI12UI()));
         options.add(new MenuItem("Estimated Travel Time - USPL03", new USLP03UI()));
         options.add(new MenuItem("Train Schedule - USPL07", new USLP07UI()));
 

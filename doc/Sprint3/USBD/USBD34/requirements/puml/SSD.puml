@@ -1,0 +1,12 @@
+@startuml
+title USBD34 – Associate a Freight with a Train
+
+actor "Logistics Manager" as LM
+participant "Application" as APP
+participant "Database" as DB
+
+LM -> APP : 1. Request freight-train association(freightId, trainId)
+APP -> DB : 2. Execute function associate_freight_train(freightId, trainId)
+DB --> APP : 3. Return SYS_REFCURSOR with association details
+APP --> LM : 4. Display confirmation and association result
+@enduml
