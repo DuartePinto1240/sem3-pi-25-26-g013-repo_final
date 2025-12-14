@@ -1,0 +1,236 @@
+# Railway Station Management System - Sprint 3
+
+Sistema de gestão de estações ferroviárias desenvolvido em C/Assembly para ARQCP Sprint 3.
+
+## 📋 Estrutura do Projeto
+
+```
+sprint3/
+├── include/          # Headers (.h)
+│   ├── manager.h
+│   ├── ui.h
+│   └── board.h
+├── src/             # Código C
+│   ├── main.c
+│   ├── manager.c
+│   ├── ui.c
+│   └── board.c
+├── asm/             # Código Assembly (Sprint 2)
+│   ├── encrypt_data.s
+│   ├── decrypt_data.s
+│   ├── extract_data.s
+│   ├── format_command.s
+│   ├── enqueue_value.s
+│   ├── dequeue_value.s
+│   ├── move_n_to_array.s
+│   ├── sort_array.s
+│   └── median.s
+├── arduino/         # Código Arduino
+│   ├── sensors/
+│   │   └── sensors.ino
+│   └── lightsigns/
+│       └── lightsigns.ino
+├── tests/           # Testes unitários
+│   └── test_manager.c
+├── data/            # Dados de configuração
+│   └── config.txt
+├── obj/             # Objetos compilados (gerado)
+├── bin/             # Executáveis (gerado)
+└── Makefile
+```
+
+## 🚀 Compilação e Execução
+
+### Pré-requisitos
+
+- GCC (GNU Compiler Collection)
+- GNU Assembler (as)
+- Make
+- Arduino IDE (para componentes Arduino)
+
+### Compilar
+
+```bash
+# Compilar programa principal
+make
+
+# Compilar testes
+make tests
+
+# Limpar e recompilar
+make rebuild
+```
+
+### Executar
+
+```bash
+# Executar programa
+make run
+
+# Executar com config específico
+make run-config
+
+# Executar testes
+make run-tests
+```
+
+## 📝 User Stories Implementadas
+
+### USAC10 - Hardware Assembly
+- ✅ Sensors (Arduino)
+- ✅ LightSigns (Arduino)
+
+### USAC11 - Initial Setup
+- ✅ Carregar configuração de ficheiro
+- ✅ Utilizadores com passwords encriptadas
+- ✅ Sensores com buffers circulares
+- ✅ Vias e comboios
+
+### USAC12 - User Log Export
+- ✅ Exportar ações de utilizador para ficheiro
+
+### USAC13 - Sensor Data
+- ✅ Comunicação com sensores
+- ✅ Moving Median filter
+- ✅ Buffer circular
+
+### USAC14 - Light Control
+- ✅ Comandos para LEDs (RE, YE, GE, RB)
+- ✅ Formatação com função assembly
+
+### USAC15 - Board Display
+- ✅ Display bonito em consola
+- ✅ Cores e símbolos Unicode
+- ✅ Informação de sensores e vias
+
+### USAC16 - Track Management
+- ✅ Atribuir via a comboio
+- ✅ Marcar via como não operacional
+- ✅ Marcar via como livre
+- ✅ Ordem de partida
+- ✅ Integração com Board e LightSigns
+- ✅ Logging de todas as ações
+
+## 🔧 Configuração
+
+### Ficheiro config.txt
+
+```
+[USERS]
+# Format: name,username,password,caesar_key
+Admin User,admin,ADMIN,3
+Station Operator,operator,OPERATOR,5
+
+[SENSORS]
+TEMP_BUFFER_LENGTH=10
+TEMP_WINDOW_LENGTH=5
+HUM_BUFFER_LENGTH=10
+HUM_WINDOW_LENGTH=5
+
+[TRACKS]
+# Track IDs
+1
+2
+3
+4
+5
+
+[TRAINS]
+# Train IDs
+101
+102
+103
+```
+
+## 🔌 Arduino
+
+### Sensors (DHT22)
+
+**Ligações:**
+- VCC → 5V
+- GND → GND
+- DATA → Pin 2 (com resistor pull-up 10kΩ)
+
+**Comandos:**
+- `GTH` - Get Temperature and Humidity
+
+**Resposta:**
+```
+TEMP&unit:celsius&value:20#HUM&unit:percentage&value:65
+```
+
+### LightSigns (LEDs RGB)
+
+**Comandos:**
+- `GE,XX` - Green (via livre)
+- `RE,XX` - Red (via ocupada)
+- `YE,XX` - Yellow (via atribuída)
+- `RB,XX` - Red Blink (via não operacional)
+
+Onde XX é o número da via (01-99).
+
+## 🧪 Testes
+
+Os testes cobrem:
+- Inicialização do manager
+- Carregamento de configuração
+- Login (sucesso e falha)
+- Logging de ações
+- Atribuição de vias
+- Emergency stop
+- Libertação de vias
+
+```bash
+make run-tests
+```
+
+## 📊 Funcionalidades Assembly
+
+Todas as funções do Sprint 2 são utilizadas:
+- `encrypt_data` / `decrypt_data` - Para passwords
+- `extract_data` - Para parsing de dados sensores
+- `format_command` - Para comandos LEDs
+- `enqueue_value` - Para buffer circular
+- `move_n_to_array` - Para moving median
+- `median` - Para cálculo da mediana
+
+## 🎨 Interface
+
+A interface usa:
+- ✅ Cores ANSI
+- ✅ Símbolos Unicode (🚂, 🛤️, 🌡️, 💧)
+- ✅ Boxes desenhados com caracteres
+- ✅ Alertas coloridos
+- ✅ Validação robusta de input
+
+## 📱 Estados das Vias
+
+| Estado | Cor | Símbolo | Descrição |
+|--------|-----|---------|-----------|
+| 0 | Verde | ● | Livre |
+| 1 | Vermelho | ● | Ocupada |
+| 2 | Amarelo | ● | Atribuída |
+| 3 | Vermelho Intermitente | ✖ | Não operacional |
+
+## 🔒 Segurança
+
+- Passwords encriptadas com Caesar Cipher
+- Chave configurável por utilizador
+- Todas as ações registadas em log
+- Validação de input robusta
+
+## 📈 Próximos Passos
+
+1. Testar com hardware real (Arduino + sensores)
+2. Implementar comunicação serial real
+3. Adicionar mais vias
+4. Implementar scheduler de comboios
+5. Integração com base de dados
+
+## 👥 Autores
+
+**Equipa gXXX** - ISEP DEI - 2024/2025
+
+## 📄 Licença
+
+Projeto académico - ARQCP 2024/2025

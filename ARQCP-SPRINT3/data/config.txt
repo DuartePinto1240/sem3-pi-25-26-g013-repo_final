@@ -1,0 +1,34 @@
+# Station Configuration File
+# Lines starting with # are comments
+
+[USERS]
+# Format: name,username,password,caesar_key
+# Password should be in plain text (will be encrypted)
+Admin User,admin,ADMIN,3
+Station Operator,operator,OPERATOR,5
+
+[SENSORS]
+# Temperature Sensor Config
+TEMP_BUFFER_LENGTH=10
+TEMP_WINDOW_LENGTH=5
+# Humidity Sensor Config
+HUM_BUFFER_LENGTH=10
+HUM_WINDOW_LENGTH=5
+
+[TRACKS]
+# Format: track_id
+# State: 0=Free, 1=Busy, 2=Assigned, 3=Inoperative
+# Initial state is always Free (0)
+1
+2
+3
+4
+5
+
+[TRAINS]
+# Format: train_id
+101
+102
+103
+104
+105

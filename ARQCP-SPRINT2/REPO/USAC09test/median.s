@@ -7,8 +7,8 @@
 
 median:
     addi sp, sp, -16
-    sw ra, 12(sp)        # guarda return adress
-    sw a0, 0(sp)         # guarda vec na stack
+    sw ra, 12(sp)        # guarda radress
+    sw a0, 0(sp)         # guarda vec eturn na stack
     sw a1, 4(sp)         # guarda length na stack
     sw a2, 8(sp)         # guarda me na stack
 
