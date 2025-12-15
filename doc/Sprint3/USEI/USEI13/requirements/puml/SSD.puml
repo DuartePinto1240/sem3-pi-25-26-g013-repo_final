@@ -1,0 +1,18 @@
+@startuml
+title USEI13 - System Sequence Diagram (SSD)
+
+actor "Maintenance Planner" as Planner
+boundary "Railway System" as System
+
+Planner -> System: Request "Rail Hub Centrality Analysis"
+System --> Planner: Show input options / confirmation (network already loaded)
+
+Planner -> System: Confirm analysis execution
+System -> System: Compute centrality measures for each station\n(degree/strength, betweenness, harmonic closeness)
+System -> System: Normalise measures to [0,1] and compute HubScore
+System --> Planner: Present ranked list of stations\n(stid, stname, degree, strength, betweenness,\n harmonic_closeness, hubscore)
+
+Planner -> System: (Optional) Export / save the ranked list
+System --> Planner: Exported file / confirmation message
+
+@enduml
