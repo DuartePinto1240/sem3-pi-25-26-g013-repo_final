@@ -1,5 +1,4 @@
 # format_command.S
-# Versão Corrigida: Lida com espaços entre caracteres (ex: " R B ")
 
 .section .text
 .global format_command

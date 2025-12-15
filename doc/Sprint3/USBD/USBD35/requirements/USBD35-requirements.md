@@ -73,12 +73,6 @@ As an **operator**, I want to **register a new facility** (e.g., station, depot,
 
 ---
 
-### 1.6. System Sequence Diagram (SSD)
-
-![System Sequence Diagram](../../USBD34/requirements/svg/SSD_USBD35.svg)
-
----
-
 ### 1.7. Other Relevant Remarks
 
 - Referential integrity between facility and operator must be guaranteed.
