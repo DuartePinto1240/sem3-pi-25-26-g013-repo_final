@@ -173,4 +173,9 @@ public class CsvRailwayLineRepository implements RailwayLineRepository {
         }
         return null;
     }
+
+    @Override
+    public List<RailwayLine> findAll() {
+        return List.of();
+    }
 }

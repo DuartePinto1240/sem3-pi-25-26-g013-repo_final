@@ -27,8 +27,8 @@ public class TravelSectionTest {
      */
     @BeforeEach
     public void setUp() {
-        origin = new Station("ST001", "Porto", 41.15, -8.61);
-        destination = new Station("ST002", "Lisboa", 38.72, -9.14);
+        origin = new Station("ST001", "Porto", 41.15, -8.61,0,0);
+        destination = new Station("ST002", "Lisboa", 38.72, -9.14,0,0);
         // The LineSegment includes distance, max speed, electrification flag, and number of tracks.
         segment = new LineSegment(1, origin, destination, 313.0, 160.0, true, 2);
     }
