@@ -1,0 +1,120 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide circle
+hide methods
+left to right direction
+
+' ===== Users =====
+class FreightManager {
+    +managerId : int
+    +name : String
+    +email : String
+    +assignedRegion : String
+}
+
+' ===== Core Domain =====
+class Freight {
+    +id : int
+    +origin : Facility
+    +destination : Facility
+}
+
+class Cargo {
+    +id : int
+    +description : String
+    +item : Item
+    +quantity : int
+    +origin : Facility
+    +destination : Facility
+}
+
+class Item {
+    +SKU : String
+    +name : String
+    +category : String
+}
+
+class Route {
+    +id : int
+    +stations : List<Facility>
+    +totalDistance : double
+}
+
+class Path {
+    +id : int
+    +facilities : List<Facility>
+    +totalDistance : double
+}
+
+class Facility {
+    +id : int
+    +name : String
+    +location : String
+}
+
+class Station {
+    +stationId : int
+    +timeZoneGroup : TimeZoneGroup
+    +latitude : double
+    +longitude : double
+}
+
+class RailLine {
+    +id : int
+    +name : String
+}
+
+class LineSegment {
+    +id : int
+    +length : int
+}
+
+' ===== Planning (conceptual responsibilities) =====
+class RoutePlanner {
+    +planRoutesForPendingFreights()
+    +computePath(origin, destination)
+    +buildRouteStopsAndOperations()
+}
+
+' ===== Relationships clarified/required by USLP08 =====
+
+FreightManager "1" --> "0..*" Freight : manages
+FreightManager "1" --> "0..*" Route : defines/assigns
+
+Freight "1" --> "1" Route : follows
+Route "1" --> "1" Path : is realised by
+
+Path "2..*" --> "1" Facility : passes through (ordered)
+
+' Route can be simple (1 freight) or complex (multiple freights/cargos)
+Route "1" o-- "1..*" Freight : includes (simple/complex)
+
+' Cargos associated with each freight/route for load/unload listing
+Freight "1" o-- "0..*" Cargo : contains
+Cargo "1" --> "1" Item : refers to
+
+' Infrastructure connectivity used by the planner to compute feasible paths
+Facility "0..*" <|-- Station
+RailLine "1" o-- "1..*" LineSegment : is composed of
+LineSegment "1" --> "1" Facility : start
+LineSegment "1" --> "1" Facility : end
+
+' Planner uses network topology (no scheduling, no trains in this US)
+RoutePlanner ..> Route
+RoutePlanner ..> Path
+RoutePlanner ..> RailLine
+RoutePlanner ..> LineSegment
+
+note right of RoutePlanner
+USLP08 focuses on:
+- defining/assigning routes to pending freights
+- computing a feasible path (ordered stations)
+- presenting load/unload cargos per station
+Out of scope here:
+- train assembly, schedule, crossings, speeds
+end note
+
+@enduml

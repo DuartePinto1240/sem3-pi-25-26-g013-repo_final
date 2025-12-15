@@ -1,0 +1,17 @@
+@startuml
+title USLP08 - System Sequence Diagram (SSD)
+
+actor "Traffic Manager" as TM
+boundary "Railway System" as System
+
+TM -> System: Request route planning for pending freights
+System --> TM: Display list of pending freights
+
+TM -> System: Confirm route planning
+System -> System: Determine feasible paths for each freight
+System --> TM: Present planned routes\n(origin, destination, path,\nload/unload operations)
+
+TM -> System: Review planned routes
+System --> TM: Routes confirmed / marked as not plannable
+
+@enduml
