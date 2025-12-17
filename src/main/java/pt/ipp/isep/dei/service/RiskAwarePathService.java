@@ -1,35 +1,35 @@
 package main.java.pt.ipp.isep.dei.service;
 
 import main.java.pt.ipp.isep.dei.domain.Station;
-import main.java.pt.ipp.isep.dei.dto.*;
+import main.java.pt.ipp.isep.dei.dto.RiskPathFailureDTO;
+import main.java.pt.ipp.isep.dei.dto.RiskPathResult;
+import main.java.pt.ipp.isep.dei.dto.RiskPathSuccessDTO;
+
 import java.util.*;
 
 public class RiskAwarePathService {
 
-    /**
-     * Computes the shortest path using Bellman-Ford to handle negative weights
-     * and detect negative cycles.
-     * * @param graph The existing graph structure (Station as Vertex, Double as Weight)
-     */
+    private static final String BELLMAN_FORD_COMPLEXITY = "O(V * E)";
+
     public RiskPathResult computeShortestPath(Graph<Station, Double> graph, Station source, Station target) {
+        long startTime = System.currentTimeMillis();
+
         if (!graph.validVertex(source) || !graph.validVertex(target)) {
-            throw new IllegalArgumentException("Source or Target station not in graph.");
+            throw new IllegalArgumentException("Source or Target station not found in the graph.");
         }
 
-        // 1. Initialize distances
         Map<Station, Double> dist = new HashMap<>();
         Map<Station, Station> pred = new HashMap<>();
 
-        for (Station s : graph.vertices()) {
-            dist.put(s, Double.POSITIVE_INFINITY);
+        for (Station v : graph.vertices()) {
+            dist.put(v, Double.POSITIVE_INFINITY);
         }
         dist.put(source, 0.0);
 
         int V = graph.numVertices();
         Collection<Edge<Station, Double>> edges = graph.edges();
 
-        // 2. Relax edges |V| - 1 times
-        // We iterate one less than V because a simple path can have at most V-1 edges
+        // Relaxation
         for (int i = 1; i < V; i++) {
             boolean changed = false;
             for (Edge<Station, Double> edge : edges) {
@@ -37,10 +37,10 @@ public class RiskAwarePathService {
                     changed = true;
                 }
             }
-            if (!changed) break; // Optimization
+            if (!changed) break;
         }
 
-        // 3. Detect Negative Cycles
+        // Negative Cycle Detection
         for (Edge<Station, Double> edge : edges) {
             Station u = edge.getVOrig();
             Station v = edge.getVDest();
@@ -49,23 +49,22 @@ public class RiskAwarePathService {
             if (dist.get(u) != Double.POSITIVE_INFINITY &&
                     dist.get(u) + weight < dist.get(v)) {
 
-                // Negative cycle found! Reconstruct it.
                 List<Station> cycle = findCycle(v, pred);
-                return new RiskPathFailureDTO(cycle);
+                long endTime = System.currentTimeMillis();
+                return new RiskPathFailureDTO(cycle, endTime - startTime, BELLMAN_FORD_COMPLEXITY);
             }
         }
 
-        // 4. Construct Result
+        long endTime = System.currentTimeMillis();
+
         if (dist.get(target) == Double.POSITIVE_INFINITY) {
-            // Target not reachable
-            return new RiskPathSuccessDTO(new ArrayList<>(), Double.POSITIVE_INFINITY);
+            return new RiskPathSuccessDTO(new ArrayList<>(), Double.POSITIVE_INFINITY, endTime - startTime, BELLMAN_FORD_COMPLEXITY);
         }
 
         List<Station> path = reconstructPath(pred, source, target);
-        return new RiskPathSuccessDTO(path, dist.get(target));
+        return new RiskPathSuccessDTO(path, dist.get(target), endTime - startTime, BELLMAN_FORD_COMPLEXITY);
     }
 
-    // Helper: Relaxation step
     private boolean relax(Edge<Station, Double> edge, Map<Station, Double> dist, Map<Station, Station> pred) {
         Station u = edge.getVOrig();
         Station v = edge.getVDest();
@@ -81,7 +80,6 @@ public class RiskAwarePathService {
         return false;
     }
 
-    // Helper: Build path from predecessors
     private List<Station> reconstructPath(Map<Station, Station> pred, Station source, Station target) {
         LinkedList<Station> path = new LinkedList<>();
         Station curr = target;
@@ -93,9 +91,7 @@ public class RiskAwarePathService {
         return path;
     }
 
-    // Helper: Reconstruct cycle
     private List<Station> findCycle(Station startNode, Map<Station, Station> pred) {
-        // Go back V times to ensure we are inside the cycle
         Station curr = startNode;
         for (int i = 0; i < pred.size(); i++) {
             curr = pred.get(curr);

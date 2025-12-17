@@ -32,6 +32,11 @@ public class USEI15UI implements Runnable {
             // Controller handles logic and graph building
             RiskPathResult result = controller.calculateRiskPath(srcId, destId);
 
+            System.out.println("\n--- Temporal Analysis ---");
+            System.out.println("Execution Time: " + result.getExecutionTimeMs() + " ms");
+            System.out.println("Complexity: " + result.getComplexityAnalysis());
+            System.out.println("-------------------------\n");
+
             if (result.isSuccess()) {
                 RiskPathSuccessDTO success = (RiskPathSuccessDTO) result;
                 if (success.getPath().isEmpty()) {

@@ -6,10 +6,14 @@ import java.util.List;
 public class RiskPathSuccessDTO implements RiskPathResult {
     private final List<Station> path;
     private final double totalCost;
+    private final long executionTimeMs;
+    private final String complexityAnalysis;
 
-    public RiskPathSuccessDTO(List<Station> path, double totalCost) {
+    public RiskPathSuccessDTO(List<Station> path, double totalCost, long executionTimeMs, String complexityAnalysis) {
         this.path = path;
         this.totalCost = totalCost;
+        this.executionTimeMs = executionTimeMs;
+        this.complexityAnalysis = complexityAnalysis;
     }
 
     public List<Station> getPath() { return path; }
@@ -21,5 +25,15 @@ public class RiskPathSuccessDTO implements RiskPathResult {
     @Override
     public String getMessage() {
         return String.format("Path found. Total Risk Cost: %.2f", totalCost);
+    }
+
+    @Override
+    public long getExecutionTimeMs() {
+        return executionTimeMs;
+    }
+
+    @Override
+    public String getComplexityAnalysis() {
+        return complexityAnalysis;
     }
 }
