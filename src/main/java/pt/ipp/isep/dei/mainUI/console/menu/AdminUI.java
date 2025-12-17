@@ -31,6 +31,7 @@ public class AdminUI implements Runnable {
         options.add(new MenuItem("Radius search and density summary - USEI10", new USEI10UI()));
         options.add(new MenuItem("Directed Line Upgrade Plan - USEI11", new USEI11UI()));
         options.add(new MenuItem("Minimal Backbone Network - USEI12", new USEI12UI()));
+        options.add(new MenuItem("Maximum throughput between two Hubs - USEI14", new USEI14UI()));
         options.add(new MenuItem("Risk-Aware Shortest Paths - USEI15", new USEI15UI()));
         options.add(new MenuItem("Estimated Travel Time - USPL03", new USLP03UI()));
         options.add(new MenuItem("Train Schedule - USPL07", new USLP07UI()));
