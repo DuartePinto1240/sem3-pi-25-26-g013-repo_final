@@ -24,7 +24,7 @@ public class RailwayLineTest {
      * @return a new Station object
      */
     private Station createStation(String name) {
-        return new Station(name, "City_" + name, 0.0, 0.0);
+        return new Station(name, "City_" + name, 0.0, 0.0,0,0);
     }
 
 

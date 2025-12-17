@@ -1,9 +1,7 @@
 # extract_data.S
 # Implementação da função USAC03 para RV32 (32-bit)
 #
-# Assinatura C:
-# int extract_data(char* str, char* token, char* unit, int* value)
-#
+
 # Convenção de chamada (RV32):
 # a0: char* str
 # a1: char* token

@@ -16,6 +16,10 @@ public class Repositories {
     private final AuthenticationRepository authenticationRepository;
 
 
+    private final StationRepository stationRepository;
+    private final RailwayLineRepository railwayLineRepository;
+
+
     /**
      * Private constructor to enforce the Singleton pattern.
      * Initializes all application repositories.
@@ -23,6 +27,9 @@ public class Repositories {
     private Repositories() {
         authenticationRepository = new AuthenticationRepository();
 
+        stationRepository = new CsvStationRepository("train_station_dataset_v2/stations.csv");
+        railwayLineRepository = new CsvRailwayLineRepository(
+                "train_station_dataset_v2/lines.csv", stationRepository);
     }
 
 
@@ -51,5 +58,11 @@ public class Repositories {
      */
     public AuthenticationRepository getAuthenticationRepository() {
         return authenticationRepository;
+    }
+    public StationRepository getStationRepository() {
+        return stationRepository;
+    }
+    public RailwayLineRepository getRailwayLineRepository() {
+        return railwayLineRepository;
     }
 }

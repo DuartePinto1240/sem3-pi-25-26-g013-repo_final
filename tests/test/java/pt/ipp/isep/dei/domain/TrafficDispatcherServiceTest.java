@@ -177,5 +177,10 @@ class TrafficDispatcherServiceTest {
         public RailwayLine findDirectLine(Station start, Station end) {
             return returnNull ? null : line;
         }
+
+        @Override
+        public List<RailwayLine> findAll() {
+            return returnNull ? new ArrayList<>() : List.of(line);
+        }
     }
 }

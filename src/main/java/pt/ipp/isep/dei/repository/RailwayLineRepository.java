@@ -2,6 +2,7 @@ package main.java.pt.ipp.isep.dei.repository;
 
 import main.java.pt.ipp.isep.dei.domain.RailwayLine;
 import main.java.pt.ipp.isep.dei.domain.Station;
+import java.util.List;
 
 /**
  * An interface that defines the contract for a repository of {@link RailwayLine} entities.
@@ -19,4 +20,11 @@ public interface RailwayLineRepository {
      * @return The {@link RailwayLine} object if a direct line is found; otherwise, {@code null}.
      */
     RailwayLine findDirectLine(Station start, Station end);
+
+
+    /**
+     * Retrieves all railway lines stored in the repository.
+     * Required for graph construction.
+     */
+    List<RailwayLine> findAll();
 }

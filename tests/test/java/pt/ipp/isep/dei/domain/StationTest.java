@@ -18,7 +18,7 @@ public class StationTest {
      */
     @Test
     public void testConstructor_WithValidData_ShouldCreateStation() {
-        Station s = new Station("ST001", "Central Station", 41.1496, -8.6109);
+        Station s = new Station("ST001", "Central Station", 41.1496, -8.6109,0,0);
 
         assertEquals("ST001", s.getId());
         assertEquals("Central Station", s.getName());
