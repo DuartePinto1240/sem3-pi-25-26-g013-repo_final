@@ -22,7 +22,7 @@ public class LineSegmentTest {
      * @return a Station instance with dummy coordinates
      */
     private Station createStation(String name) {
-        return new Station(name, "City_" + name, 0, 0);
+        return new Station(name, "City_" + name, 0, 0,0,0);
     }
 
     /**

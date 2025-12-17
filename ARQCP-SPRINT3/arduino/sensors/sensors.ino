@@ -1,29 +1,46 @@
 /*
  * Railway Station - Sensors Component
- * Lê temperatura e humidade do DHT22 e responde a comandos GTH
+ * Raspberry Pi Pico W Version
+ * Lê temperatura e humidade e responde a comandos GTH
  */
 
-#include <DHT.h>
+// O Pico W tem sensor de temperatura interno!
+// Não precisa de DHT22 externo (mas podes usar se quiseres)
 
-// Pinos
-#define DHTPIN 2        // Pino do sensor DHT22
-#define DHTTYPE DHT22   // Tipo do sensor
+// Opção 1: Usar sensor interno do Pico W (apenas temperatura)
+// Opção 2: Usar DHT22 externo (temperatura + humidade)
 
-// Criar objeto DHT
-DHT dht(DHTPIN, DHTTYPE);
+// Descomenta a linha abaixo se tiveres DHT22 externo
+// #define USE_DHT22
 
-// Buffer para receber comandos
+#ifdef USE_DHT22
+  #include <DHT.h>
+  #define DHTPIN 15        // GP15 no Pico
+  #define DHTTYPE DHT22
+  DHT dht(DHTPIN, DHTTYPE);
+#endif
+
 String command = "";
 
+// Variáveis para simular humidade (se não tiveres DHT22)
+int simulatedHumidity = 60;
+
 void setup() {
-  // Inicializar comunicação serial
+  // Inicializar comunicação serial USB
   Serial.begin(9600);
 
-  // Inicializar sensor DHT
-  dht.begin();
+  // Aguardar conexão serial (opcional)
+  while (!Serial && millis() < 3000) {
+    delay(10);
+  }
 
-  // Mensagem de inicialização
-  Serial.println("Sensors Component Initialized");
+  #ifdef USE_DHT22
+    dht.begin();
+    Serial.println("Sensors Component - Raspberry Pi Pico W (DHT22)");
+  #else
+    Serial.println("Sensors Component - Raspberry Pi Pico W (Internal Sensor)");
+  #endif
+
   Serial.println("Waiting for commands...");
 }
 
@@ -33,7 +50,6 @@ void loop() {
     char c = Serial.read();
 
     if (c == '\n' || c == '\r') {
-      // Processar comando quando receber newline
       if (command.length() > 0) {
         processCommand(command);
         command = "";
@@ -43,7 +59,7 @@ void loop() {
     }
   }
 
-  delay(10); // Pequeno delay para não sobrecarregar
+  delay(10);
 }
 
 void processCommand(String cmd) {
@@ -51,7 +67,6 @@ void processCommand(String cmd) {
   cmd.toUpperCase();
 
   if (cmd == "GTH") {
-    // Get Temperature and Humidity
     sendSensorData();
   } else {
     Serial.println("ERROR: Unknown command");
@@ -59,18 +74,33 @@ void processCommand(String cmd) {
 }
 
 void sendSensorData() {
-  // Ler temperatura e humidade
-  float humidity = dht.readHumidity();
-  float temperature = dht.readTemperature();
+  float temperature;
+  float humidity;
 
-  // Verificar se a leitura foi bem-sucedida
-  if (isnan(humidity) || isnan(temperature)) {
-    Serial.println("ERROR: Failed to read from DHT sensor!");
-    return;
-  }
+  #ifdef USE_DHT22
+    // Usar DHT22 externo
+    humidity = dht.readHumidity();
+    temperature = dht.readTemperature();
 
-  // Formatar resposta no formato esperado
-  // TEMP&unit:celsius&value:xx#HUM&unit:percentage&value:xx
+    if (isnan(humidity) || isnan(temperature)) {
+      Serial.println("ERROR: Failed to read from DHT sensor!");
+      return;
+    }
+
+  #else
+    // Usar sensor interno do Pico W
+    // O Pico W tem um sensor de temperatura no chip RP2040
+    temperature = analogReadTemp();
+
+    // Simular humidade (o Pico não tem sensor de humidade interno)
+    // Em produção, deverias ter um sensor externo
+    simulatedHumidity += random(-2, 3); // Variar ±2%
+    if (simulatedHumidity < 40) simulatedHumidity = 40;
+    if (simulatedHumidity > 80) simulatedHumidity = 80;
+    humidity = simulatedHumidity;
+  #endif
+
+  // Formatar resposta
   String response = "TEMP&unit:celsius&value:";
   response += String((int)temperature);
   response += "#HUM&unit:percentage&value:";
@@ -79,36 +109,27 @@ void sendSensorData() {
   Serial.println(response);
 }
 
-// Função alternativa caso não tenhas sensor DHT22
-// Envia valores simulados para teste
-void sendSimulatedData() {
-  // Gerar valores aleatórios para teste
-  int temp = random(15, 30);   // Temperatura entre 15-30°C
-  int hum = random(40, 80);    // Humidade entre 40-80%
-
-  String response = "TEMP&unit:celsius&value:";
-  response += String(temp);
-  response += "#HUM&unit:percentage&value:";
-  response += String(hum);
-
-  Serial.println(response);
-}
-
 /*
- * INSTRUÇÕES DE TESTE:
+ * NOTAS IMPORTANTES RASPBERRY PI PICO W:
  *
- * 1. Carregar este código no Arduino
- * 2. Abrir Serial Monitor (9600 baud)
- * 3. Enviar comando: GTH
- * 4. Deverá receber resposta: TEMP&unit:celsius&value:XX#HUM&unit:percentage&value:XX
+ * 1. Usar Arduino IDE com suporte para Pico:
+ *    - Adicionar URL em File > Preferences > Additional Board Manager URLs:
+ *      https://github.com/earlephilhower/arduino-pico/releases/download/global/package_rp2040_index.json
+ *    - Instalar "Raspberry Pi Pico/RP2040" em Tools > Board > Boards Manager
  *
- * HARDWARE:
- * - Raspberry Pi Pico ou Arduino Uno
- * - Sensor DHT22 ligado ao pino 2
- * - DHT22 VCC -> 5V
- * - DHT22 GND -> GND
- * - DHT22 DATA -> Pin 2 (com resistor pull-up de 10kΩ)
+ * 2. Selecionar Board:
+ *    - Tools > Board > Raspberry Pi RP2040 Boards > Raspberry Pi Pico W
  *
- * NOTA: Se não tiveres o sensor DHT22, substitui sendSensorData()
- * por sendSimulatedData() para testes
+ * 3. Pinos GPIO do Pico:
+ *    - Usar GPxx em vez de pin numbers
+ *    - Exemplo: GP15 em vez de Pin 15
+ *
+ * 4. Sensor Interno:
+ *    - analogReadTemp() lê temperatura do chip RP2040
+ *    - Não tem sensor de humidade interno
+ *    - Para humidade real, precisa DHT22 externo
+ *
+ * 5. USB Serial:
+ *    - Serial = USB (não precisa de pins RX/TX)
+ *    - Baudrate: 9600 (ou qualquer valor, USB é sempre full-speed)
  */

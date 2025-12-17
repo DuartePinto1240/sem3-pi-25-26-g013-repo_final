@@ -31,14 +31,6 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/docs/system-documentation/global-artifacts/01.requirements-engineering/domain-model/untitled.vpp.bak_000f</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
     <data-source source="LOCAL" name="untitled [2]" uuid="c0582957-d2ee-436e-a79f-1fff8f18701c">
       <driver-ref>sqlite.xerial</driver-ref>
@@ -46,14 +38,6 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/docs/system-documentation/global-artifacts/01.requirements-engineering/domain-model/untitled.vpp</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
     <data-source source="LOCAL" name="projectlapr3" uuid="f1d505f3-ff28-4e82-9632-9fa49a3c5559">
       <driver-ref>sqlite.xerial</driver-ref>
@@ -61,14 +45,6 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/docs/system-documentation/global-artifacts/01.requirements-engineering/projectlapr3.vpp</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
     <data-source source="LOCAL" name="Updatedversion" uuid="83ca11fe-88ac-43fd-b4a1-7c6c4bc54500">
       <driver-ref>sqlite.xerial</driver-ref>
@@ -76,14 +52,6 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/docs/system-documentation/global-artifacts/01.requirements-engineering/domain-model/Updatedversion.vpp</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
     <data-source source="LOCAL" name="projectlapr3.vpp" uuid="ecef6f72-ac6c-49e2-a22f-cc1fe6da8ada">
       <driver-ref>sqlite.xerial</driver-ref>
@@ -94,14 +62,6 @@
         <property name="com.intellij.clouds.kubernetes.db.enabled" value="false" />
       </jdbc-additional-properties>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
     <data-source source="LOCAL" name="projectlapr3 [2]" uuid="8a550a4b-02bd-48f9-bae4-5d25f3218023">
       <driver-ref>sqlite.xerial</driver-ref>
@@ -109,14 +69,6 @@
       <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
       <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/doc/Sprint1/USBD/USBD02/projectlapr3.vpp</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
-      <libraries>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/xerial/sqlite-jdbc/3.45.1.0/sqlite-jdbc-3.45.1.0.jar</url>
-        </library>
-        <library>
-          <url>file://$APPLICATION_CONFIG_DIR$/jdbc-drivers/Xerial SQLiteJDBC/3.45.1/org/slf4j/slf4j-api/1.7.36/slf4j-api-1.7.36.jar</url>
-        </library>
-      </libraries>
     </data-source>
   </component>
 </project>
