@@ -18,13 +18,13 @@ public class DirectedLineUpgradePlan {
     /**
      * Represents a railway station node with all required attributes
      */
-    static class Station {
-        int stationId;
-        String name;
-        double lat;          // Geographic latitude
-        double lon;          // Geographic longitude
-        double coordX;       // X coordinate for GRAPHVIZ
-        double coordY;       // Y coordinate for GRAPHVIZ
+    public static class Station {
+        public int stationId;
+        public String name;
+        public double lat;          // Geographic latitude
+        public double lon;          // Geographic longitude
+        public double coordX;       // X coordinate for GRAPHVIZ
+        public double coordY;       // Y coordinate for GRAPHVIZ
 
         public Station(int stationId, String name, double lat, double lon,
                        double coordX, double coordY) {
@@ -46,12 +46,12 @@ public class DirectedLineUpgradePlan {
     /**
      * Represents a directed track segment with all measures
      */
-    static class TrackSegment {
-        int fromStationId;
-        int toStationId;
-        double distance;     // Distance in kilometers
-        int capacity;        // Maximum flow of trains per planning day
-        double cost;         // Metric combining distance, capacity, congestion, penalties/bonuses
+    public static class TrackSegment {
+        public int fromStationId;
+        public int toStationId;
+        public double distance;     // Distance in kilometers
+        public int capacity;        // Maximum flow of trains per planning day
+        public double cost;         // Metric combining distance, capacity, congestion, penalties/bonuses
 
         public TrackSegment(int from, int to, double distance, int capacity, double cost) {
             this.fromStationId = from;
@@ -95,6 +95,20 @@ public class DirectedLineUpgradePlan {
         this.stations = new HashMap<>();
         this.adjacencyList = new HashMap<>();
         this.totalEdges = 0;
+    }
+
+    /**
+     * Get a station by ID (public accessor for testing)
+     */
+    public Station getStation(int stationId) {
+        return stations.get(stationId);
+    }
+
+    /**
+     * Get all stations (public accessor for testing)
+     */
+    public Map<Integer, Station> getStations() {
+        return Collections.unmodifiableMap(stations);
     }
 
     /**
@@ -185,7 +199,20 @@ public class DirectedLineUpgradePlan {
 
     /**
      * Compute the upgrade plan using Kahn's Algorithm (BFS-based topological sort)
-     * Time Complexity: O(V + E)
+     *
+     * TEMPORAL COMPLEXITY ANALYSIS:
+     * - Time Complexity: O(V + E) where V = vertices (stations), E = edges (track segments)
+     *   * Computing in-degrees: O(V + E) - iterate all vertices and edges once
+     *   * Initial queue population: O(V) - check all vertices
+     *   * Processing queue: O(V + E) - each vertex dequeued once, each edge examined once
+     *   * Cycle detection: O(V + E) - check remaining vertices and their edges
+     *   * Total: O(V + E) - Linear time complexity
+     *
+     * - Space Complexity: O(V)
+     *   * In-degree map: O(V)
+     *   * Queue: O(V) worst case
+     *   * Result structures: O(V)
+     *   * Total: O(V) - Linear space complexity
      */
     public UpgradePlanResult computeUpgradePlan() {
         long startTime = System.nanoTime();
@@ -255,6 +282,9 @@ public class DirectedLineUpgradePlan {
 
     /**
      * Detect and extract stations and links involved in cycles - O(V + E)
+     *
+     * Stations with in-degree > 0 after topological sort are part of cycles.
+     * Links connecting these stations are part of cycles.
      */
     private void detectCycles(UpgradePlanResult result, Map<Integer, Integer> inDegree) {
         // Step 1: Find all stations involved in cycles - O(V)
@@ -344,6 +374,12 @@ public class DirectedLineUpgradePlan {
                         i + 1, stationId, station.name, station.coordX, station.coordY);
             }
         }
+
+        System.out.println("\nInterpretation:");
+        System.out.println("• Each station can only be upgraded after ALL its incoming neighbors");
+        System.out.println("  have been fully upgraded.");
+        System.out.println("• This ensures compatibility, signaling, and control dependencies");
+        System.out.println("  flow correctly in the direction of traffic.");
     }
 
     /**
