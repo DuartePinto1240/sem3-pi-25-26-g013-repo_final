@@ -28,7 +28,7 @@ public class USEI14UI implements Runnable {
                     STATIONS_FILE,
                     LINES_FILE,
                     srcId,
-                    srcId
+                    dstId
             );
             long end = System.nanoTime();
 
