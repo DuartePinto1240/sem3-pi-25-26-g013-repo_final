@@ -1,10 +1,15 @@
 # Makefile para Railway Station Management System
-# ARQCP Sprint 3
+# ARQCP Sprint 3 - RISC-V Version
 
-CC = gcc
-AS = as
-CFLAGS = -Wall -Wextra -g -Iinclude
+# Compilador RISC-V
+CC = riscv32-linux-gcc
+AS = riscv32-linux-gcc
+CFLAGS = -Wall -Wextra -fanalyzer -g -Iinclude
+ARCHFLAGS = -march=rv32imd -mabi=ilp32d
 LDFLAGS = -lm
+
+# Biblioteca RISC-V
+LIBRV32 = ${HOME}/bin/bootlin/riscv32-buildroot-linux-gnu/sysroot
 
 # Diretórios
 SRC_DIR = src
@@ -13,6 +18,7 @@ INC_DIR = include
 OBJ_DIR = obj
 BIN_DIR = bin
 TEST_DIR = tests
+DATA_DIR = data
 
 # Criar diretórios se não existirem
 $(shell mkdir -p $(OBJ_DIR) $(BIN_DIR))
@@ -41,45 +47,45 @@ all: $(TARGET)
 
 # Compilar programa principal
 $(TARGET): $(OBJECTS)
-	$(CC) $(OBJECTS) -o $@ $(LDFLAGS)
+	$(CC) $(ARCHFLAGS) $(OBJECTS) -o $@ $(LDFLAGS)
 	@echo "Build concluído: $(TARGET)"
 
 # Compilar ficheiros C
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c $< -o $@
 
 # Compilar ficheiros assembly
 $(OBJ_DIR)/%.o: $(ASM_DIR)/%.s
-	$(AS) $< -o $@
+	$(AS) $(ARCHFLAGS) -c $< -o $@
 
 # Compilar testes
 $(OBJ_DIR)/test_%.o: $(TEST_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(ARCHFLAGS) -c $< -o $@
 
 # Criar executáveis de teste
 $(BIN_DIR)/test_%: $(OBJ_DIR)/test_%.o $(filter-out $(OBJ_DIR)/main.o, $(OBJECTS))
-	$(CC) $^ -o $@ $(LDFLAGS)
+	$(CC) $(ARCHFLAGS) $^ -o $@ $(LDFLAGS)
 
 # Compilar todos os testes
 tests: $(TEST_BINS)
 	@echo "Testes compilados"
 
-# Executar testes
+# Executar testes com QEMU
 run-tests: tests
-	@echo "A executar testes..."
+	@echo "A executar testes em QEMU..."
 	@for test in $(TEST_BINS); do \
 		echo "==== Executando $$test ===="; \
-		$$test; \
+		qemu-riscv32 -L $(LIBRV32) $$test; \
 		echo ""; \
 	done
 
-# Executar programa principal
+# Executar programa principal com QEMU
 run: $(TARGET)
-	./$(TARGET)
+	qemu-riscv32 -L $(LIBRV32) ./$(TARGET)
 
 # Executar com ficheiro de configuração específico
 run-config: $(TARGET)
-	./$(TARGET) data/config.txt
+	qemu-riscv32 -L $(LIBRV32) ./$(TARGET) $(DATA_DIR)/config.txt
 
 # Limpar ficheiros compilados
 clean:
@@ -92,6 +98,9 @@ rebuild: clean all
 # Verificar dependências
 check:
 	@echo "=== Verificando ficheiros ==="
+	@echo "Compilador RISC-V:"
+	@which $(CC) || echo "ERRO: $(CC) não encontrado!"
+	@echo ""
 	@echo "Ficheiros C encontrados:"
 	@ls -1 $(SRC_DIR)/*.c 2>/dev/null || echo "Nenhum"
 	@echo ""
@@ -100,22 +109,38 @@ check:
 	@echo ""
 	@echo "Ficheiros de teste encontrados:"
 	@ls -1 $(TEST_DIR)/*.c 2>/dev/null || echo "Nenhum"
+	@echo ""
+	@echo "Biblioteca RISC-V:"
+	@ls -d $(LIBRV32) 2>/dev/null || echo "ERRO: $(LIBRV32) não encontrado!"
+
+# Debug - mostrar variáveis
+debug:
+	@echo "CC = $(CC)"
+	@echo "CFLAGS = $(CFLAGS)"
+	@echo "ARCHFLAGS = $(ARCHFLAGS)"
+	@echo "C_SOURCES = $(C_SOURCES)"
+	@echo "C_OBJECTS = $(C_OBJECTS)"
+	@echo "ASM_SOURCES = $(ASM_SOURCES)"
+	@echo "ASM_OBJECTS = $(ASM_OBJECTS)"
+	@echo "TARGET = $(TARGET)"
 
 # Ajuda
 help:
-	@echo "=== Railway Station Management System - Makefile ==="
+	@echo "=== Railway Station Management System - Makefile (RISC-V) ==="
 	@echo ""
 	@echo "Alvos disponíveis:"
 	@echo "  make            - Compila o programa principal"
 	@echo "  make all        - Mesmo que 'make'"
-	@echo "  make run        - Compila e executa o programa"
+	@echo "  make run        - Compila e executa o programa em QEMU"
 	@echo "  make run-config - Executa com ficheiro de config específico"
 	@echo "  make tests      - Compila os testes"
-	@echo "  make run-tests  - Compila e executa todos os testes"
+	@echo "  make run-tests  - Compila e executa todos os testes em QEMU"
 	@echo "  make clean      - Remove ficheiros compilados"
 	@echo "  make rebuild    - Limpa e recompila tudo"
-	@echo "  make check      - Verifica ficheiros do projeto"
+	@echo "  make check      - Verifica dependências e ficheiros"
+	@echo "  make debug      - Mostra variáveis do Makefile"
 	@echo "  make help       - Mostra esta ajuda"
 	@echo ""
+	@echo "Nota: Este Makefile compila para RISC-V e usa QEMU para executar"
 
-.PHONY: all clean run run-config tests run-tests rebuild check help
+.PHONY: all clean run run-config tests run-tests rebuild check debug help

@@ -1,9 +1,9 @@
 /*
  * USAC10 - Station Controller (Unified)
  * Hardware: Raspberry Pi Pico W
- * * Funcionalidades combinadas:
- * 1. LightSigns: Controla 4 LEDs (GP13, GP14, GP22, GP21)
- * 2. Sensors: Lê Temp/Hum (Interno ou DHT22 no GP15)
+ * * Funcionalidades Atualizadas (Sprint 3):
+ * 1. LightSigns: Controla 6 LEDs (Tráfego Esquerdo e Direito)
+ * 2. Sensors: Lê Temp/Hum (DHT22 no GP15 ou Simulado)
  */
 
 // --- CONFIGURAÇÃO: SENSORES ---
@@ -12,16 +12,21 @@
 
 #ifdef USE_DHT22
   #include <DHT.h>
-  #define DHTPIN 15        // Pino do sensor DHT
+  #define DHTPIN 15        // Pino do sensor DHT (Confirmado pelo user)
   #define DHTTYPE DHT22
   DHT dht(DHTPIN, DHTTYPE);
 #endif
 
 // --- CONFIGURAÇÃO: HARDWARE LEDS ---
-#define LED_1  13   // Lado Esquerdo Externo
-#define LED_2  14   // Lado Esquerdo Interno
-#define LED_3  22   // Lado Direito Externo
-#define LED_4  21   // Lado Direito Interno
+// Lado Esquerdo
+#define LED_L_RED    10
+#define LED_L_YELLOW 11
+#define LED_L_GREEN  12
+
+// Lado Direito
+#define LED_R_RED    20
+#define LED_R_YELLOW 21
+#define LED_R_GREEN  22
 
 // Variáveis Globais
 String inputBuffer = "";
@@ -33,11 +38,16 @@ int simulatedHumidity = 60; // Para simulação caso não haja DHT
 void setup() {
   Serial.begin(9600);
 
-  // Configurar LEDs
-  pinMode(LED_1, OUTPUT);
-  pinMode(LED_2, OUTPUT);
-  pinMode(LED_3, OUTPUT);
-  pinMode(LED_4, OUTPUT);
+  // Configurar LEDs (Lado Esquerdo)
+  pinMode(LED_L_RED, OUTPUT);
+  pinMode(LED_L_YELLOW, OUTPUT);
+  pinMode(LED_L_GREEN, OUTPUT);
+
+  // Configurar LEDs (Lado Direito)
+  pinMode(LED_R_RED, OUTPUT);
+  pinMode(LED_R_YELLOW, OUTPUT);
+  pinMode(LED_R_GREEN, OUTPUT);
+
   pinMode(LED_BUILTIN, OUTPUT); // LED da placa para debug
 
   // Estado inicial: tudo apagado
@@ -52,7 +62,7 @@ void setup() {
   testStartupSequence();
 
   Serial.println(">>> Station Controller ONLINE <<<");
-  Serial.println("Modes: LightSigns (4-LED) + Sensors (GTH)");
+  Serial.println("Modes: LightSigns (6-LED Traffic) + Sensors (GTH)");
   Serial.println("Waiting for commands...");
 }
 
@@ -112,7 +122,6 @@ void sendSensorData() {
     }
   #else
     // Leitura do Sensor Interno do Pico (RP2040)
-    // Nota: analogReadTemp() é específico do core RP2040 para Arduino
     temperature = analogReadTemp();
 
     // Simulação de humidade (visto que o Pico não mede humidade interna)
@@ -124,7 +133,6 @@ void sendSensorData() {
 
   // Formato Rigoroso USAC10:
   // TEMP&unit:celsius&value:xx#HUM&unit:percentage&value:xx
-
   String response = "TEMP&unit:celsius&value:";
   response += String((int)temperature);
   response += "#HUM&unit:percentage&value:";
@@ -137,38 +145,33 @@ void sendSensorData() {
 // LÓGICA DAS LUZES (LIGHTSIGNS)
 // ==========================================
 void processLightCommand(String cmd) {
-  String operation = cmd.substring(0, 2); // Pega nos primeiros 2 chars (GE, RE...)
+  String operation = cmd.substring(0, 2); // Pega nos primeiros 2 chars
 
   // Apagar sempre antes de mudar estado (regra de exclusividade)
   turnOffAllLEDs();
 
   if (operation == "GE") {
-    // GREEN: LEDs Externos (1 e 3)
-    digitalWrite(LED_1, HIGH);
-    digitalWrite(LED_3, HIGH);
-    // Serial.println("ACK: GREEN"); // Comentado para não poluir o output se não quiseres
+    // GREEN: Sinal Verde (Via Livre)
+    digitalWrite(LED_L_GREEN, HIGH);
+    digitalWrite(LED_R_GREEN, HIGH);
 
   } else if (operation == "RE") {
-    // RED: Todos Ligados
-    digitalWrite(LED_1, HIGH);
-    digitalWrite(LED_2, HIGH);
-    digitalWrite(LED_3, HIGH);
-    digitalWrite(LED_4, HIGH);
+    // RED: Sinal Vermelho (Via Ocupada)
+    digitalWrite(LED_L_RED, HIGH);
+    digitalWrite(LED_R_RED, HIGH);
 
   } else if (operation == "YE") {
-    // YELLOW: LEDs Internos (2 e 4)
-    digitalWrite(LED_2, HIGH);
-    digitalWrite(LED_4, HIGH);
+    // YELLOW: Sinal Amarelo (Via Atribuída)
+    digitalWrite(LED_L_YELLOW, HIGH);
+    digitalWrite(LED_R_YELLOW, HIGH);
 
   } else if (operation == "RB") {
-    // RED BLINK: Todos piscam
+    // RED BLINK: Vermelho Intermitente (Não Operacional)
     blinking = true;
     lastBlinkTime = millis();
     // Liga imediatamente para dar feedback visual instantâneo
-    digitalWrite(LED_1, HIGH);
-    digitalWrite(LED_2, HIGH);
-    digitalWrite(LED_3, HIGH);
-    digitalWrite(LED_4, HIGH);
+    digitalWrite(LED_L_RED, HIGH);
+    digitalWrite(LED_R_RED, HIGH);
 
   } else if (operation == "OF") {
     // OFF: Tudo apagado (já feito pelo turnOffAllLEDs no início)
@@ -177,10 +180,15 @@ void processLightCommand(String cmd) {
 
 void turnOffAllLEDs() {
   blinking = false;
-  digitalWrite(LED_1, LOW);
-  digitalWrite(LED_2, LOW);
-  digitalWrite(LED_3, LOW);
-  digitalWrite(LED_4, LOW);
+  // Lado Esquerdo
+  digitalWrite(LED_L_RED, LOW);
+  digitalWrite(LED_L_YELLOW, LOW);
+  digitalWrite(LED_L_GREEN, LOW);
+
+  // Lado Direito
+  digitalWrite(LED_R_RED, LOW);
+  digitalWrite(LED_R_YELLOW, LOW);
+  digitalWrite(LED_R_GREEN, LOW);
 }
 
 void handleBlinking() {
@@ -190,24 +198,34 @@ void handleBlinking() {
     if (currentTime - lastBlinkTime >= 500) {
       lastBlinkTime = currentTime;
 
-      // Inverter estado de todos os LEDs
-      int newState = !digitalRead(LED_1);
-      digitalWrite(LED_1, newState);
-      digitalWrite(LED_2, newState);
-      digitalWrite(LED_3, newState);
-      digitalWrite(LED_4, newState);
+      // Inverter estado dos LEDs Vermelhos (para RB)
+      int newStateLeft = !digitalRead(LED_L_RED);
+      int newStateRight = !digitalRead(LED_R_RED);
+
+      digitalWrite(LED_L_RED, newStateLeft);
+      digitalWrite(LED_R_RED, newStateRight);
     }
   }
 }
 
 void testStartupSequence() {
-  // Piscar sequencial rápido no arranque
-  int leds[] = {LED_1, LED_2, LED_4, LED_3}; // Sequência circular
-  for(int i=0; i<4; i++) {
-    digitalWrite(leds[i], HIGH);
-    delay(100);
-    digitalWrite(leds[i], LOW);
-  }
+  // Sequência Semafórica de Arranque (Vermelho -> Amarelo -> Verde)
+
+  // 1. Vermelho
+  digitalWrite(LED_L_RED, HIGH); digitalWrite(LED_R_RED, HIGH);
+  delay(300);
+  digitalWrite(LED_L_RED, LOW); digitalWrite(LED_R_RED, LOW);
+
+  // 2. Amarelo
+  digitalWrite(LED_L_YELLOW, HIGH); digitalWrite(LED_R_YELLOW, HIGH);
+  delay(300);
+  digitalWrite(LED_L_YELLOW, LOW); digitalWrite(LED_R_YELLOW, LOW);
+
+  // 3. Verde
+  digitalWrite(LED_L_GREEN, HIGH); digitalWrite(LED_R_GREEN, HIGH);
+  delay(300);
+  digitalWrite(LED_L_GREEN, LOW); digitalWrite(LED_R_GREEN, LOW);
+
   // Piscar LED interno
   digitalWrite(LED_BUILTIN, HIGH);
   delay(200);
