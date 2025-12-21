@@ -24,7 +24,9 @@ CREATE OR REPLACE PACKAGE BODY pkg_facility IS
         v_facility_id Facility.facility_id%TYPE;
         v_count       NUMBER;
 BEGIN
+        ----------------------------------------------------------------
         -- Validate FacilityType existence
+        ----------------------------------------------------------------
 SELECT COUNT(*)
 INTO v_count
 FROM FacilityType
@@ -34,7 +36,9 @@ IF v_count = 0 THEN
             RAISE_APPLICATION_ERROR(-20001, 'Facility type does not exist.');
 END IF;
 
+        ----------------------------------------------------------------
         -- Case and space insensitive uniqueness validation
+        ----------------------------------------------------------------
 SELECT COUNT(*)
 INTO v_count
 FROM Facility
@@ -44,9 +48,18 @@ IF v_count > 0 THEN
             RAISE_APPLICATION_ERROR(-20002, 'Facility name already exists.');
 END IF;
 
-INSERT INTO Facility (facilitytype_id, name, location)
-VALUES (p_facilitytype_id, TRIM(p_name), p_location)
-    RETURNING facility_id INTO v_facility_id;
+        ----------------------------------------------------------------
+        -- Generate new facility_id (no sequences, no identity)
+        ----------------------------------------------------------------
+SELECT NVL(MAX(facility_id), 0) + 1
+INTO v_facility_id
+FROM Facility;
+
+----------------------------------------------------------------
+-- Insert Facility
+----------------------------------------------------------------
+INSERT INTO Facility (facility_id, facilitytype_id, name, location)
+VALUES (v_facility_id, p_facilitytype_id, TRIM(p_name), p_location);
 
 RETURN v_facility_id;
 END register_facility;
@@ -64,11 +77,14 @@ BEGIN
 SAVEPOINT test_start;
 
 --------------------------------------------------------------------
--- Test setup (allowed: inside the test)
+-- Test setup (NO pre-existing data assumed)
 --------------------------------------------------------------------
-INSERT INTO FacilityType (type)
-VALUES ('Terminal')
-    RETURNING facilitytype_id INTO v_facilitytype_id;
+SELECT NVL(MAX(facilitytype_id), 0) + 1
+INTO v_facilitytype_id
+FROM FacilityType;
+
+INSERT INTO FacilityType (facilitytype_id, type)
+VALUES (v_facilitytype_id, 'Terminal');
 
 --------------------------------------------------------------------
 -- Test 1: Happy path
@@ -79,7 +95,9 @@ v_facility_id := pkg_facility.register_facility(
         'Porto'
     );
 
-    DBMS_OUTPUT.PUT_LINE('Test 1 OK - Facility ID = ' || v_facility_id);
+    DBMS_OUTPUT.PUT_LINE(
+        'Test 1 OK - Facility created with ID = ' || v_facility_id
+    );
 
     --------------------------------------------------------------------
     -- Test 2: Duplicate name (case + space insensitive)
@@ -93,7 +111,9 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('Test 2 FAILED');
 EXCEPTION
         WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('Test 2 OK - Duplicate name rejected');
+            DBMS_OUTPUT.PUT_LINE(
+                'Test 2 OK - Duplicate name rejected'
+            );
 END;
 
     --------------------------------------------------------------------
@@ -108,7 +128,9 @@ BEGIN
         DBMS_OUTPUT.PUT_LINE('Test 3 FAILED');
 EXCEPTION
         WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('Test 3 OK - Invalid facility type rejected');
+            DBMS_OUTPUT.PUT_LINE(
+                'Test 3 OK - Invalid facility type rejected'
+            );
 END;
 
     --------------------------------------------------------------------
