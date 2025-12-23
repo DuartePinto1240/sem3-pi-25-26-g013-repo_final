@@ -12,14 +12,14 @@ with that train.
 
 **From the specifications document:**
 
-> All commits for these US are individual; each US is assessed independently.
-> US must be implemented as a PL/SQL function.
-> Functions must be fully testable (anonymous block required).
-> SYSDATE should not be used in functions (to keep tests deterministic).
-> A freight can only be removed from a train if it is currently associated with that train.
-> Removing a freight implicitly removes the association of all its wagons and locomotives with that train.
-> The operation must ensure data integrity, consistent with all database rules.
-> The train must remain in a valid state after removal (e.g., not violating maximum length constraints — although reducing length is always safe).
+> All commits for these US are individual; each US is assessed independently.  
+> US must be implemented as a PL/SQL function.  
+> Functions must be fully testable (anonymous block required).  
+> SYSDATE should not be used in functions (to keep tests deterministic).  
+> A freight can only be removed from a train if it is currently associated with that train.  
+> Removing a freight implicitly removes the association of all its wagons and locomotives with that train.  
+> The operation must ensure data integrity, consistent with all database rules.  
+> The train must remain in a valid state after removal (e.g., not violating maximum length constraints — although reducing length is always safe).  
 
 ---
 

@@ -72,7 +72,7 @@ BEGIN
 END;
 /
 
---tests: anonymous blocks
+-- Tests - anonymous block
 SET SERVEROUTPUT ON;
 
 DECLARE
