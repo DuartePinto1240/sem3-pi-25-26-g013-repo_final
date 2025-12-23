@@ -73,6 +73,7 @@ END pkg_facility;
 DECLARE
 v_facilitytype_id FacilityType.facilitytype_id%TYPE;
     v_facility_id     Facility.facility_id%TYPE;
+    v_dummy_id        Facility.facility_id%TYPE;
 BEGIN
 SAVEPOINT test_start;
 
@@ -103,7 +104,7 @@ v_facility_id := pkg_facility.register_facility(
     -- Test 2: Duplicate name (case + space insensitive)
     --------------------------------------------------------------------
 BEGIN
-        pkg_facility.register_facility(
+        v_dummy_id := pkg_facility.register_facility(
             v_facilitytype_id,
             'porto hub',
             'Another location'
@@ -120,7 +121,7 @@ END;
     -- Test 3: Invalid facility type
     --------------------------------------------------------------------
 BEGIN
-        pkg_facility.register_facility(
+        v_dummy_id := pkg_facility.register_facility(
             -1,
             'Lisbon Hub',
             'Lisbon'
