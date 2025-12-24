@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 -- USBD35 - Register a new facility
 -- Single file with full tests (BDDAD compliant)
+-- CORRECTED: No INSERTs before tests, uses existing FacilityType
 --------------------------------------------------------------------------------
 
 CREATE OR REPLACE PACKAGE pkg_facility IS
@@ -42,7 +43,7 @@ END IF;
 SELECT COUNT(*)
 INTO v_count
 FROM Facility
-WHERE UPPER(TRIM(name)) = UPPER(TRIM(p_name));
+WHERE UPPER(REPLACE(TRIM(name), ' ', '')) = UPPER(REPLACE(TRIM(p_name), ' ', ''));
 
 IF v_count > 0 THEN
             RAISE_APPLICATION_ERROR(-20002, 'Facility name already exists.');
@@ -68,6 +69,7 @@ END pkg_facility;
 /
 --------------------------------------------------------------------------------
 -- TESTS (anonymous blocks in the SAME file)
+-- NO PRE-INSERTS: Uses existing FacilityType from populate script
 --------------------------------------------------------------------------------
 
 DECLARE
@@ -78,14 +80,12 @@ BEGIN
 SAVEPOINT test_start;
 
 --------------------------------------------------------------------
--- Test setup (NO pre-existing data assumed)
+-- Get existing FacilityType (from populate script - document 2)
 --------------------------------------------------------------------
-SELECT NVL(MAX(facilitytype_id), 0) + 1
+SELECT facilitytype_id
 INTO v_facilitytype_id
-FROM FacilityType;
-
-INSERT INTO FacilityType (facilitytype_id, type)
-VALUES (v_facilitytype_id, 'Terminal');
+FROM FacilityType
+WHERE ROWNUM = 1;
 
 --------------------------------------------------------------------
 -- Test 1: Happy path
@@ -135,11 +135,37 @@ EXCEPTION
 END;
 
     --------------------------------------------------------------------
+    -- Test 4: Case/space insensitive facility name (advanced test)
+    --------------------------------------------------------------------
+BEGIN
+        v_dummy_id := pkg_facility.register_facility(
+            v_facilitytype_id,
+            '  P O R T O   H U B  ',  -- extra spaces
+            'Porto'
+        );
+        DBMS_OUTPUT.PUT_LINE('Test 4 FAILED');
+EXCEPTION
+        WHEN OTHERS THEN
+            DBMS_OUTPUT.PUT_LINE(
+                'Test 4 OK - Case/space insensitive duplicate rejected'
+            );
+END;
+
+    --------------------------------------------------------------------
     -- Cleanup
     --------------------------------------------------------------------
 ROLLBACK TO test_start;
 DBMS_OUTPUT.PUT_LINE('All tests executed successfully.');
 
+EXCEPTION
+    WHEN NO_DATA_FOUND THEN
+        ROLLBACK TO test_start;
+        RAISE_APPLICATION_ERROR(-20999,
+            'USBD35 SETUP ERROR: No FacilityType found in database. ' ||
+            'Please run the populate script first.');
+WHEN OTHERS THEN
+        ROLLBACK TO test_start;
+        RAISE;
 END;
 /
 --------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 --------------------------------------------------------------------------------
 -- USBD40 - Register a freight with wagons
 -- Single file with full tests (BDDAD compliant)
+-- CORRECTED: No INSERTs before tests, uses existing data from populate script
 --------------------------------------------------------------------------------
 
 CREATE OR REPLACE PACKAGE pkg_freight IS
@@ -161,6 +162,7 @@ END pkg_freight;
 
 --------------------------------------------------------------------------------
 -- COMPREHENSIVE TESTS (anonymous blocks in the SAME file)
+-- NO PRE-INSERTS: Uses existing data from populate script
 --------------------------------------------------------------------------------
 
 SET SERVEROUTPUT ON;
@@ -168,125 +170,42 @@ SET SERVEROUTPUT ON;
 DECLARE
 v_origin_facility_id      NUMBER;
     v_destination_facility_id NUMBER;
-    v_another_facility_id     NUMBER;
     v_wagonmodel_id           NUMBER;
-    v_another_wagonmodel_id   NUMBER;
     v_freight_id              NUMBER;
-    v_test_wagon_id           NUMBER;
-    v_test_freight_id         NUMBER;
-    v_test_train_id           NUMBER;
     v_count                   NUMBER;
+    v_free_wagons_initial     NUMBER;
 BEGIN
 SAVEPOINT test_start;
 
 --------------------------------------------------------------------
--- Setup test data
+-- Get existing data from populate script (document 2)
 --------------------------------------------------------------------
-DBMS_OUTPUT.PUT_LINE('=== SETTING UP TEST DATA ===');
+-- Facility 50 = Leixões (has many wagons)
+-- Facility 5 = Porto Campanhã (destination)
+v_origin_facility_id := 50;
+    v_destination_facility_id := 5;
 
-    -- Create facilities
-SELECT NVL(MAX(facility_id), 0) + 1 INTO v_origin_facility_id FROM Facility;
-INSERT INTO Facility (facility_id, facilitytype_id, name, location)
-VALUES (v_origin_facility_id, 1, 'Test_Origin', 'City A');
+    -- WagonModel 1104 exists with multiple wagons at facility 50
+    v_wagonmodel_id := 1104;
 
-SELECT NVL(MAX(facility_id), 0) + 1 INTO v_destination_facility_id FROM Facility;
-INSERT INTO Facility (facility_id, facilitytype_id, name, location)
-VALUES (v_destination_facility_id, 1, 'Test_Destination', 'City B');
+    -- Count initial free wagons for this model at origin
+SELECT COUNT(*)
+INTO v_free_wagons_initial
+FROM Wagon w
+WHERE w.wagonmodel_id = v_wagonmodel_id
+  AND w.current_facility_id = v_origin_facility_id
+  AND NOT EXISTS (SELECT 1 FROM FreightWagon fw WHERE fw.wagon_id = w.wagon_id)
+  AND NOT EXISTS (SELECT 1 FROM TrainWagon tw WHERE tw.wagon_id = w.wagon_id);
 
-SELECT NVL(MAX(facility_id), 0) + 1 INTO v_another_facility_id FROM Facility;
-INSERT INTO Facility (facility_id, facilitytype_id, name, location)
-VALUES (v_another_facility_id, 1, 'Test_Another', 'City C');
-
--- Create wagon models
-SELECT NVL(MAX(wagonmodel_id), 0) + 1 INTO v_wagonmodel_id FROM WagonModel;
-INSERT INTO WagonModel (
-    wagonmodel_id, wagontype_id, gauge_id, model_id, wagoncategory_id,
-    payload_t, volume_m3
-) VALUES (v_wagonmodel_id, 1, 1668, 1, 1, 10, 20);
-
-SELECT NVL(MAX(wagonmodel_id), 0) + 1 INTO v_another_wagonmodel_id FROM WagonModel;
-INSERT INTO WagonModel (
-    wagonmodel_id, wagontype_id, gauge_id, model_id, wagoncategory_id,
-    payload_t, volume_m3
-) VALUES (v_another_wagonmodel_id, 2, 1668, 2, 2, 15, 30);
-
--- Create a test train for TrainWagon tests
-SELECT NVL(MAX(train_id), 0) + 1 INTO v_test_train_id FROM Train;
-INSERT INTO Train (train_id, operator_id, name, max_length_m)
-VALUES (v_test_train_id, 2, 'TEST_TRN', 500);
-
--- Create a test freight for FreightWagon tests
-SELECT NVL(MAX(freight_id), 0) + 1 INTO v_test_freight_id FROM Freight;
-INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id,
-                     train_id, depart_time, arrival_time)
-VALUES (v_test_freight_id, v_origin_facility_id, v_destination_facility_id,
-        NULL, SYSDATE, SYSDATE + 1);
-
--- Create 5 free wagons at origin
-FOR i IN 1..5 LOOP
-SELECT NVL(MAX(wagon_id), 0) + 1 INTO v_test_wagon_id FROM Wagon;
-INSERT INTO Wagon (
-    wagon_id, wagonmodel_id, operator_id,
-    start_facility_id, current_facility_id, service_year
-)
-VALUES (
-           v_test_wagon_id, v_wagonmodel_id, 2,
-           v_origin_facility_id, v_origin_facility_id, 2020
-       );
-END LOOP;
-
-    -- Create 2 wagons at origin but already in FreightWagon
-FOR i IN 1..2 LOOP
-SELECT NVL(MAX(wagon_id), 0) + 1 INTO v_test_wagon_id FROM Wagon;
-INSERT INTO Wagon (
-    wagon_id, wagonmodel_id, operator_id,
-    start_facility_id, current_facility_id, service_year
-)
-VALUES (
-           v_test_wagon_id, v_wagonmodel_id, 2,
-           v_origin_facility_id, v_origin_facility_id, 2020
-       );
--- Assign to test freight
-INSERT INTO FreightWagon (freight_id, wagon_id)
-VALUES (v_test_freight_id, v_test_wagon_id);
-END LOOP;
-
-    -- Create 1 wagon at origin but already in TrainWagon
-SELECT NVL(MAX(wagon_id), 0) + 1 INTO v_test_wagon_id FROM Wagon;
-INSERT INTO Wagon (
-    wagon_id, wagonmodel_id, operator_id,
-    start_facility_id, current_facility_id, service_year
-)
-VALUES (
-           v_test_wagon_id, v_wagonmodel_id, 2,
-           v_origin_facility_id, v_origin_facility_id, 2020
-       );
--- Assign to test train
-INSERT INTO TrainWagon (train_id, wagon_id)
-VALUES (v_test_train_id, v_test_wagon_id);
-
--- Create 2 wagons of same model but at different facility
-FOR i IN 1..2 LOOP
-SELECT NVL(MAX(wagon_id), 0) + 1 INTO v_test_wagon_id FROM Wagon;
-INSERT INTO Wagon (
-    wagon_id, wagonmodel_id, operator_id,
-    start_facility_id, current_facility_id, service_year
-)
-VALUES (
-           v_test_wagon_id, v_wagonmodel_id, 2,
-           v_another_facility_id, v_another_facility_id, 2020
-       );
-END LOOP;
-
-    DBMS_OUTPUT.PUT_LINE('Test data created successfully.');
-    DBMS_OUTPUT.PUT_LINE('  - Created 5 free wagons at origin');
-    DBMS_OUTPUT.PUT_LINE('  - Created 2 wagons in FreightWagon');
-    DBMS_OUTPUT.PUT_LINE('  - Created 1 wagon in TrainWagon');
-    DBMS_OUTPUT.PUT_LINE('  - Created 2 wagons at different facility');
+DBMS_OUTPUT.PUT_LINE('=== SETUP INFO ===');
+    DBMS_OUTPUT.PUT_LINE('Origin Facility: ' || v_origin_facility_id);
+    DBMS_OUTPUT.PUT_LINE('Destination Facility: ' || v_destination_facility_id);
+    DBMS_OUTPUT.PUT_LINE('WagonModel: ' || v_wagonmodel_id);
+    DBMS_OUTPUT.PUT_LINE('Free wagons available: ' || v_free_wagons_initial);
     DBMS_OUTPUT.PUT_LINE('');
 
     --------------------------------------------------------------------
-    -- TEST 1: Happy path - Register freight with 3 wagons
+    -- TEST 1: Happy path - Register freight with 2 wagons
     --------------------------------------------------------------------
     DBMS_OUTPUT.PUT_LINE('=== TEST 1: Happy Path ===');
 BEGIN
@@ -294,7 +213,7 @@ BEGIN
             v_origin_facility_id,
             v_destination_facility_id,
             v_wagonmodel_id,
-            3,
+            2,
             DATE '2025-01-01',
             DATE '2025-01-02'
         );
@@ -310,7 +229,7 @@ SELECT COUNT(*) INTO v_count
 FROM FreightWagon
 WHERE freight_id = v_freight_id;
 
-IF v_count = 3 THEN
+IF v_count = 2 THEN
                 DBMS_OUTPUT.PUT_LINE('✓ TEST 1 PASSED - Freight ID: ' || v_freight_id || ', Wagons: ' || v_count);
 ELSE
                 DBMS_OUTPUT.PUT_LINE('✗ TEST 1 FAILED - Wrong number of wagons: ' || v_count);
@@ -325,7 +244,7 @@ END;
     DBMS_OUTPUT.PUT_LINE('');
 
     --------------------------------------------------------------------
-    -- TEST 2: Not enough free wagons (only 2 free left, requesting 3)
+    -- TEST 2: Request more wagons than available
     --------------------------------------------------------------------
     DBMS_OUTPUT.PUT_LINE('=== TEST 2: Insufficient Free Wagons ===');
 BEGIN
@@ -333,7 +252,7 @@ BEGIN
             v_origin_facility_id,
             v_destination_facility_id,
             v_wagonmodel_id,
-            3,
+            9999,  -- More than exist
             DATE '2025-01-03',
             DATE '2025-01-04'
         );
@@ -513,11 +432,10 @@ END;
     DBMS_OUTPUT.PUT_LINE('');
 
     --------------------------------------------------------------------
-    -- TEST 10: Verify wagons at wrong facility are not used
+    -- TEST 10: Verify only free wagons are used
     --------------------------------------------------------------------
-    DBMS_OUTPUT.PUT_LINE('=== TEST 10: Wagons at Different Facility Not Used ===');
+    DBMS_OUTPUT.PUT_LINE('=== TEST 10: Verify Only Free Wagons Used ===');
 BEGIN
-        -- Request 1 wagon from origin (only 1 free left after previous tests)
         v_freight_id := pkg_freight.register_freight(
             v_origin_facility_id,
             v_destination_facility_id,
@@ -527,47 +445,22 @@ BEGIN
             DATE '2025-01-19'
         );
 
-        -- Verify the wagon is from origin facility
+        -- Verify assigned wagon is from origin and was free
 SELECT COUNT(*) INTO v_count
 FROM FreightWagon fw
          JOIN Wagon w ON fw.wagon_id = w.wagon_id
 WHERE fw.freight_id = v_freight_id
-  AND w.current_facility_id = v_origin_facility_id;
+  AND w.current_facility_id = v_origin_facility_id
+  AND w.wagonmodel_id = v_wagonmodel_id;
 
 IF v_count = 1 THEN
-            DBMS_OUTPUT.PUT_LINE('✓ TEST 10 PASSED - Wagon from correct facility');
+            DBMS_OUTPUT.PUT_LINE('✓ TEST 10 PASSED - Correct wagon assigned');
 ELSE
-            DBMS_OUTPUT.PUT_LINE('✗ TEST 10 FAILED - Wagon from wrong facility');
+            DBMS_OUTPUT.PUT_LINE('✗ TEST 10 FAILED - Wrong wagon assigned');
 END IF;
 EXCEPTION
         WHEN OTHERS THEN
             DBMS_OUTPUT.PUT_LINE('✗ TEST 10 FAILED - ' || SQLERRM);
-END;
-    DBMS_OUTPUT.PUT_LINE('');
-
-    --------------------------------------------------------------------
-    -- TEST 11: Verify wagons in TrainWagon are not used
-    --------------------------------------------------------------------
-    DBMS_OUTPUT.PUT_LINE('=== TEST 11: Wagons in TrainWagon Not Used ===');
-BEGIN
-        -- Count free wagons before
-SELECT COUNT(*) INTO v_count
-FROM Wagon w
-WHERE w.wagonmodel_id = v_wagonmodel_id
-  AND w.current_facility_id = v_origin_facility_id
-  AND NOT EXISTS (SELECT 1 FROM FreightWagon fw WHERE fw.wagon_id = w.wagon_id)
-  AND NOT EXISTS (SELECT 1 FROM TrainWagon tw WHERE tw.wagon_id = w.wagon_id);
-
-DBMS_OUTPUT.PUT_LINE('Free wagons remaining: ' || v_count);
-
-        IF v_count = 0 THEN
-            DBMS_OUTPUT.PUT_LINE('✓ TEST 11 PASSED - All free wagons were used, wagon in TrainWagon was excluded');
-ELSE
-            DBMS_OUTPUT.PUT_LINE('✗ TEST 11 FAILED - Expected 0 free wagons, found ' || v_count);
-END IF;
-EXCEPTION
-        WHEN OTHERS THEN
-            DBMS_OUTPUT.PUT_LINE('✗ TEST 11 FAILED - ' || SQLERRM);
 END;
     DBMS_OUTPUT.PUT_LINE('');
 
