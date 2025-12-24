@@ -252,7 +252,6 @@ INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id, tr
 INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id, train_id, depart_time, arrival_time) VALUES (2007, 50, 5, NULL, TO_DATE('2025-10-03 08:00', 'YYYY-MM-DD HH24:MI'), TO_DATE('2025-10-03 20:00', 'YYYY-MM-DD HH24:MI'));
 INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id, train_id, depart_time, arrival_time) VALUES (2050, 12, 50, 5437, TO_DATE('2025-10-06 08:00', 'YYYY-MM-DD HH24:MI'), TO_DATE('2025-10-06 20:00', 'YYYY-MM-DD HH24:MI'));
 INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id, train_id, depart_time, arrival_time) VALUES (2051, 11, 50, 5437, TO_DATE('2025-10-06 08:00', 'YYYY-MM-DD HH24:MI'), TO_DATE('2025-10-06 20:00', 'YYYY-MM-DD HH24:MI'));
-INSERT INTO Freight (freight_id, origin_facility_id, destination_facility_id, train_id, depart_time, arrival_time) VALUES (9001, 50, 50, NULL, TO_DATE('2025-01-01 09:00', 'YYYY-MM-DD HH24:MI'), TO_DATE('2025-01-01 18:00', 'YYYY-MM-DD HH24:MI'));
 
 INSERT INTO FreightWagon (freight_id, wagon_id) VALUES (2001, 3330001);
 INSERT INTO FreightWagon (freight_id, wagon_id) VALUES (2001, 3330002);
