@@ -15,7 +15,7 @@ public class Repositories {
     /** The repository for managing authentication-related data and logic. */
     private final AuthenticationRepository authenticationRepository;
 
-
+    private final TrainRepository trainRepository;
     private final StationRepository stationRepository;
     private final RailwayLineRepository railwayLineRepository;
 
@@ -27,6 +27,7 @@ public class Repositories {
     private Repositories() {
         authenticationRepository = new AuthenticationRepository();
 
+        trainRepository = new OracleTrainRepository();
         stationRepository = new CsvStationRepository("train_station_dataset_v2/stations.csv");
         railwayLineRepository = new CsvRailwayLineRepository(
                 "train_station_dataset_v2/lines.csv", stationRepository);
@@ -58,6 +59,9 @@ public class Repositories {
      */
     public AuthenticationRepository getAuthenticationRepository() {
         return authenticationRepository;
+    }
+    public TrainRepository getTrainRepository() {
+        return trainRepository;
     }
     public StationRepository getStationRepository() {
         return stationRepository;
