@@ -1,0 +1,122 @@
+@startuml
+skinparam monochrome true
+skinparam packageStyle rectangle
+skinparam shadowing false
+
+autonumber
+
+actor "Freight Manager" as FM
+participant ":USLP08UI" as UI
+participant "controller:RoutePlannerController" as CTRL
+participant "service:RoutePlannerService" as SERVICE
+participant "repository:FreightRepository\n(OracleFreightRepository)" as REPO
+database "Oracle DB\n(PL/SQL)" as DB
+participant "plan:RoutePlanDTO" as PLAN
+participant "stop:StopPlanDTO" as STOP
+
+activate FM
+
+FM -> UI : run()
+activate UI
+
+' ==== carregar freights pendentes ====
+UI -> CTRL : getPendingFreights()
+activate CTRL
+CTRL -> REPO : getPendingFreights()
+activate REPO
+REPO -> DB : FN_USLP08_GET_PENDING_FREIGHTS()
+activate DB
+DB --> REPO : SYS_REFCURSOR\n(PendingFreight rows)
+deactivate DB
+REPO --> CTRL : List<PendingFreightDTO>
+deactivate REPO
+CTRL --> UI : List<PendingFreightDTO>
+deactivate CTRL
+
+UI --> FM : mostrar lista de pending freights
+
+' ==== escolher modo ====
+alt opção 1 (auto-plan ALL)
+    UI -> CTRL : autoPlanAll()
+    activate CTRL
+
+    CTRL -> REPO : getPendingFreights()
+    activate REPO
+    REPO -> DB : FN_USLP08_GET_PENDING_FREIGHTS()
+    activate DB
+    DB --> REPO : pending rows
+    deactivate DB
+    REPO --> CTRL : List<PendingFreightDTO>
+    deactivate REPO
+
+    CTRL -> SERVICE : planRoutes(pending)
+    activate SERVICE
+
+    loop para cada freight na(s) rota(s)
+        SERVICE -> REPO : getCargosForFreight(freightId)
+        activate REPO
+        REPO -> DB : FN_USLP08_GET_FREIGHT_CARGOS(freightId)
+        activate DB
+        DB --> REPO : SYS_REFCURSOR\n(Cargo rows)
+        deactivate DB
+        REPO --> SERVICE : List<CargoDTO>
+        deactivate REPO
+
+        SERVICE -> STOP : atualizar loads/unloads por estação
+        activate STOP
+        STOP --> SERVICE : stop atualizado
+        deactivate STOP
+    end
+
+    SERVICE --> CTRL : List<RoutePlanDTO>
+    deactivate SERVICE
+    CTRL --> UI : List<RoutePlanDTO>
+    deactivate CTRL
+
+else opção 2 (selecionar IDs)
+    FM -> UI : introduz lista de freightIds
+    UI -> CTRL : planSelected(selectedIds)
+    activate CTRL
+
+    CTRL -> REPO : getPendingFreights()
+    activate REPO
+    REPO -> DB : FN_USLP08_GET_PENDING_FREIGHTS()
+    activate DB
+    DB --> REPO : pending rows
+    deactivate DB
+    REPO --> CTRL : List<PendingFreightDTO>
+    deactivate REPO
+
+    CTRL -> CTRL : filtrar pending por selectedIds
+
+    CTRL -> SERVICE : planRoutes(filteredPending)
+    activate SERVICE
+
+    loop para cada freight selecionado
+        SERVICE -> REPO : getCargosForFreight(freightId)
+        activate REPO
+        REPO -> DB : FN_USLP08_GET_FREIGHT_CARGOS(freightId)
+        activate DB
+        DB --> REPO : cargos rows
+        deactivate DB
+        REPO --> SERVICE : List<CargoDTO>
+        deactivate REPO
+
+        SERVICE -> STOP : atualizar loads/unloads
+        activate STOP
+        STOP --> SERVICE : stop atualizado
+        deactivate STOP
+    end
+
+    SERVICE --> CTRL : List<RoutePlanDTO>
+    deactivate SERVICE
+    CTRL --> UI : List<RoutePlanDTO>
+    deactivate CTRL
+end
+
+UI --> FM : mostrar rotas (sequência de stations + cargos load/unload)
+
+deactivate UI
+deactivate FM
+
+@enduml
