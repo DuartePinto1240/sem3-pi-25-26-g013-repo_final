@@ -53,6 +53,29 @@ public class Utils {
         showList(list, header);
         return selectsObject(list);
     }
+    /**
+     * Asks the user a yes/no question.
+     *
+     * @param message Question to display
+     * @return true if user answers yes, false otherwise
+     */
+    public static boolean confirm(String message) {
+        while (true) {
+            String answer = readLineFromConsole(message + " (y/n): ");
+            if (answer == null) return false;
+
+            answer = answer.trim().toLowerCase();
+            if (answer.equals("y") || answer.equals("yes")) {
+                return true;
+            }
+            if (answer.equals("n") || answer.equals("no")) {
+                return false;
+            }
+
+            System.out.println("Please answer 'y' or 'n'.");
+        }
+    }
+
 
     /**
      * Displays a list of objects and prompts the user to select an index.
@@ -65,6 +88,23 @@ public class Utils {
         showList(list, header);
         return selectsIndex(list);
     }
+    /**
+     * Reads an integer from the console, retrying until valid.
+     *
+     * @param prompt message to show the user
+     * @return integer value
+     */
+    public static int readIntegerFromConsole(String prompt) {
+        while (true) {
+            try {
+                String input = readLineFromConsole(prompt);
+                return Integer.parseInt(input.trim());
+            } catch (NumberFormatException e) {
+                System.out.println("Invalid number. Please enter an integer.");
+            }
+        }
+    }
+
 
     /**
      * Prints the contents of a list to the console, prefixed with sequential numbers.
