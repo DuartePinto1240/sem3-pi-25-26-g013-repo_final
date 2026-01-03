@@ -2,10 +2,7 @@ package main.java.pt.ipp.isep.dei.controller;
 
 import main.java.pt.ipp.isep.dei.domain.Station;
 import main.java.pt.ipp.isep.dei.dto.*;
-import main.java.pt.ipp.isep.dei.repository.Repositories;
-import main.java.pt.ipp.isep.dei.repository.ScheduleRepository;
-import main.java.pt.ipp.isep.dei.repository.StationRepository;
-import main.java.pt.ipp.isep.dei.repository.TrainRepository;
+import main.java.pt.ipp.isep.dei.repository.*;
 import main.java.pt.ipp.isep.dei.service.*;
 
 import java.time.LocalDateTime;
@@ -20,6 +17,7 @@ public class USLP10Controller {
     private final TrainRepository trainRepository;
     private final ScheduleRepository scheduleRepository;
     private final StationRepository stationRepository;
+    private final FacilityRepository facilityRepository;
     private final SpeedCalculatorService speedCalc;
     private final PathFinderService pathFinder;
     private final SchedulerService scheduler;
@@ -27,6 +25,7 @@ public class USLP10Controller {
 
     public USLP10Controller() {
         this.trainRepository = Repositories.getInstance().getTrainRepository();
+        this.facilityRepository = new OracleFacilityRepository();
         this.scheduleRepository = Repositories.getInstance().getScheduleRepository();
         this.stationRepository = Repositories.getInstance().getStationRepository();
 
@@ -49,6 +48,9 @@ public class USLP10Controller {
      */
     public List<Station> getStations() {
         return stationRepository.findAll();
+    }
+    public List<FacilityDTO> getFacilities() {
+        return facilityRepository.getAllFacilities();
     }
 
     /**

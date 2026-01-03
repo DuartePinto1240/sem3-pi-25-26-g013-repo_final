@@ -2,7 +2,6 @@ package main.java.pt.ipp.isep.dei.ui;
 
 import main.java.pt.ipp.isep.dei.controller.USLP10Controller;
 import main.java.pt.ipp.isep.dei.dto.*;
-import main.java.pt.ipp.isep.dei.domain.Station;
 import main.java.pt.ipp.isep.dei.util.Utils;
 
 import java.time.LocalDateTime;
@@ -88,7 +87,7 @@ public class USLP10UI implements Runnable {
         // Step 2: Define Manual Path
         List<Long> path = defineManualPath();
         if (path.isEmpty() || path.size() < 2) {
-            System.out.println("❌ Path must have at least 2 stations.");
+            System.out.println("❌ Path must have at least 2 facilities.");
             return;
         }
 
@@ -117,6 +116,7 @@ public class USLP10UI implements Runnable {
             displaySchedule(schedule);
         } catch (Exception e) {
             System.out.println("❌ Dispatch failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -131,13 +131,13 @@ public class USLP10UI implements Runnable {
         long trainId = selectTrain();
         if (trainId == -1) return;
 
-        // Step 2: Select Origin and Destination
-        System.out.println("\nSelect ORIGIN station:");
-        long fromFacilityId = selectStation();
+        // Step 2: Select Origin and Destination (MUDANÇA AQUI!)
+        System.out.println("\nSelect ORIGIN facility:");
+        long fromFacilityId = selectFacility();
         if (fromFacilityId == -1) return;
 
-        System.out.println("\nSelect DESTINATION station:");
-        long toFacilityId = selectStation();
+        System.out.println("\nSelect DESTINATION facility:");
+        long toFacilityId = selectFacility();
         if (toFacilityId == -1) return;
 
         if (fromFacilityId == toFacilityId) {
@@ -174,6 +174,7 @@ public class USLP10UI implements Runnable {
             displaySchedule(schedule);
         } catch (Exception e) {
             System.out.println("❌ Dispatch failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -218,6 +219,7 @@ public class USLP10UI implements Runnable {
             }
         } catch (Exception e) {
             System.out.println("❌ Batch dispatch failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -257,6 +259,7 @@ public class USLP10UI implements Runnable {
             }
         } catch (Exception e) {
             System.out.println("❌ Error fetching schedules: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -291,32 +294,31 @@ public class USLP10UI implements Runnable {
 
         } catch (Exception e) {
             System.out.println("❌ Error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     // ================================================================
-    // HELPER METHODS - INPUT
+    // HELPER METHODS - INPUT (MUDANÇAS AQUI!)
     // ================================================================
 
     private long selectTrain() {
-        // TODO: If you have a method to list all trains, use it here
-        // For now, ask user to input train ID directly
         return Utils.readIntegerFromConsole("Enter Train ID: ");
     }
 
-    private long selectStation() {
-        List<Station> stations = controller.getStations();
+    private long selectFacility() {
+        List<FacilityDTO> facilities = controller.getFacilities();
 
-        if (stations.isEmpty()) {
-            System.out.println("❌ No stations available.");
+        if (facilities.isEmpty()) {
+            System.out.println("❌ No facilities available.");
             return -1;
         }
 
-        int idx = Utils.showAndSelectIndex(stations, "Available Stations");
+        int idx = Utils.showAndSelectIndex(facilities, "Available Facilities");
         if (idx == -1) return -1;
 
-        Station selected = stations.get(idx);
-        return getStationId(selected);
+        FacilityDTO selected = facilities.get(idx);
+        return selected.facilityId();
     }
 
     private List<Long> selectMultipleTrains() {
@@ -344,23 +346,23 @@ public class USLP10UI implements Runnable {
 
     private List<Long> defineManualPath() {
         List<Long> path = new ArrayList<>();
-        List<Station> stations = controller.getStations();
+        List<FacilityDTO> facilities = controller.getFacilities();
 
-        if (stations.isEmpty()) {
-            System.out.println("❌ No stations available.");
+        if (facilities.isEmpty()) {
+            System.out.println("❌ No facilities available.");
             return path;
         }
 
-        System.out.println("\nDefine path (select stations in order):");
+        System.out.println("\nDefine path (select facilities in order):");
         boolean defining = true;
 
         while (defining) {
             System.out.println("\nCurrent path: " + formatPath(path));
-            int idx = Utils.showAndSelectIndex(stations, "Select next station (-1 to finish)");
+            int idx = Utils.showAndSelectIndex(facilities, "Select next facility (-1 to finish)");
 
             if (idx == -1) {
                 if (path.size() < 2) {
-                    System.out.println("⚠ Path must have at least 2 stations.");
+                    System.out.println("⚠ Path must have at least 2 facilities.");
                     if (!Utils.confirm("Continue defining path?")) {
                         return List.of();
                     }
@@ -368,10 +370,10 @@ public class USLP10UI implements Runnable {
                 }
                 defining = false;
             } else {
-                Station selected = stations.get(idx);
-                long stationId = getStationId(selected);
-                path.add(stationId);
-                System.out.println("✓ Added: " + selected);
+                FacilityDTO selected = facilities.get(idx);
+                long facilityId = selected.facilityId();
+                path.add(facilityId);
+                System.out.println("✓ Added: " + selected.name());
             }
         }
 
@@ -462,10 +464,5 @@ public class USLP10UI implements Runnable {
                 .map(id -> "F" + id)
                 .reduce((a, b) -> a + " → " + b)
                 .orElse("");
-    }
-
-    private long getStationId(Station s) {
-        // TODO: Replace with actual s.getId() if Station has it
-        return Math.abs(s.hashCode());
     }
 }
