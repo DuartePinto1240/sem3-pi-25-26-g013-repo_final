@@ -52,6 +52,9 @@ public class USLP10Controller {
     public List<TrainDTO> getTrainsWithRoutes() {
         return trainRepo.getTrainsWithRoutes(); // Chama método específico
     }
+    public List<LineSegmentDTO> getLineSegments(Long fromFacilityId, Long toFacilityId) {
+        return trainRepo.getLineSegments(fromFacilityId, toFacilityId);
+    }
 
     /**
      * Get route assigned to a train

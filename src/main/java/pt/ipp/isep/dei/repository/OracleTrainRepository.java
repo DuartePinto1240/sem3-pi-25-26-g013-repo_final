@@ -230,24 +230,25 @@ public class OracleTrainRepository implements TrainRepository {
             try (ResultSet rs = (ResultSet) cs.getObject(1)) {
                 while (rs.next()) {
                     out.add(new LineSegmentDTO(
-                            rs.getLong("line_segment_id"),
-                            rs.getLong("line_id"),
-                            rs.getLong("start_facility_id"),
-                            rs.getString("start_facility_name"),
-                            rs.getLong("end_facility_id"),
-                            rs.getString("end_facility_name"),
-                            rs.getDouble("length_m") / 1000.0, // convert to km
-                            rs.getDouble("speed_limit"),
-                            "Yes".equals(rs.getString("electrified")),
-                            "double".equals(rs.getString("track_type")),
-                            rs.getInt("gauge_id")
+                            rs.getLong("line_segment_id"),      // segmentId
+                            rs.getLong("line_id"),               // lineId
+                            rs.getLong("start_facility_id"),     // fromFacilityId
+                            rs.getString("start_facility_name"), // fromFacilityName
+                            rs.getLong("end_facility_id"),       // toFacilityId
+                            rs.getString("end_facility_name"),   // toFacilityName
+                            rs.getDouble("length_m") / 1000.0,   // distance (converter para km)
+                            rs.getDouble("speed_limit"),         // maxSpeed
+                            "Yes".equals(rs.getString("electrified")), // isElectrified
+                            "double".equals(rs.getString("track_type")), // isDoubleTrack
+                            rs.getInt("gauge_id")                // gauge
                     ));
                 }
             }
             return out;
 
         } catch (SQLException e) {
-            throw new RuntimeException("DB error fetching line segments from " + fromFacilityId + " to " + toFacilityId, e);
+            throw new RuntimeException("DB error fetching line segments from " +
+                    fromFacilityId + " to " + toFacilityId, e);
         }
     }
 

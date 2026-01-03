@@ -382,23 +382,32 @@ public class USLP10UI implements Runnable {
     private List<Long> defineManualPath(RouteDTO route) {
         System.out.println("\n--- Define Manual Path ---");
         System.out.println("You can override the route's automatic path.");
-        System.out.println("\nDefault route stops:");
 
+        System.out.println("\n✅ DEFAULT ROUTE (recommended):");
         for (RouteStopDTO stop : route.stops()) {
             System.out.printf("  %d. %-30s (ID: %d)%n",
-                    stop.stopOrder(),
-                    stop.facilityName(),
-                    stop.facilityId());
+                    stop.stopOrder(), stop.facilityName(), stop.facilityId());
         }
 
-        System.out.println("\nEnter facility IDs in order (must form a connected path):");
+        System.out.println("\n⚠  IMPORTANT:");
+        System.out.println("   • Only facilities connected by railway lines will work");
+        System.out.println("   • Path will be validated before dispatch");
+
+        // ✅ OPÇÃO RÁPIDA
+        if (Utils.confirm("\nUse default route path (recommended)?")) {
+            return route.stops().stream()
+                    .map(RouteStopDTO::facilityId)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        System.out.println("\n--- Custom Path Definition ---");
 
         List<Long> path = new ArrayList<>();
         boolean defining = true;
 
         while (defining) {
             if (!path.isEmpty()) {
-                System.out.println("\nCurrent manual path: " + formatPathWithNames(path));
+                System.out.println("\nCurrent manual path: " + formatPath(path));
             }
 
             long facilityId = Utils.readIntegerFromConsole(
@@ -413,7 +422,33 @@ public class USLP10UI implements Runnable {
                     }
                     continue;
                 }
+
+                // ✅ VALIDAR CONECTIVIDADE ANTES DE FINALIZAR
+                System.out.println("\n🔍 Validating path connectivity...");
+                ValidationResult result = validatePathConnections(path);
+
+                if (!result.isValid()) {
+                    System.out.println("\n❌ PATH VALIDATION FAILED!");
+                    System.out.println(result.getDetails());
+                    System.out.println("\nThe selected facilities are NOT connected by railway lines.");
+                    System.out.println("\nOptions:");
+                    System.out.println("  1. Restart and choose different facilities");
+                    System.out.println("  2. Cancel and use automatic path");
+
+                    int choice = Utils.readIntegerFromConsole("Choose (1-2): ");
+
+                    if (choice == 1) {
+                        path.clear();
+                        continue;
+                    } else {
+                        return null;
+                    }
+                }
+
+                System.out.println("✓ Path validation PASSED!");
+                System.out.println(result.getDetails());
                 defining = false;
+
             } else if (facilityId == 0) {
                 path.clear();
                 System.out.println("✓ Path reset.");
@@ -611,6 +646,60 @@ public class USLP10UI implements Runnable {
     private String formatPathWithNames(List<Long> path) {
         // In a full implementation, would fetch facility names
         return formatPath(path);
+    }
+    private ValidationResult validatePathConnections(List<Long> path) {
+        StringBuilder details = new StringBuilder();
+        boolean allConnected = true;
+
+        for (int i = 0; i < path.size() - 1; i++) {
+            Long from = path.get(i);
+            Long to = path.get(i + 1);
+
+            details.append(String.format("  Facility %d → %d: ", from, to));
+
+            try {
+                List<LineSegmentDTO> segments = controller.getLineSegments(from, to);
+
+                if (segments.isEmpty()) {
+                    details.append("❌ NO RAILWAY CONNECTION\n");
+                    allConnected = false;
+                } else {
+                    // ✅ CORRIGIDO: usar distance() em vez de distanceKm()
+                    double totalKm = segments.stream()
+                            .mapToDouble(LineSegmentDTO::distance)
+                            .sum();
+                    details.append(String.format("✓ Connected (%.1f km)\n", totalKm));
+                }
+
+            } catch (Exception e) {
+                details.append("❌ Error: " + e.getMessage() + "\n");
+                allConnected = false;
+            }
+        }
+
+        return new ValidationResult(allConnected, details.toString());
+    }
+
+// ================================================================
+// HELPER CLASS
+// ================================================================
+
+    private static class ValidationResult {
+        private final boolean valid;
+        private final String details;
+
+        public ValidationResult(boolean valid, String details) {
+            this.valid = valid;
+            this.details = details;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public String getDetails() {
+            return details;
+        }
     }
 
     // ================================================================
