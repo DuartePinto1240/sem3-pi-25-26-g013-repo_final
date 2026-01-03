@@ -17,6 +17,7 @@
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_route_details.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_train_details.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_train_schedule.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_trains_with_routes.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/insertsUSLP10.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/sp_assign_train_to_route.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/sp_save_passage_time.sql" dialect="GenericSQL" />

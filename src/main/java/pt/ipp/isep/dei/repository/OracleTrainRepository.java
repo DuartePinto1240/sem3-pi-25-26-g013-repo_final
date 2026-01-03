@@ -434,4 +434,39 @@ public class OracleTrainRepository implements TrainRepository {
         long value = rs.getLong(columnName);
         return rs.wasNull() ? null : value;
     }
+    /**
+     * Get trains that have routes assigned
+     * Uses dedicated SQL function for better performance
+     */
+    public List<TrainDTO> getTrainsWithRoutes() {
+        String call = "{ ? = call fn_get_trains_with_routes }";
+        List<TrainDTO> trains = new ArrayList<>();
+
+        try (Connection conn = OracleDb.getConnection();
+             CallableStatement cs = conn.prepareCall(call)) {
+
+            cs.registerOutParameter(1, Types.REF_CURSOR);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    Long trainId = rs.getLong("train_id");
+
+                    System.out.println("Found train with route: " + trainId);
+
+                    // Get full details
+                    TrainDTO fullTrain = getTrainById(trainId);
+                    if (fullTrain != null) {
+                        trains.add(fullTrain);
+                    }
+                }
+            }
+
+            System.out.println("Total trains with routes: " + trains.size());
+            return trains;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching trains with routes", e);
+        }
+    }
 }

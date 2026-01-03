@@ -17,5 +17,6 @@ public interface TrainRepository {
     // ✨ NEW - For USLP09
     List<LocomotiveDTO> getAllLocomotives(); // All locomotives (available + in use)
     WagonDTO getWagonById(Long wagonId); // Get specific wagon
-    List<TrainDTO> getAllTrains(); // All trains
+    List<TrainDTO> getAllTrains();
+    List<TrainDTO> getTrainsWithRoutes();// All trains
 }
