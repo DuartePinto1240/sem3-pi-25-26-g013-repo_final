@@ -1,9 +1,6 @@
 package main.java.pt.ipp.isep.dei.repository;
 
-import main.java.pt.ipp.isep.dei.dto.LineSegmentDTO;
-import main.java.pt.ipp.isep.dei.dto.LocomotiveDTO;
-import main.java.pt.ipp.isep.dei.dto.TrainDTO;
-import main.java.pt.ipp.isep.dei.dto.WagonDTO;
+import main.java.pt.ipp.isep.dei.dto.*;
 
 import java.util.List;
 
@@ -15,4 +12,6 @@ public interface TrainRepository {
     Long createTrain(List<Long> locomotiveIds, List<Long> wagonIds);
     void assignTrainToRoute(Long trainId, Long routeId);
     List<TrainDTO> getAllTrains(); // ← ADICIONAR ESTE
+    RouteDTO getRouteForTrain(Long trainId);
+    List<LocomotiveDTO> getLocomotivesSortedByDistance(Long routeId);
 }

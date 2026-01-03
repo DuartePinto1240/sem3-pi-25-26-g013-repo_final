@@ -1,9 +1,6 @@
 package main.java.pt.ipp.isep.dei.repository;
 
-import main.java.pt.ipp.isep.dei.dto.LineSegmentDTO;
-import main.java.pt.ipp.isep.dei.dto.LocomotiveDTO;
-import main.java.pt.ipp.isep.dei.dto.TrainDTO;
-import main.java.pt.ipp.isep.dei.dto.WagonDTO;
+import main.java.pt.ipp.isep.dei.dto.*;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -217,16 +214,7 @@ public class OracleTrainRepository implements TrainRepository {
         }
     }
 
-    @Override
-    public void assignTrainToRoute(Long trainId, Long routeId) {
-        // For now, routeId is not used in our schema
-        // In future, you might want to add a route table
-        // For now, this is a no-op or could update a status field
 
-        // If you want to implement it:
-        // UPDATE Train SET route_id = ? WHERE train_id = ?
-        // But since we don't have route_id in Train table, skip for now
-    }
 
     // ============================================================
     // HELPER METHODS
@@ -269,5 +257,80 @@ public class OracleTrainRepository implements TrainRepository {
     private Long getLongOrNull(ResultSet rs, String columnName) throws SQLException {
         long value = rs.getLong(columnName);
         return rs.wasNull() ? null : value;
+    }
+
+    @Override
+    public void assignTrainToRoute(Long trainId, Long routeId) {
+        String call = "{ call sp_assign_train_to_route(?, ?) }";
+
+        try (Connection conn = OracleDb.getConnection();
+             CallableStatement cs = conn.prepareCall(call)) {
+
+            cs.setLong(1, trainId);
+            cs.setLong(2, routeId);
+            cs.execute();
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error assigning train " + trainId + " to route " + routeId, e);
+        }
+    }
+
+    @Override
+    public RouteDTO getRouteForTrain(Long trainId) {
+        String sql = "SELECT route_id FROM Train WHERE train_id = ?";
+
+        try (Connection conn = OracleDb.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, trainId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    Long routeId = rs.getLong("route_id");
+                    if (rs.wasNull()) return null;
+
+                    RouteRepository routeRepo = new OracleRouteRepository();
+                    return routeRepo.getRouteById(routeId);
+                }
+            }
+            return null;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting route for train " + trainId, e);
+        }
+    }
+
+    @Override
+    public List<LocomotiveDTO> getLocomotivesSortedByDistance(Long routeId) {
+        String call = "{ ? = call fn_get_locomotives_by_distance(?) }";
+        List<LocomotiveDTO> locos = new ArrayList<>();
+
+        try (Connection conn = OracleDb.getConnection();
+             CallableStatement cs = conn.prepareCall(call)) {
+
+            cs.registerOutParameter(1, Types.REF_CURSOR);
+            cs.setLong(2, routeId);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    locos.add(new LocomotiveDTO(
+                            rs.getLong("loco_id"),
+                            rs.getString("model_name"),
+                            rs.getString("locomotive_type"),
+                            rs.getDouble("power_kw"),
+                            rs.getDouble("weight"),
+                            rs.getDouble("max_speed"),
+                            rs.getLong("current_facility_id"),
+                            rs.getString("current_facility_name"),
+                            null, // transit route
+                            rs.getString("status")
+                    ));
+                }
+            }
+            return locos;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching locomotives by distance for route " + routeId, e);
+        }
     }
 }
