@@ -80,8 +80,8 @@ public class USLP10UI implements Runnable {
     private void dispatchManual() {
         System.out.println("\n--- Manual Dispatch ---");
 
-        // Step 1: Select Train
-        long trainId = selectTrain();
+        // Step 1: Select Train (COM LISTA!)
+        long trainId = selectTrainFromList();
         if (trainId == -1) return;
 
         // Step 2: Define Manual Path
@@ -89,6 +89,14 @@ public class USLP10UI implements Runnable {
         if (path.isEmpty() || path.size() < 2) {
             System.out.println("❌ Path must have at least 2 facilities.");
             return;
+        }
+
+        // Step 2.5: VALIDAR SE O PATH É POSSÍVEL
+        if (!validatePath(path)) {
+            System.out.println("❌ Invalid path: No railway connection between selected facilities.");
+            if (!Utils.confirm("Continue anyway?")) {
+                return;
+            }
         }
 
         // Step 3: Set Departure Time
@@ -127,11 +135,11 @@ public class USLP10UI implements Runnable {
     private void dispatchAutomatic() {
         System.out.println("\n--- Automatic Dispatch ---");
 
-        // Step 1: Select Train
-        long trainId = selectTrain();
+        // Step 1: Select Train (COM LISTA!)
+        long trainId = selectTrainFromList();
         if (trainId == -1) return;
 
-        // Step 2: Select Origin and Destination (MUDANÇA AQUI!)
+        // Step 2: Select Origin and Destination
         System.out.println("\nSelect ORIGIN facility:");
         long fromFacilityId = selectFacility();
         if (fromFacilityId == -1) return;
@@ -165,15 +173,29 @@ public class USLP10UI implements Runnable {
             return;
         }
 
-        // Step 5: Dispatch
+        // Step 5: Dispatch (COM TRATAMENTO DE ERRO!)
         try {
             TrainScheduleDTO schedule = controller.dispatchAutomatic(
                     trainId, fromFacilityId, toFacilityId, departure
             );
             System.out.println("\n✓ Train dispatched successfully!");
             displaySchedule(schedule);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("No path found")) {
+                System.out.println("\n❌ PATHFINDING FAILED");
+                System.out.println("No railway connection exists between the selected facilities.");
+                System.out.println("From: Facility " + fromFacilityId);
+                System.out.println("To: Facility " + toFacilityId);
+                System.out.println("\nPlease verify:");
+                System.out.println("  • Both facilities are part of the railway network");
+                System.out.println("  • There is a connected path via railway lines");
+                System.out.println("  • Try using Manual Dispatch to define the exact path");
+            } else {
+                System.out.println("❌ Dispatch failed: " + e.getMessage());
+            }
+            e.printStackTrace();
         } catch (Exception e) {
-            System.out.println("❌ Dispatch failed: " + e.getMessage());
+            System.out.println("❌ Unexpected error: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -270,7 +292,18 @@ public class USLP10UI implements Runnable {
     private void viewTrainDetails() {
         System.out.println("\n--- View Train Details ---");
 
-        long trainId = Utils.readIntegerFromConsole("Enter Train ID: ");
+        // Opção de escolher da lista ou digitar ID
+        System.out.println("1. Select from list");
+        System.out.println("2. Enter Train ID manually");
+        int choice = Utils.readIntegerFromConsole("Choose: ");
+
+        long trainId;
+        if (choice == 1) {
+            trainId = selectTrainFromList();
+            if (trainId == -1) return;
+        } else {
+            trainId = Utils.readIntegerFromConsole("Enter Train ID: ");
+        }
 
         try {
             TrainDTO train = controller.getTrainById(trainId);
@@ -304,6 +337,57 @@ public class USLP10UI implements Runnable {
 
     private long selectTrain() {
         return Utils.readIntegerFromConsole("Enter Train ID: ");
+    }
+    private long selectTrainFromList() {
+        List<TrainDTO> trains = controller.getAllTrains();
+
+        if (trains.isEmpty()) {
+            System.out.println("❌ No trains available.");
+            System.out.println("ℹ  You can still enter a Train ID manually.");
+
+            if (Utils.confirm("Enter Train ID manually?")) {
+                return Utils.readIntegerFromConsole("Enter Train ID: ");
+            }
+            return -1;
+        }
+
+        // Format trains for display
+        List<String> trainStrings = trains.stream()
+                .map(t -> String.format("[%d] %s - %d locos, %d wagons",
+                        t.trainId(), t.trainNumber(),
+                        t.locomotiveIds().size(), t.wagonIds().size()))
+                .toList();
+
+        int idx = Utils.showAndSelectIndex(trainStrings, "Available Trains");
+        if (idx == -1) {
+            if (Utils.confirm("Enter Train ID manually instead?")) {
+                return Utils.readIntegerFromConsole("Enter Train ID: ");
+            }
+            return -1;
+        }
+
+        return trains.get(idx).trainId();
+    }
+
+    /**
+     * Validate if path is possible (has railway connections)
+     */
+    private boolean validatePath(List<Long> path) {
+        for (int i = 0; i < path.size() - 1; i++) {
+            Long from = path.get(i);
+            Long to = path.get(i + 1);
+
+            try {
+                List<LineSegmentDTO> segments = controller.getLineSegments(from, to);
+                if (segments.isEmpty()) {
+                    System.out.println("⚠ Warning: No direct connection between Facility " + from + " and " + to);
+                    return false;
+                }
+            } catch (Exception e) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private long selectFacility() {

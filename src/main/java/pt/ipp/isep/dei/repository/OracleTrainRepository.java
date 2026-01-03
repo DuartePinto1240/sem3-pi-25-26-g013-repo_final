@@ -47,6 +47,37 @@ public class OracleTrainRepository implements TrainRepository {
             throw new RuntimeException("DB error fetching available locomotives at facility " + startFacilityId, e);
         }
     }
+    public List<TrainDTO> getAllTrains() {
+        String call = "{ ? = call fn_get_all_trains }";
+        List<TrainDTO> trains = new ArrayList<>();
+
+        try (Connection conn = OracleDb.getConnection();
+             CallableStatement cs = conn.prepareCall(call)) {
+
+            cs.registerOutParameter(1, Types.REF_CURSOR);
+            cs.execute();
+
+            try (ResultSet rs = (ResultSet) cs.getObject(1)) {
+                while (rs.next()) {
+                    // Simplified DTO without full details
+                    trains.add(new TrainDTO(
+                            rs.getLong("train_id"),
+                            rs.getString("train_name"),
+                            List.of(), // locomotive IDs - would need separate query
+                            List.of(), // wagon IDs - would need separate query
+                            0.0, // total weight
+                            0.0, // total length
+                            0.0, // max weight
+                            rs.getDouble("max_length_m")
+                    ));
+                }
+            }
+            return trains;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("DB error fetching all trains", e);
+        }
+    }
 
     @Override
     public List<WagonDTO> getAvailableWagons(Long startFacilityId) {

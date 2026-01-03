@@ -14,4 +14,5 @@ public interface TrainRepository {
     TrainDTO getTrainById(Long trainId);
     Long createTrain(List<Long> locomotiveIds, List<Long> wagonIds);
     void assignTrainToRoute(Long trainId, Long routeId);
+    List<TrainDTO> getAllTrains(); // ← ADICIONAR ESTE
 }

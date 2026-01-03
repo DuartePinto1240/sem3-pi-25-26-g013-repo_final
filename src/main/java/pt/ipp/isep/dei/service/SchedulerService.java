@@ -127,6 +127,11 @@ public class SchedulerService {
         List<LocomotiveDTO> locomotives = getLocomotives(train);
         List<WagonDTO> wagons = getWagons(train);
 
+        // VALIDAR SE TEM PATH
+        if (path.segments().isEmpty()) {
+            throw new RuntimeException("Cannot calculate schedule: path has no segments");
+        }
+
         // Calculate passage times
         List<PassageTimeDTO> passageTimes = new ArrayList<>();
         LocalDateTime currentTime = departureTime;
@@ -143,7 +148,7 @@ public class SchedulerService {
         // Calculate for each segment
         int facilityIndex = 1;
         for (LineSegmentDTO segment : path.segments()) {
-            // Calculate travel time
+            // CALCULAR TEMPO DE VIAGEM (COM VELOCIDADE!)
             double travelMinutes = speedCalc.calculateTravelTime(locomotives, wagons, segment);
 
             // Add travel time

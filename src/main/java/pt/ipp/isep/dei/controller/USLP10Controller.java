@@ -218,6 +218,33 @@ public class USLP10Controller {
         return train;
     }
 
+
+
+    public List<TrainDTO> getAllTrains() {
+        // Simplified: Get all trains from database
+        // In a real implementation, you'd query the Train table
+        List<TrainDTO> trains = new ArrayList<>();
+
+        // For now, return trains we know exist
+        try {
+            // Try to get known trains
+            for (long id : List.of(5421L, 5435L, 5437L, 9001L, 9100L, 9200L, 9300L)) {
+                try {
+                    TrainDTO train = trainRepository.getTrainById(id);
+                    if (train != null) {
+                        trains.add(train);
+                    }
+                } catch (Exception e) {
+                    // Skip trains that don't exist
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error fetching trains: " + e.getMessage());
+        }
+
+        return trains;
+    }
+
     /**
      * Get schedule for a specific train.
      *

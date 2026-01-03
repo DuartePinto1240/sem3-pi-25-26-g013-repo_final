@@ -6,6 +6,7 @@
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USBD/USBD45/USBD45.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_create_schedule.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_create_train.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_all_trains.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_available_locomotives.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_available_wagons.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_line_segments.sql" dialect="GenericSQL" />
