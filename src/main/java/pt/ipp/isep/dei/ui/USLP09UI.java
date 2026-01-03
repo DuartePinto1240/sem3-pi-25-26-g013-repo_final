@@ -8,14 +8,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * UI for USLP09 - Train Assembly and Assignment to Routes
+ * UI for USLP09 - Train Assembly and Route Assignment
  *
- * Flow:
- * 1. Select a route (from USLP08)
- * 2. View route details
- * 3. Select locomotives (sorted by distance)
- * 4. Select wagons (required for route freights)
- * 5. Create train and assign to route
+ * Integrated with USLP08 to get route plans
  */
 public class USLP09UI implements Runnable {
     private final USLP09Controller controller;
@@ -30,25 +25,43 @@ public class USLP09UI implements Runnable {
         System.out.println("║   USLP09: Train Assembly & Route Assignment    ║");
         System.out.println("╚════════════════════════════════════════════════╝");
 
-        // Step 1: Select Route
-        RouteDTO selectedRoute = selectRoute();
-        if (selectedRoute == null) {
+        // Step 1: Get Route Plans from USLP08
+        System.out.println("\n📋 Step 1: Getting route plans from USLP08...");
+        List<RoutePlanDTO> routePlans = controller.getAvailableRoutePlans();
+
+        if (routePlans.isEmpty()) {
+            System.out.println("\n❌ No route plans available.");
+            System.out.println("ℹ  Route plans are generated from pending freights.");
+            System.out.println("   Please ensure there are pending freights in the system.");
+            return;
+        }
+
+        System.out.println("✓ Found " + routePlans.size() + " route plan(s)");
+
+        // Step 2: Select Route Plan
+        RoutePlanDTO selectedPlan = selectRoutePlan(routePlans);
+        if (selectedPlan == null) {
             System.out.println("⚠ Operation cancelled.");
             return;
         }
 
-        // Step 2: Display Route Details
-        displayRouteDetails(selectedRoute);
+        // Step 3: Display Route Plan Details
+        displayRoutePlanDetails(selectedPlan);
 
         if (!Utils.confirm("\nProceed with train assembly for this route?")) {
             System.out.println("⚠ Operation cancelled.");
             return;
         }
 
-        // Step 3: Select Locomotives (sorted by distance)
-        System.out.println("\n🚂 Step 3: Select Locomotives");
-        System.out.println("Locomotives are sorted by distance to route start:");
-        List<Long> selectedLocoIds = selectLocomotives(selectedRoute.routeId());
+        // Step 4: Get starting facility
+        Long startFacilityId = selectedPlan.getStops().get(0).getFacilityId();
+
+        // Step 5: Select Locomotives
+        System.out.println("\n🚂 Step 5: Select Locomotives");
+        System.out.println("Locomotives sorted by distance to route start (" +
+                selectedPlan.getStops().get(0).getFacilityName() + "):");
+
+        List<Long> selectedLocoIds = selectLocomotives(startFacilityId);
 
         if (selectedLocoIds.isEmpty()) {
             System.out.println("❌ No locomotives selected. Cannot create train.");
@@ -56,42 +69,35 @@ public class USLP09UI implements Runnable {
         }
         System.out.println("✓ Selected " + selectedLocoIds.size() + " locomotive(s)");
 
-        // Step 4: Select Wagons (required for route)
-        System.out.println("\n🚃 Step 4: Select Wagons");
-        System.out.println("These wagons will carry the freights in the route:");
-        List<Long> selectedWagonIds = selectWagons(selectedRoute.routeId());
+        // Step 6: Select Wagons
+        System.out.println("\n🚃 Step 6: Select Wagons");
 
-        if (selectedWagonIds.isEmpty()) {
-            System.out.println("⚠ Warning: No wagons selected.");
-            if (!Utils.confirm("Continue without wagons?")) {
-                return;
+        // Show wagons required for the route
+        List<WagonDTO> requiredWagons = controller.getWagonsForRoutePlan(selectedPlan);
+        if (!requiredWagons.isEmpty()) {
+            System.out.println("\nWagons carrying route freights:");
+            for (WagonDTO wagon : requiredWagons) {
+                System.out.println("  • " + formatWagon(wagon));
             }
-        } else {
-            System.out.println("✓ Selected " + selectedWagonIds.size() + " wagon(s)");
+            System.out.println("\nThese wagons will be automatically included.");
         }
 
-        // Step 5: Display Summary
-        System.out.println("\n" + "=".repeat(60));
-        System.out.println("              TRAIN ASSEMBLY SUMMARY");
-        System.out.println("=".repeat(60));
-        System.out.println("Route ID: " + selectedRoute.routeId());
-        System.out.println("Route Type: " + selectedRoute.routeType());
-        System.out.println("Route: " + selectedRoute.startFacilityName() + " → " + selectedRoute.endFacilityName());
-        System.out.println("Stops: " + selectedRoute.numStops());
-        System.out.println("Freights: " + selectedRoute.numFreights());
-        System.out.println("\nLocomotives: " + selectedLocoIds);
-        System.out.println("Wagons: " + selectedWagonIds);
-        System.out.println("=".repeat(60));
+        List<Long> selectedWagonIds = selectWagons(startFacilityId, requiredWagons);
 
-        if (!Utils.confirm("\nConfirm train assembly and assignment?")) {
+        System.out.println("✓ Selected " + selectedWagonIds.size() + " wagon(s) total");
+
+        // Step 7: Display Summary
+        displayAssemblySummary(selectedPlan, selectedLocoIds, selectedWagonIds);
+
+        if (!Utils.confirm("\nConfirm train assembly and route assignment?")) {
             System.out.println("⚠ Operation cancelled.");
             return;
         }
 
-        // Step 6: Create Train and Assign to Route
+        // Step 8: Assemble Train and Assign to Route
         try {
             TrainDTO train = controller.assembleAndAssignTrain(
-                    selectedRoute.routeId(),
+                    selectedPlan,
                     selectedLocoIds,
                     selectedWagonIds
             );
@@ -99,94 +105,77 @@ public class USLP09UI implements Runnable {
             System.out.println("\n✓ SUCCESS! Train assembled and assigned to route!");
             System.out.println("╔════════════════════════════════════════════════╗");
             System.out.println("║  Train ID: " + String.format("%-37d", train.trainId()) + "║");
-            System.out.println("║  Route ID: " + String.format("%-37d", selectedRoute.routeId()) + "║");
+            System.out.println("║  Freights: " + String.format("%-37d", selectedPlan.getFreightIds().size()) + "║");
             System.out.println("╚════════════════════════════════════════════════╝");
 
             displayTrainDetails(train);
 
+            System.out.println("\nℹ This train is now ready for scheduling in USLP10.");
+
         } catch (Exception e) {
-            System.out.println("\n❌ ERROR creating train: " + e.getMessage());
+            System.out.println("\n❌ ERROR: " + e.getMessage());
             e.printStackTrace();
         }
     }
 
     // ================================================================
-    // ROUTE SELECTION
+    // ROUTE PLAN SELECTION
     // ================================================================
 
-    private RouteDTO selectRoute() {
-        System.out.println("\n📍 Step 1: Select Route");
+    private RoutePlanDTO selectRoutePlan(List<RoutePlanDTO> plans) {
+        System.out.println("\n📍 Step 2: Select Route Plan");
 
-        List<RouteDTO> routes = controller.getAvailableRoutes();
-
-        if (routes.isEmpty()) {
-            System.out.println("❌ No routes available.");
-            System.out.println("ℹ  Please create routes first using USLP08 (Route Planning).");
-            return null;
+        List<String> planStrings = new ArrayList<>();
+        for (int i = 0; i < plans.size(); i++) {
+            RoutePlanDTO plan = plans.get(i);
+            planStrings.add(formatRoutePlanSummary(i + 1, plan));
         }
 
-        // Format routes for display
-        List<String> routeStrings = new ArrayList<>();
-        for (RouteDTO route : routes) {
-            routeStrings.add(String.format(
-                    "[%d] %s → %s (%d stops, %d freights, %s)",
-                    route.routeId(),
-                    route.startFacilityName(),
-                    route.endFacilityName(),
-                    route.numStops(),
-                    route.numFreights(),
-                    route.routeType()
-            ));
-        }
-
-        int idx = Utils.showAndSelectIndex(routeStrings, "Available Routes");
+        int idx = Utils.showAndSelectIndex(planStrings, "Available Route Plans");
         if (idx == -1) return null;
 
-        return routes.get(idx);
+        return plans.get(idx);
+    }
+
+    private String formatRoutePlanSummary(int num, RoutePlanDTO plan) {
+        String type = plan.getFreightIds().size() == 1 ? "SIMPLE" : "COMPLEX";
+        String path = plan.getStops().isEmpty() ? "?" :
+                plan.getStops().get(0).getFacilityName() + " → " +
+                        plan.getStops().get(plan.getStops().size() - 1).getFacilityName();
+
+        return String.format("[%d] %s - %d freight(s), %d stop(s) - %s",
+                num, type, plan.getFreightIds().size(), plan.getStops().size(), path);
     }
 
     // ================================================================
-    // LOCOMOTIVE SELECTION (SORTED BY DISTANCE)
+    // LOCOMOTIVE SELECTION
     // ================================================================
 
-    private List<Long> selectLocomotives(Long routeId) {
-        List<LocomotiveDTO> availableLocos = controller.getLocomotivesSortedByDistance(routeId);
+    private List<Long> selectLocomotives(Long startFacilityId) {
+        List<LocomotiveDTO> availableLocos = controller.getLocomotivesSortedByDistance(startFacilityId);
 
         if (availableLocos.isEmpty()) {
             System.out.println("❌ No locomotives available.");
             return List.of();
         }
 
-        System.out.println("\nAvailable locomotives (sorted by distance to route start):");
-        System.out.println("Legend: [PARKED] = at station, [IN_TRANSIT] = on route\n");
-
         List<Long> selectedLocoIds = new ArrayList<>();
         boolean selectingLocos = true;
 
         while (selectingLocos) {
-            // Filter out already selected
             List<LocomotiveDTO> choices = new ArrayList<>(availableLocos);
             choices.removeIf(l -> selectedLocoIds.contains(l.locomotiveId()));
 
             if (choices.isEmpty()) {
-                System.out.println("✓ All available locomotives have been selected.");
+                System.out.println("✓ All available locomotives selected.");
                 break;
             }
 
             System.out.println("\nCurrently selected: " + selectedLocoIds.size() + " locomotive(s)");
 
-            // Format for display with distance info
             List<String> locoStrings = new ArrayList<>();
             for (LocomotiveDTO loco : choices) {
-                locoStrings.add(String.format(
-                        "[%d] %s - %s - %.0f kW - at %s [%s]",
-                        loco.locomotiveId(),
-                        loco.model(),
-                        loco.type(),
-                        loco.power(),
-                        loco.currentFacilityName(),
-                        loco.status()
-                ));
+                locoStrings.add(formatLocomotive(loco));
             }
 
             int idx = Utils.showAndSelectIndex(locoStrings, "Select Locomotive (-1 when done)");
@@ -215,39 +204,56 @@ public class USLP09UI implements Runnable {
     }
 
     // ================================================================
-    // WAGON SELECTION (FOR ROUTE FREIGHTS)
+    // WAGON SELECTION
     // ================================================================
 
-    private List<Long> selectWagons(Long routeId) {
-        List<WagonDTO> requiredWagons = controller.getWagonsForRoute(routeId);
+    private List<Long> selectWagons(Long startFacilityId, List<WagonDTO> requiredWagons) {
+        // Start with required wagons
+        List<Long> selectedWagonIds = requiredWagons.stream()
+                .map(WagonDTO::wagonId)
+                .collect(java.util.stream.Collectors.toList());
 
-        if (requiredWagons.isEmpty()) {
-            System.out.println("ℹ No specific wagons required for this route.");
-            System.out.println("You can add wagons manually if needed.");
-        } else {
-            System.out.println("\nWagons carrying route freights:");
-            for (WagonDTO wagon : requiredWagons) {
-                System.out.println("  • " + formatWagon(wagon));
-            }
+        if (!Utils.confirm("\nAdd additional wagons beyond the required ones?")) {
+            return selectedWagonIds;
         }
 
-        // For now, simplified: get available wagons at route start
-        RouteDTO route = controller.getRouteDetails(routeId);
-        Long startFacilityId = route.startFacilityId();
+        List<WagonDTO> availableWagons = controller.getAvailableWagons(startFacilityId);
+        availableWagons.removeIf(w -> selectedWagonIds.contains(w.wagonId()));
 
-        // Would call: controller.getAvailableWagons(startFacilityId)
-        // But for now, simplified
-        List<Long> selectedWagonIds = new ArrayList<>();
+        if (availableWagons.isEmpty()) {
+            System.out.println("ℹ No additional wagons available at this facility.");
+            return selectedWagonIds;
+        }
 
-        if (Utils.confirm("\nAdd additional wagons?")) {
-            boolean selectingWagons = true;
-            while (selectingWagons) {
-                long wagonId = Utils.readIntegerFromConsole("Enter Wagon ID (-1 to finish): ");
-                if (wagonId == -1) {
+        boolean selectingWagons = true;
+
+        while (selectingWagons) {
+            List<WagonDTO> choices = new ArrayList<>(availableWagons);
+            choices.removeIf(w -> selectedWagonIds.contains(w.wagonId()));
+
+            if (choices.isEmpty()) {
+                System.out.println("✓ All available wagons selected.");
+                break;
+            }
+
+            System.out.println("\nCurrently selected: " + selectedWagonIds.size() + " wagon(s)");
+
+            List<String> wagonStrings = new ArrayList<>();
+            for (WagonDTO wagon : choices) {
+                wagonStrings.add(formatWagon(wagon));
+            }
+
+            int idx = Utils.showAndSelectIndex(wagonStrings, "Select Wagon (-1 when done)");
+
+            if (idx == -1) {
+                selectingWagons = false;
+            } else {
+                WagonDTO selected = choices.get(idx);
+                selectedWagonIds.add(selected.wagonId());
+                System.out.println("✓ Added: " + formatWagon(selected));
+
+                if (!Utils.confirm("Add another wagon?")) {
                     selectingWagons = false;
-                } else {
-                    selectedWagonIds.add(wagonId);
-                    System.out.println("✓ Added wagon " + wagonId);
                 }
             }
         }
@@ -259,26 +265,54 @@ public class USLP09UI implements Runnable {
     // DISPLAY METHODS
     // ================================================================
 
-    private void displayRouteDetails(RouteDTO route) {
+    private void displayRoutePlanDetails(RoutePlanDTO plan) {
         System.out.println("\n" + "=".repeat(60));
-        System.out.println("                  ROUTE DETAILS");
+        System.out.println("              ROUTE PLAN DETAILS");
         System.out.println("=".repeat(60));
-        System.out.println("Route ID: " + route.routeId());
-        System.out.println("Type: " + route.routeType());
-        System.out.println("Created: " + route.createdDate());
-        System.out.println("\nRoute Path:");
-        System.out.println("  " + route.startFacilityName() + " → " + route.endFacilityName());
-        System.out.println("\nStops (" + route.numStops() + "):");
 
-        for (RouteStopDTO stop : route.stops()) {
-            System.out.printf("  %d. %-30s  Load: %d  Unload: %d%n",
-                    stop.stopOrder(),
-                    stop.facilityName(),
-                    stop.freightsToLoad(),
-                    stop.freightsToUnload());
+        String type = plan.getFreightIds().size() == 1 ? "SIMPLE" : "COMPLEX";
+        System.out.println("Type: " + type);
+        System.out.println("Freights: " + plan.getFreightIds().size());
+        System.out.println("Stops: " + plan.getStops().size());
+
+        System.out.println("\n--- Route Path ---");
+        for (int i = 0; i < plan.getStops().size(); i++) {
+            StopPlanDTO stop = plan.getStops().get(i);
+            System.out.printf("%2d. %-30s  Load: %-2d  Unload: %-2d%n",
+                    (i + 1),
+                    stop.getFacilityName(),
+                    stop.getToLoad().size(),
+                    stop.getToUnload().size());
         }
 
-        System.out.println("\nTotal Freights: " + route.numFreights());
+        System.out.println("\n--- Freights in Route ---");
+        for (Long freightId : plan.getFreightIds()) {
+            System.out.print("Freight " + freightId + ": ");
+            List<CargoDTO> cargos = controller.getCargosForFreight(freightId);
+            if (cargos.isEmpty()) {
+                System.out.println("(no cargo details)");
+            } else {
+                System.out.println(cargos.size() + " cargo item(s)");
+                for (CargoDTO cargo : cargos) {
+                    System.out.printf("    • Wagon %d: %s (%.1f kg)%n",
+                            cargo.wagonId(), cargo.description(), cargo.weight());
+                }
+            }
+        }
+
+        System.out.println("=".repeat(60));
+    }
+
+    private void displayAssemblySummary(RoutePlanDTO plan, List<Long> locoIds, List<Long> wagonIds) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("              TRAIN ASSEMBLY SUMMARY");
+        System.out.println("=".repeat(60));
+        System.out.println("Route: " + plan.getStops().get(0).getFacilityName() + " → " +
+                plan.getStops().get(plan.getStops().size() - 1).getFacilityName());
+        System.out.println("Stops: " + plan.getStops().size());
+        System.out.println("Freights: " + plan.getFreightIds().size());
+        System.out.println("\nLocomotives: " + locoIds.size());
+        System.out.println("Wagons: " + wagonIds.size());
         System.out.println("=".repeat(60));
     }
 
@@ -296,18 +330,20 @@ public class USLP09UI implements Runnable {
     // ================================================================
 
     private String formatLocomotive(LocomotiveDTO loco) {
-        return String.format("[%d] %s - %s - %.0f kW at %s",
+        return String.format("[%d] %s - %s - %.0f kW - at %s [%s]",
                 loco.locomotiveId(),
                 loco.model(),
                 loco.type(),
                 loco.power(),
-                loco.currentFacilityName());
+                loco.currentFacilityName(),
+                loco.status());
     }
 
     private String formatWagon(WagonDTO wagon) {
-        return String.format("[%d] %s - %.1f t capacity",
+        return String.format("[%d] %s - %.1f t payload - at %s",
                 wagon.wagonId(),
                 wagon.type(),
-                wagon.payload());
+                wagon.payload(),
+                wagon.currentFacilityName());
     }
 }
