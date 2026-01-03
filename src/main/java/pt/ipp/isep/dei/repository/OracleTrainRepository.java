@@ -470,4 +470,25 @@ public class OracleTrainRepository implements TrainRepository {
             throw new RuntimeException("Error fetching trains with routes", e);
         }
     }
+    @Override
+    public String getFacilityName(Long facilityId) {
+        String sql = "SELECT name FROM Facility WHERE facility_id = ?";
+
+        try (Connection conn = OracleDb.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setLong(1, facilityId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+            return "Facility " + facilityId;
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Error fetching facility name for id " + facilityId, e);
+        }
+    }
+
 }

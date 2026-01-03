@@ -5,8 +5,7 @@ import main.java.pt.ipp.isep.dei.dto.RouteStopDTO;
 
 import java.sql.*;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class OracleRouteRepository implements RouteRepository {
@@ -26,18 +25,26 @@ public class OracleRouteRepository implements RouteRepository {
                 while (rs.next()) {
                     Long routeId = rs.getLong("route_id");
 
+                    List<RouteStopDTO> stops = getRouteStops(routeId);
+                    List<Long> freightIds = getFreightIdsForRoute(routeId);
+
+                    Long startFacilityId = stops.isEmpty() ? null : stops.get(0).facilityId();
+                    String startFacilityName = stops.isEmpty() ? null : stops.get(0).facilityName();
+                    Long endFacilityId = stops.isEmpty() ? null : stops.get(stops.size() - 1).facilityId();
+                    String endFacilityName = stops.isEmpty() ? null : stops.get(stops.size() - 1).facilityName();
+
                     routes.add(new RouteDTO(
                             routeId,
                             rs.getString("route_type"),
                             toLocalDateTime(rs.getTimestamp("created_date")),
-                            getRouteStops(routeId),
-                            List.of(), // Freight IDs
-                            rs.getLong("start_facility_id"),
-                            rs.getString("start_facility_name"),
-                            rs.getLong("end_facility_id"),
-                            rs.getString("end_facility_name"),
-                            rs.getInt("num_freights"),
-                            rs.getInt("num_stops")
+                            stops,
+                            freightIds,
+                            startFacilityId,
+                            startFacilityName,
+                            endFacilityId,
+                            endFacilityName,
+                            freightIds.size(),
+                            stops.size()
                     ));
                 }
             }
@@ -50,9 +57,6 @@ public class OracleRouteRepository implements RouteRepository {
 
     @Override
     public RouteDTO getRouteById(Long routeId) {
-        System.out.println("🔍 DEBUG: Getting route " + routeId);
-
-        // ✅ QUERY SIMPLIFICADA - SEM SUBQUERIES
         String sql = "SELECT route_id, route_type, created_date FROM Route WHERE route_id = ?";
 
         try (Connection conn = OracleDb.getConnection();
@@ -61,77 +65,59 @@ public class OracleRouteRepository implements RouteRepository {
             ps.setLong(1, routeId);
 
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    System.out.println("✓ Route found in DB: " + routeId);
+                if (!rs.next()) return null;
 
-                    // Get stops
-                    List<RouteStopDTO> stops = getRouteStops(routeId);
-                    System.out.println("  Loaded stops: " + stops.size());
+                List<RouteStopDTO> stops = getRouteStops(routeId);
+                List<Long> freightIds = getFreightIdsForRoute(routeId);
 
-                    // Get freight IDs
-                    List<Long> freightIds = getFreightIdsForRoute(routeId);
-                    System.out.println("  Loaded freights: " + freightIds.size());
+                Long startFacilityId = null;
+                String startFacilityName = null;
+                Long endFacilityId = null;
+                String endFacilityName = null;
 
-                    // Get start/end from stops
-                    Long startFacilityId = null;
-                    String startFacilityName = null;
-                    Long endFacilityId = null;
-                    String endFacilityName = null;
+                if (!stops.isEmpty()) {
+                    RouteStopDTO first = stops.get(0);
+                    RouteStopDTO last = stops.get(stops.size() - 1);
 
-                    if (!stops.isEmpty()) {
-                        RouteStopDTO first = stops.get(0);
-                        RouteStopDTO last = stops.get(stops.size() - 1);
-
-                        startFacilityId = first.facilityId();
-                        startFacilityName = first.facilityName();
-                        endFacilityId = last.facilityId();
-                        endFacilityName = last.facilityName();
-
-                        System.out.println("  Start: " + startFacilityName + " (" + startFacilityId + ")");
-                        System.out.println("  End: " + endFacilityName + " (" + endFacilityId + ")");
-                    }
-
-                    RouteDTO route = new RouteDTO(
-                            rs.getLong("route_id"),
-                            rs.getString("route_type"),
-                            toLocalDateTime(rs.getTimestamp("created_date")),
-                            stops,
-                            freightIds,
-                            startFacilityId,
-                            startFacilityName,
-                            endFacilityId,
-                            endFacilityName,
-                            freightIds.size(),
-                            stops.size()
-                    );
-
-                    System.out.println("✓ Route DTO created successfully");
-                    return route;
-
-                } else {
-                    System.out.println("❌ Route NOT found in DB: " + routeId);
-                    return null;
+                    startFacilityId = first.facilityId();
+                    startFacilityName = first.facilityName();
+                    endFacilityId = last.facilityId();
+                    endFacilityName = last.facilityName();
                 }
+
+                return new RouteDTO(
+                        rs.getLong("route_id"),
+                        rs.getString("route_type"),
+                        toLocalDateTime(rs.getTimestamp("created_date")),
+                        stops,
+                        freightIds,
+                        startFacilityId,
+                        startFacilityName,
+                        endFacilityId,
+                        endFacilityName,
+                        freightIds.size(),
+                        stops.size()
+                );
             }
 
         } catch (SQLException e) {
-            System.err.println("❌ SQL Error getting route " + routeId + ": " + e.getMessage());
-            e.printStackTrace();
-            return null; // ← NÃO fazer throw, retornar null
+            throw new RuntimeException("Error getting route " + routeId, e);
         }
     }
 
     @Override
     public List<RouteStopDTO> getRouteStops(Long routeId) {
-        System.out.println("🔍 DEBUG: Getting stops for route " + routeId);
-
-        // ✅ TENTAR FUNÇÃO PRIMEIRO
+        // Try function first; fallback to direct query
+        List<RouteStopDTO> stops;
         try {
-            return getRouteStopsViaFunction(routeId);
+            stops = getRouteStopsViaFunction(routeId);
         } catch (Exception e) {
-            System.out.println("⚠ Function failed, trying direct query...");
-            return getRouteStopsViaQuery(routeId);
+            stops = getRouteStopsViaQuery(routeId);
         }
+
+        // ✅ IMPORTANT FIX:
+        // remove repeated facilities (keeps first occurrence order)
+        return normalizeStops(stops);
     }
 
     private List<RouteStopDTO> getRouteStopsViaFunction(Long routeId) {
@@ -157,7 +143,6 @@ public class OracleRouteRepository implements RouteRepository {
                 }
             }
 
-            System.out.println("  Loaded " + stops.size() + " stops via function");
             return stops;
 
         } catch (SQLException e) {
@@ -185,17 +170,15 @@ public class OracleRouteRepository implements RouteRepository {
                             rs.getLong("facility_id"),
                             rs.getString("facility_name"),
                             rs.getInt("stop_order"),
-                            0, // freights_to_load - not in simple query
-                            0  // freights_to_unload - not in simple query
+                            0,
+                            0
                     ));
                 }
             }
 
-            System.out.println("  Loaded " + stops.size() + " stops via query");
             return stops;
 
         } catch (SQLException e) {
-            System.err.println("Error querying route stops: " + e.getMessage());
             return List.of();
         }
     }
@@ -214,10 +197,7 @@ public class OracleRouteRepository implements RouteRepository {
             cs.setString(3, routeType);
             cs.execute();
 
-            Long routeId = cs.getLong(1);
-            System.out.println("✓ Created route " + routeId);
-
-            return routeId;
+            return cs.getLong(1);
 
         } catch (SQLException e) {
             throw new RuntimeException("Error creating route", e);
@@ -225,7 +205,41 @@ public class OracleRouteRepository implements RouteRepository {
     }
 
     // ============================================================
-    // HELPER METHODS
+    // NORMALIZATION (fixes your 7 vs 9 issue in USLP10)
+    // ============================================================
+
+    /**
+     * RouteStop in DB is sometimes saved with repeated facilities (loops),
+     * causing USLP10 to display more stops than USLP08 planned.
+     *
+     * We normalize by keeping the first occurrence of each facility (stable order),
+     * and then re-number stop_order sequentially.
+     */
+    private List<RouteStopDTO> normalizeStops(List<RouteStopDTO> rawStops) {
+        if (rawStops == null || rawStops.isEmpty()) return List.of();
+
+        Map<Long, RouteStopDTO> firstByFacility = new LinkedHashMap<>();
+        for (RouteStopDTO s : rawStops) {
+            if (s == null) continue;
+            firstByFacility.putIfAbsent(s.facilityId(), s);
+        }
+
+        List<RouteStopDTO> out = new ArrayList<>();
+        int order = 1;
+        for (RouteStopDTO s : firstByFacility.values()) {
+            out.add(new RouteStopDTO(
+                    s.facilityId(),
+                    s.facilityName(),
+                    order++,
+                    s.freightsToLoad(),
+                    s.freightsToUnload()
+            ));
+        }
+        return out;
+    }
+
+    // ============================================================
+    // HELPERS
     // ============================================================
 
     private List<Long> getFreightIdsForRoute(Long routeId) {
@@ -243,11 +257,9 @@ public class OracleRouteRepository implements RouteRepository {
                 }
             }
 
-            System.out.println("  Found " + freightIds.size() + " freight(s) for route " + routeId);
             return freightIds;
 
         } catch (SQLException e) {
-            System.err.println("Error fetching freight IDs: " + e.getMessage());
             return List.of();
         }
     }

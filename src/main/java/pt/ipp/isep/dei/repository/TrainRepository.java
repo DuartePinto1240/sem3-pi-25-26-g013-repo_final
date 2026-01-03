@@ -13,6 +13,7 @@ public interface TrainRepository {
     Long createTrain(List<Long> locomotiveIds, List<Long> wagonIds);
     void assignTrainToRoute(Long trainId, Long routeId);
     RouteDTO getRouteForTrain(Long trainId);
+    String getFacilityName(Long facilityId);
 
     // ✨ NEW - For USLP09
     List<LocomotiveDTO> getAllLocomotives(); // All locomotives (available + in use)
