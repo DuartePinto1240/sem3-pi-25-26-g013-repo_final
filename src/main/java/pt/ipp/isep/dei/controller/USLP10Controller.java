@@ -46,16 +46,33 @@ public class USLP10Controller {
     /**
      * Get all trains that have routes assigned (ready for dispatch)
      */
+    /**
+     * Get all trains that have routes assigned (ready for dispatch)
+     */
     public List<TrainDTO> getTrainsWithRoutes() {
+        System.out.println("🔍 DEBUG: Fetching trains with routes...");
+
         // Query trains where route_id IS NOT NULL
         List<TrainDTO> allTrains = trainRepo.getAllTrains();
 
-        return allTrains.stream()
-                .filter(train -> {
-                    RouteDTO route = trainRepo.getRouteForTrain(train.trainId());
-                    return route != null;
-                })
-                .toList();
+        System.out.println("🔍 DEBUG: Found " + allTrains.size() + " total trains");
+
+        List<TrainDTO> trainsWithRoutes = new ArrayList<>();
+
+        for (TrainDTO train : allTrains) {
+            RouteDTO route = trainRepo.getRouteForTrain(train.trainId());
+
+            System.out.println("🔍 DEBUG: Train " + train.trainId() +
+                    " - Route: " + (route != null ? route.routeId() : "NULL"));
+
+            if (route != null) {
+                trainsWithRoutes.add(train);
+            }
+        }
+
+        System.out.println("🔍 DEBUG: " + trainsWithRoutes.size() + " trains have routes");
+
+        return trainsWithRoutes;
     }
 
     /**
