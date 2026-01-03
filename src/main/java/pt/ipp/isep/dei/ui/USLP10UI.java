@@ -2,7 +2,6 @@ package main.java.pt.ipp.isep.dei.ui;
 
 import main.java.pt.ipp.isep.dei.controller.USLP10Controller;
 import main.java.pt.ipp.isep.dei.dto.*;
-import main.java.pt.ipp.isep.dei.domain.Station;
 import main.java.pt.ipp.isep.dei.util.Utils;
 
 import java.time.LocalDateTime;
@@ -12,10 +11,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * UI for USLP10 - Train Scheduling and Dispatching
+ *
+ * Flow:
+ * 1. Select a train (that has a route assigned from USLP09)
+ * 2. View train and route details
+ * 3. Set departure time
+ * 4. Choose: use route path OR define manual path
+ * 5. Calculate and display schedule with arrival times
+ */
 public class USLP10UI implements Runnable {
     private final USLP10Controller controller;
     private final Scanner scanner;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("HH:mm:ss");
 
     public USLP10UI() {
         this.controller = new USLP10Controller();
@@ -28,13 +38,12 @@ public class USLP10UI implements Runnable {
 
         while (running) {
             System.out.println("\n╔════════════════════════════════════════════════╗");
-            System.out.println("║         USLP10: Train Scheduling              ║");
+            System.out.println("║      USLP10: Train Scheduling & Dispatch       ║");
             System.out.println("╚════════════════════════════════════════════════╝");
-            System.out.println("\n1. Dispatch train (Manual Path)");
-            System.out.println("2. Dispatch train (Automatic Path)");
-            System.out.println("3. Batch Dispatch");
-            System.out.println("4. View Active Schedules");
-            System.out.println("5. View Train Details");
+            System.out.println("\n1. Dispatch Single Train");
+            System.out.println("2. Batch Dispatch");
+            System.out.println("3. View Active Schedules");
+            System.out.println("4. View Train Details");
             System.out.println("0. Back to Main Menu");
             System.out.println();
 
@@ -43,18 +52,15 @@ public class USLP10UI implements Runnable {
             try {
                 switch (option) {
                     case 1:
-                        dispatchManual();
+                        dispatchSingleTrain();
                         break;
                     case 2:
-                        dispatchAutomatic();
-                        break;
-                    case 3:
                         dispatchBatch();
                         break;
-                    case 4:
+                    case 3:
                         viewActiveSchedules();
                         break;
-                    case 5:
+                    case 4:
                         viewTrainDetails();
                         break;
                     case 0:
@@ -75,105 +81,84 @@ public class USLP10UI implements Runnable {
     }
 
     // ================================================================
-    // MANUAL DISPATCH
+    // DISPATCH SINGLE TRAIN
     // ================================================================
 
-    private void dispatchManual() {
-        System.out.println("\n--- Manual Dispatch ---");
+    private void dispatchSingleTrain() {
+        System.out.println("\n--- Dispatch Single Train ---");
 
-        // Step 1: Select Train
-        long trainId = selectTrain();
-        if (trainId == -1) return;
+        // Step 1: Select Train (that has route assigned)
+        TrainWithRouteInfo trainInfo = selectTrainWithRoute();
+        if (trainInfo == null) return;
 
-        // Step 2: Define Manual Path
-        List<Long> path = defineManualPath();
-        if (path.isEmpty() || path.size() < 2) {
-            System.out.println("❌ Path must have at least 2 stations.");
+        TrainDTO train = trainInfo.train;
+        RouteDTO route = trainInfo.route;
+
+        // Step 2: Display Train and Route Info
+        displayTrainAndRouteInfo(train, route);
+
+        if (!Utils.confirm("\nProceed with dispatching this train?")) {
+            System.out.println("⚠ Operation cancelled.");
             return;
         }
 
         // Step 3: Set Departure Time
-        LocalDateTime departure = inputDepartureTime();
-        if (departure == null) return;
+        LocalDateTime departureTime = inputDepartureTime();
+        if (departureTime == null) return;
 
-        // Step 4: Display Summary
-        System.out.println("\n" + "=".repeat(50));
-        System.out.println("           DISPATCH SUMMARY (MANUAL)");
-        System.out.println("=".repeat(50));
-        System.out.println("Train ID: " + trainId);
-        System.out.println("Path: " + formatPath(path));
-        System.out.println("Departure: " + departure.format(DATE_FORMATTER));
-        System.out.println("=".repeat(50));
+        // Step 4: Choose path mode
+        System.out.println("\n--- Path Selection ---");
+        System.out.println("1. Use route path (automatic from USLP09)");
+        System.out.println("2. Define manual path (override route)");
+        int pathChoice = Utils.readIntegerFromConsole("Choose: ");
+
+        List<Long> manualPath = null;
+        String pathMode = "AUTOMATIC";
+
+        if (pathChoice == 2) {
+            manualPath = defineManualPath(route);
+            if (manualPath == null || manualPath.isEmpty()) {
+                System.out.println("❌ Invalid manual path.");
+                return;
+            }
+            pathMode = "MANUAL";
+        }
+
+        // Step 5: Display Summary
+        displayDispatchSummary(train, route, departureTime, pathMode, manualPath);
 
         if (!Utils.confirm("\nConfirm dispatch?")) {
             System.out.println("⚠ Dispatch cancelled.");
             return;
         }
 
-        // Step 5: Dispatch
+        // Step 6: Dispatch
         try {
-            TrainScheduleDTO schedule = controller.dispatchManual(trainId, path, departure);
-            System.out.println("\n✓ Train dispatched successfully!");
-            displaySchedule(schedule);
-        } catch (Exception e) {
-            System.out.println("❌ Dispatch failed: " + e.getMessage());
-        }
-    }
-
-    // ================================================================
-    // AUTOMATIC DISPATCH
-    // ================================================================
-
-    private void dispatchAutomatic() {
-        System.out.println("\n--- Automatic Dispatch ---");
-
-        // Step 1: Select Train
-        long trainId = selectTrain();
-        if (trainId == -1) return;
-
-        // Step 2: Select Origin and Destination
-        System.out.println("\nSelect ORIGIN station:");
-        long fromFacilityId = selectStation();
-        if (fromFacilityId == -1) return;
-
-        System.out.println("\nSelect DESTINATION station:");
-        long toFacilityId = selectStation();
-        if (toFacilityId == -1) return;
-
-        if (fromFacilityId == toFacilityId) {
-            System.out.println("❌ Origin and destination cannot be the same.");
-            return;
-        }
-
-        // Step 3: Set Departure Time
-        LocalDateTime departure = inputDepartureTime();
-        if (departure == null) return;
-
-        // Step 4: Display Summary
-        System.out.println("\n" + "=".repeat(50));
-        System.out.println("        DISPATCH SUMMARY (AUTOMATIC)");
-        System.out.println("=".repeat(50));
-        System.out.println("Train ID: " + trainId);
-        System.out.println("From: Facility " + fromFacilityId);
-        System.out.println("To: Facility " + toFacilityId);
-        System.out.println("Departure: " + departure.format(DATE_FORMATTER));
-        System.out.println("Path: (will be calculated automatically)");
-        System.out.println("=".repeat(50));
-
-        if (!Utils.confirm("\nConfirm dispatch?")) {
-            System.out.println("⚠ Dispatch cancelled.");
-            return;
-        }
-
-        // Step 5: Dispatch
-        try {
-            TrainScheduleDTO schedule = controller.dispatchAutomatic(
-                    trainId, fromFacilityId, toFacilityId, departure
+            TrainScheduleDTO schedule = controller.dispatchTrain(
+                    train.trainId(),
+                    departureTime,
+                    pathMode,
+                    manualPath
             );
+
             System.out.println("\n✓ Train dispatched successfully!");
             displaySchedule(schedule);
+
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("No path found") || e.getMessage().contains("no route assigned")) {
+                System.out.println("\n❌ DISPATCH FAILED");
+                System.out.println(e.getMessage());
+                System.out.println("\nPossible solutions:");
+                System.out.println("  • Verify the train has a route assigned in USLP09");
+                System.out.println("  • Check that railway connections exist between facilities");
+                System.out.println("  • Try using manual path instead of automatic");
+            } else {
+                System.out.println("❌ Dispatch failed: " + e.getMessage());
+            }
+            e.printStackTrace();
         } catch (Exception e) {
-            System.out.println("❌ Dispatch failed: " + e.getMessage());
+            System.out.println("❌ Unexpected error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -183,59 +168,129 @@ public class USLP10UI implements Runnable {
 
     private void dispatchBatch() {
         System.out.println("\n--- Batch Dispatch ---");
+        System.out.println("Dispatch multiple trains with different departure times.");
 
-        // Step 1: Select Multiple Trains
-        List<Long> trainIds = selectMultipleTrains();
+        List<Long> trainIds = new ArrayList<>();
+        List<LocalDateTime> departureTimes = new ArrayList<>();
+
+        boolean selecting = true;
+        while (selecting) {
+            System.out.println("\n╔════════════════════════════════════════════════╗");
+            System.out.println("║  Train #" + (trainIds.size() + 1) + " Selection                              ║");
+            System.out.println("╚════════════════════════════════════════════════╝");
+
+            TrainWithRouteInfo trainInfo = selectTrainWithRoute();
+            if (trainInfo == null) {
+                if (trainIds.isEmpty()) {
+                    System.out.println("⚠ No trains selected. Batch dispatch cancelled.");
+                    return;
+                }
+                System.out.println("ℹ Moving to departure time selection...");
+                break;
+            }
+
+            // Check if already added
+            if (trainIds.contains(trainInfo.train.trainId())) {
+                System.out.println("⚠ Train " + trainInfo.train.trainId() + " already added to batch.");
+                continue;
+            }
+
+            LocalDateTime departure = inputDepartureTime();
+            if (departure == null) {
+                if (trainIds.isEmpty()) {
+                    System.out.println("⚠ No trains selected. Batch dispatch cancelled.");
+                    return;
+                }
+                break;
+            }
+
+            trainIds.add(trainInfo.train.trainId());
+            departureTimes.add(departure);
+
+            System.out.println("✓ Added: Train " + trainInfo.train.trainId() +
+                    " (" + trainInfo.train.trainNumber() + ") @ " +
+                    departure.format(DATE_FORMATTER));
+
+            if (trainIds.size() >= 10) {
+                System.out.println("ℹ Maximum of 10 trains per batch reached.");
+                break;
+            }
+
+            if (!Utils.confirm("Add another train to batch?")) {
+                selecting = false;
+            }
+        }
+
         if (trainIds.isEmpty()) {
-            System.out.println("⚠ No trains selected.");
+            System.out.println("⚠ No trains to dispatch.");
             return;
         }
 
-        // Step 2: Choose path mode
-        boolean autoPath = Utils.confirm("Use automatic pathfinding for all trains?");
-
-        // Step 3: Confirm
-        System.out.println("\n" + "=".repeat(50));
-        System.out.println("           BATCH DISPATCH SUMMARY");
-        System.out.println("=".repeat(50));
-        System.out.println("Trains: " + trainIds);
-        System.out.println("Path Mode: " + (autoPath ? "Automatic" : "Manual"));
-        System.out.println("=".repeat(50));
+        // Summary
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("              BATCH DISPATCH SUMMARY");
+        System.out.println("=".repeat(60));
+        System.out.println("Total trains: " + trainIds.size());
+        System.out.println();
+        for (int i = 0; i < trainIds.size(); i++) {
+            System.out.printf("%2d. Train %-6d  →  %s%n",
+                    (i + 1),
+                    trainIds.get(i),
+                    departureTimes.get(i).format(DATE_FORMATTER));
+        }
+        System.out.println("=".repeat(60));
 
         if (!Utils.confirm("\nConfirm batch dispatch?")) {
             System.out.println("⚠ Batch dispatch cancelled.");
             return;
         }
 
-        // Step 4: Dispatch
+        // Dispatch
         try {
-            List<TrainScheduleDTO> schedules = controller.dispatchBatch(trainIds, autoPath);
-            System.out.println("\n✓ Batch dispatch completed!");
-            System.out.println("Successfully dispatched " + schedules.size() + " train(s)");
+            List<TrainScheduleDTO> schedules = controller.dispatchBatch(trainIds, departureTimes);
 
-            for (TrainScheduleDTO schedule : schedules) {
-                displaySchedule(schedule);
+            System.out.println("\n✓ BATCH DISPATCH COMPLETED!");
+            System.out.println("Successfully dispatched " + schedules.size() + " out of " + trainIds.size() + " train(s)");
+
+            if (schedules.size() < trainIds.size()) {
+                System.out.println("⚠ " + (trainIds.size() - schedules.size()) + " train(s) failed to dispatch.");
             }
+
+            System.out.println("\n" + "=".repeat(80));
+            for (int i = 0; i < schedules.size(); i++) {
+                System.out.println("\n[" + (i + 1) + "] Train " + schedules.get(i).trainId());
+                displayScheduleSummary(schedules.get(i));
+            }
+            System.out.println("\n" + "=".repeat(80));
+
         } catch (Exception e) {
             System.out.println("❌ Batch dispatch failed: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
     // ================================================================
-    // VIEW SCHEDULES
+    // VIEW SCHEDULES & DETAILS
     // ================================================================
 
     private void viewActiveSchedules() {
         System.out.println("\n--- Active Schedules ---");
 
-        LocalDateTime from = LocalDateTime.now().minusDays(7);
-        LocalDateTime to = LocalDateTime.now().plusDays(7);
+        LocalDateTime from = LocalDateTime.now().minusDays(30);
+        LocalDateTime to = LocalDateTime.now().plusDays(30);
+
+        System.out.println("Searching from: " + from.format(DATE_FORMATTER));
+        System.out.println("           to: " + to.format(DATE_FORMATTER));
 
         try {
             List<TrainScheduleDTO> schedules = controller.getActiveSchedules(from, to);
 
             if (schedules.isEmpty()) {
-                System.out.println("ℹ No active schedules found.");
+                System.out.println("\nℹ No active schedules found.");
+                System.out.println("\nPossible reasons:");
+                System.out.println("  • No trains have been dispatched yet (use option 1 or 2)");
+                System.out.println("  • All schedules are outside the search time window");
+                System.out.println("  • Schedule data was not saved to database");
                 return;
             }
 
@@ -249,129 +304,157 @@ public class USLP10UI implements Runnable {
 
             System.out.println("\n" + "=".repeat(80));
 
-            if (Utils.confirm("View detailed schedule?")) {
+            if (Utils.confirm("\nView detailed schedule?")) {
                 int idx = Utils.readIntegerFromConsole("Enter schedule number: ") - 1;
                 if (idx >= 0 && idx < schedules.size()) {
                     displaySchedule(schedules.get(idx));
+                } else {
+                    System.out.println("⚠ Invalid schedule number.");
                 }
             }
         } catch (Exception e) {
             System.out.println("❌ Error fetching schedules: " + e.getMessage());
+            e.printStackTrace();
         }
     }
-
-    // ================================================================
-    // VIEW TRAIN DETAILS
-    // ================================================================
 
     private void viewTrainDetails() {
         System.out.println("\n--- View Train Details ---");
 
-        long trainId = Utils.readIntegerFromConsole("Enter Train ID: ");
+        TrainWithRouteInfo trainInfo = selectTrainWithRoute();
+        if (trainInfo == null) return;
 
-        try {
-            TrainDTO train = controller.getTrainById(trainId);
-
-            if (train == null) {
-                System.out.println("❌ Train not found: " + trainId);
-                return;
-            }
-
-            System.out.println("\n" + "=".repeat(50));
-            System.out.println("              TRAIN DETAILS");
-            System.out.println("=".repeat(50));
-            System.out.println("Train ID: " + train.trainId());
-            System.out.println("Train Number: " + train.trainNumber());
-            System.out.println("Locomotives: " + train.locomotiveIds().size());
-            System.out.println("Wagons: " + train.wagonIds().size());
-            System.out.printf("Total Weight: %.2f tonnes%n", train.totalWeight());
-            System.out.printf("Total Length: %.2f meters%n", train.totalLength());
-            System.out.printf("Max Length: %.2f meters%n", train.maxLength());
-            System.out.println("=".repeat(50));
-
-        } catch (Exception e) {
-            System.out.println("❌ Error: " + e.getMessage());
-        }
+        displayTrainAndRouteInfo(trainInfo.train, trainInfo.route);
     }
 
     // ================================================================
-    // HELPER METHODS - INPUT
+    // HELPER METHODS - SELECTION
     // ================================================================
 
-    private long selectTrain() {
-        // TODO: If you have a method to list all trains, use it here
-        // For now, ask user to input train ID directly
-        return Utils.readIntegerFromConsole("Enter Train ID: ");
-    }
+    private TrainWithRouteInfo selectTrainWithRoute() {
+        List<TrainDTO> trains = controller.getTrainsWithRoutes();
 
-    private long selectStation() {
-        List<Station> stations = controller.getStations();
-
-        if (stations.isEmpty()) {
-            System.out.println("❌ No stations available.");
-            return -1;
+        if (trains.isEmpty()) {
+            System.out.println("\n❌ No trains with assigned routes available.");
+            System.out.println("\n" + "=".repeat(60));
+            System.out.println("  TRAINS NEED ROUTES FIRST!");
+            System.out.println("=".repeat(60));
+            System.out.println("\nBefore dispatching trains (USLP10), you must:");
+            System.out.println("  1. Create routes using USLP08 (Route Planning)");
+            System.out.println("  2. Assign trains to routes using USLP09 (Train Assembly)");
+            System.out.println("\nOnly then can trains be dispatched here in USLP10.");
+            System.out.println("=".repeat(60));
+            return null;
         }
 
-        int idx = Utils.showAndSelectIndex(stations, "Available Stations");
-        if (idx == -1) return -1;
+        System.out.println("\nTrains with assigned routes:");
+        List<String> trainStrings = new ArrayList<>();
+        List<RouteDTO> routes = new ArrayList<>();
 
-        Station selected = stations.get(idx);
-        return getStationId(selected);
-    }
+        for (TrainDTO train : trains) {
+            RouteDTO route = controller.getRouteForTrain(train.trainId());
+            routes.add(route);
 
-    private List<Long> selectMultipleTrains() {
-        List<Long> trainIds = new ArrayList<>();
-        boolean selecting = true;
+            String routeInfo = route != null
+                    ? String.format("%s → %s (%d stops)",
+                    route.startFacilityName(),
+                    route.endFacilityName(),
+                    route.numStops())
+                    : "No route";
 
-        while (selecting) {
-            System.out.print("\nEnter Train ID (or -1 to finish): ");
-            long trainId = Utils.readIntegerFromConsole("");
-
-            if (trainId == -1) {
-                if (trainIds.isEmpty()) {
-                    System.out.println("⚠ You must select at least one train.");
-                    continue;
-                }
-                selecting = false;
-            } else {
-                trainIds.add(trainId);
-                System.out.println("✓ Added train " + trainId);
-            }
+            trainStrings.add(String.format(
+                    "[%d] %s - %s",
+                    train.trainId(),
+                    train.trainNumber(),
+                    routeInfo
+            ));
         }
 
-        return trainIds;
+        int idx = Utils.showAndSelectIndex(trainStrings, "Select Train");
+        if (idx == -1) return null;
+
+        TrainDTO selectedTrain = trains.get(idx);
+        RouteDTO selectedRoute = routes.get(idx);
+
+        return new TrainWithRouteInfo(selectedTrain, selectedRoute);
     }
 
-    private List<Long> defineManualPath() {
+    private List<Long> defineManualPath(RouteDTO route) {
+        System.out.println("\n--- Define Manual Path ---");
+        System.out.println("You can override the route's automatic path.");
+
+        System.out.println("\n✅ DEFAULT ROUTE (recommended):");
+        for (RouteStopDTO stop : route.stops()) {
+            System.out.printf("  %d. %-30s (ID: %d)%n",
+                    stop.stopOrder(), stop.facilityName(), stop.facilityId());
+        }
+
+        System.out.println("\n⚠  IMPORTANT:");
+        System.out.println("   • Only facilities connected by railway lines will work");
+        System.out.println("   • Path will be validated before dispatch");
+
+        // ✅ OPÇÃO RÁPIDA
+        if (Utils.confirm("\nUse default route path (recommended)?")) {
+            return route.stops().stream()
+                    .map(RouteStopDTO::facilityId)
+                    .collect(java.util.stream.Collectors.toList());
+        }
+
+        System.out.println("\n--- Custom Path Definition ---");
+
         List<Long> path = new ArrayList<>();
-        List<Station> stations = controller.getStations();
-
-        if (stations.isEmpty()) {
-            System.out.println("❌ No stations available.");
-            return path;
-        }
-
-        System.out.println("\nDefine path (select stations in order):");
         boolean defining = true;
 
         while (defining) {
-            System.out.println("\nCurrent path: " + formatPath(path));
-            int idx = Utils.showAndSelectIndex(stations, "Select next station (-1 to finish)");
+            if (!path.isEmpty()) {
+                System.out.println("\nCurrent manual path: " + formatPath(path));
+            }
 
-            if (idx == -1) {
+            long facilityId = Utils.readIntegerFromConsole(
+                    "Enter Facility ID (-1 to finish" + (path.isEmpty() ? "" : ", 0 to restart") + "): "
+            );
+
+            if (facilityId == -1) {
                 if (path.size() < 2) {
-                    System.out.println("⚠ Path must have at least 2 stations.");
-                    if (!Utils.confirm("Continue defining path?")) {
-                        return List.of();
+                    System.out.println("⚠ Path must have at least 2 facilities.");
+                    if (!Utils.confirm("Continue defining?")) {
+                        return null;
                     }
                     continue;
                 }
+
+                // ✅ VALIDAR CONECTIVIDADE ANTES DE FINALIZAR
+                System.out.println("\n🔍 Validating path connectivity...");
+                ValidationResult result = validatePathConnections(path);
+
+                if (!result.isValid()) {
+                    System.out.println("\n❌ PATH VALIDATION FAILED!");
+                    System.out.println(result.getDetails());
+                    System.out.println("\nThe selected facilities are NOT connected by railway lines.");
+                    System.out.println("\nOptions:");
+                    System.out.println("  1. Restart and choose different facilities");
+                    System.out.println("  2. Cancel and use automatic path");
+
+                    int choice = Utils.readIntegerFromConsole("Choose (1-2): ");
+
+                    if (choice == 1) {
+                        path.clear();
+                        continue;
+                    } else {
+                        return null;
+                    }
+                }
+
+                System.out.println("✓ Path validation PASSED!");
+                System.out.println(result.getDetails());
                 defining = false;
+
+            } else if (facilityId == 0) {
+                path.clear();
+                System.out.println("✓ Path reset.");
             } else {
-                Station selected = stations.get(idx);
-                long stationId = getStationId(selected);
-                path.add(stationId);
-                System.out.println("✓ Added: " + selected);
+                path.add(facilityId);
+                System.out.println("✓ Added Facility " + facilityId);
             }
         }
 
@@ -379,23 +462,37 @@ public class USLP10UI implements Runnable {
     }
 
     private LocalDateTime inputDepartureTime() {
-        System.out.println("\nEnter departure time:");
+        System.out.println("\n--- Set Departure Time ---");
         System.out.println("Format: yyyy-MM-dd HH:mm");
-        System.out.println("Example: 2026-01-15 08:30");
+        System.out.println("Example: " + LocalDateTime.now().plusHours(1).format(DATE_FORMATTER));
+        System.out.println("(Leave empty to use current time + 1 hour)");
         System.out.print("> ");
 
         String input = scanner.nextLine().trim();
 
         if (input.isEmpty()) {
-            System.out.println("⚠ Using current time + 1 hour");
-            return LocalDateTime.now().plusHours(1);
+            LocalDateTime defaultTime = LocalDateTime.now().plusHours(1);
+            System.out.println("✓ Using: " + defaultTime.format(DATE_FORMATTER));
+            return defaultTime;
         }
 
         try {
-            return LocalDateTime.parse(input, DATE_FORMATTER);
+            LocalDateTime parsedTime = LocalDateTime.parse(input, DATE_FORMATTER);
+
+            // Validate not in the past
+            if (parsedTime.isBefore(LocalDateTime.now())) {
+                System.out.println("⚠ Warning: Departure time is in the past!");
+                if (!Utils.confirm("Continue anyway?")) {
+                    return inputDepartureTime(); // Try again
+                }
+            }
+
+            System.out.println("✓ Departure time set: " + parsedTime.format(DATE_FORMATTER));
+            return parsedTime;
+
         } catch (DateTimeParseException e) {
-            System.out.println("⚠ Invalid format. Using current time + 1 hour");
-            return LocalDateTime.now().plusHours(1);
+            System.out.println("❌ Invalid format. Please try again.");
+            return inputDepartureTime(); // Recursive retry
         }
     }
 
@@ -403,27 +500,99 @@ public class USLP10UI implements Runnable {
     // HELPER METHODS - DISPLAY
     // ================================================================
 
+    private void displayTrainAndRouteInfo(TrainDTO train, RouteDTO route) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("           TRAIN & ROUTE INFORMATION");
+        System.out.println("=".repeat(60));
+
+        // Train info
+        System.out.println("\n--- Train Details ---");
+        System.out.println("Train ID: " + train.trainId());
+        System.out.println("Train Number: " + train.trainNumber());
+        System.out.println("Locomotives: " + train.locomotiveIds().size());
+        System.out.println("Wagons: " + train.wagonIds().size());
+        System.out.printf("Total Weight: %.2f tonnes%n", train.totalWeight());
+        System.out.printf("Total Length: %.2f meters%n", train.totalLength());
+
+        // Route info
+        System.out.println("\n--- Assigned Route ---");
+        System.out.println("Route ID: " + route.routeId());
+        System.out.println("Type: " + route.routeType());
+        System.out.println("Path: " + route.startFacilityName() + " → " + route.endFacilityName());
+        System.out.println("Stops: " + route.numStops());
+        System.out.println("Freights: " + route.numFreights());
+
+        System.out.println("\n--- Route Stops ---");
+        for (RouteStopDTO stop : route.stops()) {
+            System.out.printf("%2d. %-30s  Load: %d  Unload: %d%n",
+                    stop.stopOrder(),
+                    stop.facilityName(),
+                    stop.freightsToLoad(),
+                    stop.freightsToUnload());
+        }
+
+        System.out.println("=".repeat(60));
+    }
+
+    private void displayDispatchSummary(
+            TrainDTO train,
+            RouteDTO route,
+            LocalDateTime departureTime,
+            String pathMode,
+            List<Long> manualPath
+    ) {
+        System.out.println("\n" + "=".repeat(60));
+        System.out.println("              DISPATCH SUMMARY");
+        System.out.println("=".repeat(60));
+        System.out.println("Train: " + train.trainNumber() + " (ID: " + train.trainId() + ")");
+        System.out.println("Route: " + route.startFacilityName() + " → " + route.endFacilityName());
+        System.out.println("Departure: " + departureTime.format(DATE_FORMATTER));
+        System.out.println("Path Mode: " + pathMode);
+
+        if ("MANUAL".equals(pathMode) && manualPath != null) {
+            System.out.println("Manual Path: " + formatPath(manualPath));
+        } else {
+            System.out.println("Path: Following assigned route (" + route.numStops() + " stops)");
+        }
+
+        System.out.println("=".repeat(60));
+    }
+
     private void displaySchedule(TrainScheduleDTO schedule) {
         System.out.println("\n" + "=".repeat(80));
-        System.out.println("                    TRAIN SCHEDULE");
+        System.out.println("                       TRAIN SCHEDULE");
         System.out.println("=".repeat(80));
         System.out.println("Schedule ID: " + schedule.scheduleId());
         System.out.println("Train ID: " + schedule.trainId());
         System.out.println("Departure: " + schedule.departureTime().format(DATE_FORMATTER));
-        System.out.println("\n--- Passage Times ---");
-        System.out.println(String.format("%-30s %-20s %-20s %-6s",
-                "Facility", "Arrival", "Departure", "Stops"));
-        System.out.println("-".repeat(80));
 
-        for (PassageTimeDTO passage : schedule.passageTimes()) {
-            String arrival = passage.arrivalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
-            String departureStr = passage.departureTime() != null
-                    ? passage.departureTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"))
-                    : "-";
-            String stops = passage.stops() ? "YES" : "NO";
+        if (schedule.passageTimes().isEmpty()) {
+            System.out.println("\n⚠ No passage times calculated.");
+        } else {
+            System.out.println("\n--- Passage Times ---");
+            System.out.printf("%-4s %-30s %-12s %-12s %-10s%n",
+                    "#", "Facility", "Arrival", "Departure", "Stops");
+            System.out.println("-".repeat(80));
 
-            System.out.printf("%-30s %-20s %-20s %-6s%n",
-                    passage.facilityName(), arrival, departureStr, stops);
+            int stopNum = 1;
+            for (PassageTimeDTO passage : schedule.passageTimes()) {
+                String arrival = passage.arrivalTime() != null
+                        ? passage.arrivalTime().format(TIME_FORMATTER)
+                        : "---";
+
+                String departure = passage.departureTime() != null
+                        ? passage.departureTime().format(TIME_FORMATTER)
+                        : "---";
+
+                String stops = passage.stops() ? "YES" : "NO";
+
+                System.out.printf("%-4d %-30s %-12s %-12s %-10s%n",
+                        stopNum++,
+                        passage.facilityName(),
+                        arrival,
+                        departure,
+                        stops);
+            }
         }
 
         if (!schedule.crossings().isEmpty()) {
@@ -434,21 +603,31 @@ public class USLP10UI implements Runnable {
                         crossing.crossingType(),
                         crossing.trainId1(),
                         crossing.trainId2(),
-                        crossing.crossingTime().format(DateTimeFormatter.ofPattern("HH:mm")));
+                        crossing.crossingTime().format(TIME_FORMATTER));
             }
+        } else {
+            System.out.println("\nℹ No crossing operations required.");
         }
 
         System.out.println("=".repeat(80));
     }
 
     private void displayScheduleSummary(TrainScheduleDTO schedule) {
-        System.out.println("  Train: " + schedule.trainId());
         System.out.println("  Departure: " + schedule.departureTime().format(DATE_FORMATTER));
         System.out.println("  Stops: " + schedule.passageTimes().size());
+
         if (!schedule.passageTimes().isEmpty()) {
             PassageTimeDTO first = schedule.passageTimes().get(0);
             PassageTimeDTO last = schedule.passageTimes().get(schedule.passageTimes().size() - 1);
             System.out.println("  Route: " + first.facilityName() + " → " + last.facilityName());
+
+            if (last.arrivalTime() != null && first.departureTime() != null) {
+                long minutes = java.time.Duration.between(
+                        first.departureTime(),
+                        last.arrivalTime()
+                ).toMinutes();
+                System.out.println("  Duration: " + minutes + " minutes");
+            }
         }
     }
 
@@ -457,15 +636,83 @@ public class USLP10UI implements Runnable {
     // ================================================================
 
     private String formatPath(List<Long> path) {
-        if (path.isEmpty()) return "(empty)";
+        if (path == null || path.isEmpty()) return "(empty)";
         return path.stream()
                 .map(id -> "F" + id)
                 .reduce((a, b) -> a + " → " + b)
                 .orElse("");
     }
 
-    private long getStationId(Station s) {
-        // TODO: Replace with actual s.getId() if Station has it
-        return Math.abs(s.hashCode());
+    private String formatPathWithNames(List<Long> path) {
+        // In a full implementation, would fetch facility names
+        return formatPath(path);
+    }
+    private ValidationResult validatePathConnections(List<Long> path) {
+        StringBuilder details = new StringBuilder();
+        boolean allConnected = true;
+
+        for (int i = 0; i < path.size() - 1; i++) {
+            Long from = path.get(i);
+            Long to = path.get(i + 1);
+
+            details.append(String.format("  Facility %d → %d: ", from, to));
+
+            try {
+                List<LineSegmentDTO> segments = controller.getLineSegments(from, to);
+
+                if (segments.isEmpty()) {
+                    details.append("❌ NO RAILWAY CONNECTION\n");
+                    allConnected = false;
+                } else {
+                    // ✅ CORRIGIDO: usar distance() em vez de distanceKm()
+                    double totalKm = segments.stream()
+                            .mapToDouble(LineSegmentDTO::distance)
+                            .sum();
+                    details.append(String.format("✓ Connected (%.1f km)\n", totalKm));
+                }
+
+            } catch (Exception e) {
+                details.append("❌ Error: " + e.getMessage() + "\n");
+                allConnected = false;
+            }
+        }
+
+        return new ValidationResult(allConnected, details.toString());
+    }
+
+// ================================================================
+// HELPER CLASS
+// ================================================================
+
+    private static class ValidationResult {
+        private final boolean valid;
+        private final String details;
+
+        public ValidationResult(boolean valid, String details) {
+            this.valid = valid;
+            this.details = details;
+        }
+
+        public boolean isValid() {
+            return valid;
+        }
+
+        public String getDetails() {
+            return details;
+        }
+    }
+
+    // ================================================================
+    // INNER CLASS - HELPER
+    // ================================================================
+
+    private static class TrainWithRouteInfo {
+        final TrainDTO train;
+        final RouteDTO route;
+
+        TrainWithRouteInfo(TrainDTO train, RouteDTO route) {
+            this.train = train;
+            this.route = route;
+        }
     }
 }

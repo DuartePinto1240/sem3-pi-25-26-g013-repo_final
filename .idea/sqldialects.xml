@@ -4,14 +4,22 @@
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USBD/USBD39/USBD39.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USBD/USBD40/USBD40.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USBD/USBD45/USBD45.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/Route.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_create_route.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_create_schedule.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_create_train.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_all_trains.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_available_locomotives.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_available_routes.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_available_wagons.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_line_segments.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_locomotives_by_distance.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_route_details.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_train_details.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_train_schedule.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/fn_get_trains_with_routes.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/insertsUSLP10.sql" dialect="GenericSQL" />
+    <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/sp_assign_train_to_route.sql" dialect="GenericSQL" />
     <file url="file://$PROJECT_DIR$/doc/Sprint3/USLP/USPL10/Data/sp_save_passage_time.sql" dialect="GenericSQL" />
   </component>
 </project>

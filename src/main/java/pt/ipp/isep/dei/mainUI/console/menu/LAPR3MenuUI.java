@@ -4,6 +4,7 @@ import main.java.pt.ipp.isep.dei.ui.USLP03UI;
 import main.java.pt.ipp.isep.dei.ui.USLP07UI;
 import main.java.pt.ipp.isep.dei.ui.USLP08UI;
 import main.java.pt.ipp.isep.dei.ui.USLP09UI;
+import main.java.pt.ipp.isep.dei.ui.USLP10UI;   // ← NOVO
 import main.java.pt.ipp.isep.dei.util.Utils;
 
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ public class LAPR3MenuUI implements Runnable {
         options.add(new MenuItem("Train Schedule - USLP07", new USLP07UI()));
         options.add(new MenuItem("Route Planner (Pending Freights) - USLP08", new USLP08UI()));
         options.add(new MenuItem("Assemble Train - USLP09", new USLP09UI()));
+        options.add(new MenuItem("Train Dispatch & Scheduling - USLP10", new USLP10UI())); // ← NOVO
 
         int option;
         do {
