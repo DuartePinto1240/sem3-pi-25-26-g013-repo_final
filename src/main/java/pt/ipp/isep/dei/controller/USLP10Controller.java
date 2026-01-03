@@ -140,6 +140,13 @@ public class USLP10Controller {
      * @param autoPath if true, use automatic pathfinding; if false, use manual paths
      * @return list of schedules for all dispatched trains
      */
+    /**
+     * Dispatch multiple trains and calculate crossings.
+     *
+     * @param trainIds list of train IDs to dispatch
+     * @param autoPath if true, use automatic pathfinding; if false, use manual paths
+     * @return list of schedules for all dispatched trains
+     */
     public List<TrainScheduleDTO> dispatchBatch(
             List<Long> trainIds,
             boolean autoPath
@@ -149,35 +156,45 @@ public class USLP10Controller {
         }
 
         List<TrainScheduleDTO> schedules = new ArrayList<>();
-        List<TrainDTO> trains = new ArrayList<>();
-        List<PathDTO> paths = new ArrayList<>();
-        List<LocalDateTime> departures = new ArrayList<>();
 
-        // Prepare trains and paths
+        // Process each train individually
         for (int i = 0; i < trainIds.size(); i++) {
             Long trainId = trainIds.get(i);
-            TrainDTO train = trainRepository.getTrainById(trainId);
 
-            if (train == null) {
-                System.out.println("⚠ Warning: Train " + trainId + " not found. Skipping.");
+            try {
+                // Get train
+                TrainDTO train = trainRepository.getTrainById(trainId);
+
+                if (train == null) {
+                    System.out.println("⚠ Warning: Train " + trainId + " not found. Skipping.");
+                    continue;
+                }
+
+                System.out.println("\nProcessing Train " + trainId + "...");
+
+                if (autoPath) {
+                    // For automatic batch dispatch, we need origin and destination
+                    // This is simplified - in real implementation, these would come from routes
+                    System.out.println("⚠ Automatic pathfinding for batch not fully implemented.");
+                    System.out.println("  Please use manual dispatch for each train individually.");
+                    continue;
+                } else {
+                    // For manual batch, we need to get path from user for each train
+                    System.out.println("⚠ Manual path definition required for Train " + trainId);
+                    System.out.println("  Please use manual dispatch for each train individually.");
+                    continue;
+                }
+
+            } catch (Exception e) {
+                System.out.println("❌ Error processing train " + trainId + ": " + e.getMessage());
                 continue;
             }
-
-            trains.add(train);
-
-            // For batch dispatch, we need to define paths
-            // This is simplified - in real implementation, paths would come from route planning
-            PathDTO path = new PathDTO(null, List.of(), 0.0, 0.0);
-            paths.add(path);
-
-            // Stagger departures by 1 hour each
-            LocalDateTime departure = LocalDateTime.now().plusHours(i);
-            departures.add(departure);
         }
 
-        // Dispatch all trains
-        if (!trains.isEmpty()) {
-            schedules = scheduler.dispatchMultipleTrains(trains, paths, departures);
+        if (schedules.isEmpty()) {
+            System.out.println("\n⚠ No trains were dispatched.");
+            System.out.println("Batch dispatch requires pre-defined routes or manual configuration.");
+            System.out.println("Please use individual dispatch (options 1 or 2) for now.");
         }
 
         return schedules;
@@ -210,12 +227,21 @@ public class USLP10Controller {
      * @param trainId ID of the train
      * @return TrainDTO with complete train information
      */
+    /**
+     * Get detailed information about a specific train.
+     *
+     * @param trainId ID of the train
+     * @return TrainDTO with complete train information, or null if not found
+     */
     public TrainDTO getTrainById(long trainId) {
-        TrainDTO train = trainRepository.getTrainById(trainId);
-        if (train == null) {
-            throw new RuntimeException("Train not found: " + trainId);
+        try {
+            TrainDTO train = trainRepository.getTrainById(trainId);
+            return train; // Pode ser null se não existir
+        } catch (Exception e) {
+            // Não fazer throw, retornar null
+            System.err.println("Error fetching train " + trainId + ": " + e.getMessage());
+            return null;
         }
-        return train;
     }
 
 

@@ -80,9 +80,22 @@ public class USLP10UI implements Runnable {
     private void dispatchManual() {
         System.out.println("\n--- Manual Dispatch ---");
 
-        // Step 1: Select Train (COM LISTA!)
+        // Step 1: Select Train (COM VALIDAÇÃO!)
         long trainId = selectTrainFromList();
         if (trainId == -1) return;
+
+        // VALIDAR SE O TRAIN EXISTE
+        try {
+            TrainDTO train = controller.getTrainById(trainId);
+            if (train == null) {
+                System.out.println("❌ Train not found: " + trainId);
+                return;
+            }
+            System.out.println("✓ Train found: " + train.trainNumber());
+        } catch (Exception e) {
+            System.out.println("❌ Error: Train " + trainId + " does not exist in database.");
+            return;
+        }
 
         // Step 2: Define Manual Path
         List<Long> path = defineManualPath();
@@ -135,9 +148,22 @@ public class USLP10UI implements Runnable {
     private void dispatchAutomatic() {
         System.out.println("\n--- Automatic Dispatch ---");
 
-        // Step 1: Select Train (COM LISTA!)
+        // Step 1: Select Train (COM VALIDAÇÃO!)
         long trainId = selectTrainFromList();
         if (trainId == -1) return;
+
+        // VALIDAR SE O TRAIN EXISTE
+        try {
+            TrainDTO train = controller.getTrainById(trainId);
+            if (train == null) {
+                System.out.println("❌ Train not found: " + trainId);
+                return;
+            }
+            System.out.println("✓ Train found: " + train.trainNumber());
+        } catch (Exception e) {
+            System.out.println("❌ Error: Train " + trainId + " does not exist in database.");
+            return;
+        }
 
         // Step 2: Select Origin and Destination
         System.out.println("\nSelect ORIGIN facility:");
@@ -310,6 +336,7 @@ public class USLP10UI implements Runnable {
 
             if (train == null) {
                 System.out.println("❌ Train not found: " + trainId);
+                System.out.println("ℹ  Please verify the Train ID and try again.");
                 return;
             }
 
@@ -325,8 +352,11 @@ public class USLP10UI implements Runnable {
             System.out.printf("Max Length: %.2f meters%n", train.maxLength());
             System.out.println("=".repeat(50));
 
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             System.out.println("❌ Error: " + e.getMessage());
+            System.out.println("ℹ  The train may not exist or there was a database error.");
+        } catch (Exception e) {
+            System.out.println("❌ Unexpected error: " + e.getMessage());
             e.printStackTrace();
         }
     }
