@@ -34,9 +34,12 @@ public class USEI13UI implements Runnable {
                 return;
             }
 
+            int V = railwayNetwork.numVertices();
+            int E = railwayNetwork.numEdges();
+
             System.out.println("✅ Rede carregada: V="
-                    + railwayNetwork.numVertices()
-                    + " | E=" + railwayNetwork.numEdges());
+                    + V
+                    + " | E=" + E);
 
             // 2) Compute ranking
             long t0 = System.nanoTime();
@@ -59,6 +62,9 @@ public class USEI13UI implements Runnable {
                 System.out.printf("%2d) %s%n", i + 1, ranking.get(i));
             }
 
+            // 3.1) Temporal analysis complexity (Expected Returns)
+            printTemporalComplexity(V, E);
+
             // 4) Export
             controller.exportToCsv(ranking);
             System.out.println("\n✅ Resultados exportados para:");
@@ -67,5 +73,37 @@ public class USEI13UI implements Runnable {
         } catch (Exception e) {
             System.out.println("❌ Falha na execução da USEI13: " + e.getMessage());
         }
+    }
+
+    private static void printTemporalComplexity(int V, int E) {
+        System.out.println("""
+                
+                ════════════════════════════════════
+                TEMPORAL COMPLEXITY (USEI13)
+                ════════════════════════════════════
+                
+                V = stations (vertices) = %d
+                E = connections (edges) = %d
+                
+                Degree & Strength:
+                  Time: O(E)
+                
+                Betweenness Centrality:
+                  Brandes + Dijkstra
+                  Time: O(V × (E + V log V))
+                
+                Harmonic Closeness:
+                  Dijkstra from each vertex
+                  Time: O(V × (E + V log V))
+                
+                Sorting by HubScore:
+                  Time: O(V log V)
+                
+                OVERALL:
+                  Time: O(V × (E + V log V))
+                  Space: O(V + E)
+                
+                ════════════════════════════════════
+                """.formatted(V, E));
     }
 }
