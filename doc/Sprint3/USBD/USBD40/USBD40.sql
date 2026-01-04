@@ -1,7 +1,4 @@
---------------------------------------------------------------------------------
--- USBD40 - Register a freight with wagons
--- Single file with full tests (BDDAD compliant)
--- CORRECTED: No INSERTs before tests, uses existing data from populate script
+
 --------------------------------------------------------------------------------
 
 CREATE OR REPLACE PACKAGE pkg_freight IS

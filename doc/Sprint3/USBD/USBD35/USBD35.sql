@@ -1,8 +1,5 @@
---------------------------------------------------------------------------------
--- USBD35 - Register a new facility
--- Single file with full tests (BDDAD compliant)
--- CORRECTED: No INSERTs before tests, uses existing FacilityType
---------------------------------------------------------------------------------
+
+
 
 CREATE OR REPLACE PACKAGE pkg_facility IS
     FUNCTION register_facility (
