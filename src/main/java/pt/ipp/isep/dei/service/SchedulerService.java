@@ -6,6 +6,7 @@ import main.java.pt.ipp.isep.dei.repository.TrainRepository;
 
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Main scheduler service - calculates complete train schedules
@@ -37,9 +38,12 @@ public class SchedulerService {
 
     /**
      * OPTION B (simple): calculate schedule strictly following the Route stops list,
-     * showing real facility names and requiring a railway connection between each consecutive stop.
+     * showing real facility names.
      *
-     * NOTE (current behavior): if there's no direct connection, it assumes 0 travel time (no warnings printed).
+     * IMPORTANT:
+     * - If there's no DIRECT connection between consecutive stops, we fallback to PathFinder (multi-segment path)
+     *   and sum the travel time of those segments.
+     * - We still show ONLY the route stops in the schedule (no intermediate facilities printed).
      */
     public TrainScheduleDTO calculateScheduleForStopSequence(
             TrainDTO train,
@@ -53,6 +57,7 @@ public class SchedulerService {
         // Map for names (so we print real names instead of "Facility X")
         Map<Long, String> nameByFacilityId = new HashMap<>();
         for (RouteStopDTO s : stops) {
+            // if for some reason facilityName comes null, we still fallback later
             nameByFacilityId.put(s.facilityId(), s.facilityName());
         }
 
@@ -60,10 +65,13 @@ public class SchedulerService {
         Set<Long> stopFacilities = new HashSet<>();
         for (RouteStopDTO s : stops) stopFacilities.add(s.facilityId());
 
-        // NOTE: your repo currently does not provide locomotive/wagon detailed DTOs per ID
-        // SpeedCalculatorService must tolerate empty lists OR you later implement fetch methods.
+        // Fetch REAL locomotives/wagons (so speed depends on power + weight)
         List<LocomotiveDTO> locomotives = getLocomotives(train);
         List<WagonDTO> wagons = getWagons(train);
+
+        if (locomotives.isEmpty()) {
+            throw new RuntimeException("Train " + train.trainId() + " has no locomotives loaded for speed calculation.");
+        }
 
         List<PassageTimeDTO> passageTimes = new ArrayList<>();
         LocalDateTime currentTime = departureTime;
@@ -73,7 +81,7 @@ public class SchedulerService {
         // Start always a stop: arrival=departure at start
         passageTimes.add(new PassageTimeDTO(
                 startId,
-                nameByFacilityId.getOrDefault(startId, "Facility " + startId),
+                resolveFacilityName(startId, nameByFacilityId),
                 currentTime,
                 currentTime,
                 true
@@ -84,14 +92,22 @@ public class SchedulerService {
             Long fromId = stops.get(i).facilityId();
             Long toId = stops.get(i + 1).facilityId();
 
+            // 1) Try direct segments (fast path)
             List<LineSegmentDTO> segments = trainRepo.getLineSegments(fromId, toId);
 
-            // If no connection: assume 0 travel time (SILENT)
-            if (segments != null && !segments.isEmpty()) {
-                for (LineSegmentDTO seg : segments) {
-                    double travelMinutes = speedCalc.calculateTravelTime(locomotives, wagons, seg);
-                    currentTime = currentTime.plusMinutes((long) Math.ceil(travelMinutes));
+            // 2) Fallback: if not direct, ask PathFinder for a multi-segment path
+            if (segments == null || segments.isEmpty()) {
+                PathDTO path = pathFinder.findPath(fromId, toId, train);
+                if (path == null || path.segments() == null || path.segments().isEmpty()) {
+                    throw new RuntimeException("No railway path between " + fromId + " and " + toId);
                 }
+                segments = path.segments();
+            }
+
+            // Sum travel time across ALL segments from -> to
+            for (LineSegmentDTO seg : segments) {
+                double travelMinutes = speedCalc.calculateTravelTime(locomotives, wagons, seg);
+                currentTime = currentTime.plusMinutes((long) Math.ceil(travelMinutes));
             }
 
             // Arrive at the next stop
@@ -106,7 +122,7 @@ public class SchedulerService {
 
             passageTimes.add(new PassageTimeDTO(
                     toId,
-                    nameByFacilityId.getOrDefault(toId, "Facility " + toId),
+                    resolveFacilityName(toId, nameByFacilityId),
                     arrival,
                     depart,
                     isStop
@@ -145,7 +161,6 @@ public class SchedulerService {
         }
 
         PathDTO path = pathFinder.findPathWithWaypoints(manualPath, train);
-
         Set<Long> stopFacilities = new HashSet<>(manualPath);
 
         return calculateScheduleForPath(train, path, departureTime, stopFacilities);
@@ -245,7 +260,7 @@ public class SchedulerService {
 
         passageTimes.add(new PassageTimeDTO(
                 startFacility,
-                "Facility " + startFacility,
+                trainRepo.getFacilityName(startFacility),
                 currentTime,
                 currentTime,
                 true
@@ -269,7 +284,7 @@ public class SchedulerService {
 
             passageTimes.add(new PassageTimeDTO(
                     nextFacility,
-                    "Facility " + nextFacility,
+                    trainRepo.getFacilityName(nextFacility),
                     arrival,
                     depart,
                     isStop
@@ -293,14 +308,40 @@ public class SchedulerService {
     }
 
     // ============================================================
-    // HELPERS (kept)
+    // HELPERS
     // ============================================================
 
+    private String resolveFacilityName(Long facilityId, Map<Long, String> nameByFacilityId) {
+        String n = nameByFacilityId.get(facilityId);
+        if (n != null && !n.isBlank()) return n;
+        return trainRepo.getFacilityName(facilityId);
+    }
+
     private List<LocomotiveDTO> getLocomotives(TrainDTO train) {
-        return new ArrayList<>();
+        if (train == null || train.locomotiveIds() == null || train.locomotiveIds().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // We already have getAllLocomotives() in repo: filter by the train IDs
+        List<LocomotiveDTO> all = trainRepo.getAllLocomotives();
+        Set<Long> ids = new HashSet<>(train.locomotiveIds());
+
+        return all.stream()
+                .filter(l -> l != null && ids.contains(l.locomotiveId()))
+                .collect(Collectors.toList());
     }
 
     private List<WagonDTO> getWagons(TrainDTO train) {
-        return new ArrayList<>();
+        if (train == null || train.wagonIds() == null || train.wagonIds().isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        List<WagonDTO> wagons = new ArrayList<>();
+        for (Long id : train.wagonIds()) {
+            if (id == null) continue;
+            WagonDTO w = trainRepo.getWagonById(id);
+            if (w != null) wagons.add(w);
+        }
+        return wagons;
     }
 }

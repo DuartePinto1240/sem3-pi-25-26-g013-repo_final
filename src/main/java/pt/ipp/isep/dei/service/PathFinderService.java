@@ -1,9 +1,6 @@
 package main.java.pt.ipp.isep.dei.service;
 
-import main.java.pt.ipp.isep.dei.dto.LineSegmentDTO;
-import main.java.pt.ipp.isep.dei.dto.LocomotiveDTO;
-import main.java.pt.ipp.isep.dei.dto.PathDTO;
-import main.java.pt.ipp.isep.dei.dto.TrainDTO;
+import main.java.pt.ipp.isep.dei.dto.*;
 import main.java.pt.ipp.isep.dei.repository.TrainRepository;
 
 import java.util.*;
@@ -11,6 +8,12 @@ import java.util.*;
 /**
  * Service for finding optimal paths between facilities
  * Uses Dijkstra's algorithm
+ *
+ * ✅ UPDATED:
+ * - Graph is built using RailwayLine adjacency (not "direct segments only").
+ * - Each edge (A->B) exists if there's a RailwayLine connecting A and B.
+ * - Edge weight uses distance (sum of LineSegments between A and B) as cost.
+ * - Result path is expanded into LineSegmentDTO list hop-by-hop.
  */
 public class PathFinderService {
 
@@ -23,7 +26,7 @@ public class PathFinderService {
     }
 
     /**
-     * Find shortest path between two facilities
+     * Find shortest path between two facilities (by distance)
      * @return PathDTO with ordered list of segments
      */
     public PathDTO findPath(
@@ -31,33 +34,47 @@ public class PathFinderService {
             Long toFacilityId,
             TrainDTO train
     ) {
-        // Get all possible segments (simplified - in reality build complete graph)
-        List<LineSegmentDTO> allSegments = getAllSegmentsInNetwork(fromFacilityId, toFacilityId);
+        if (fromFacilityId == null || toFacilityId == null) {
+            throw new RuntimeException("from/to cannot be null");
+        }
+        if (fromFacilityId.equals(toFacilityId)) {
+            return new PathDTO(null, List.of(), 0.0, 0.0);
+        }
 
-        // Build adjacency graph
-        Map<Long, List<Edge>> graph = buildGraph(allSegments);
+        PathResult result = dijkstraByAdjacency(fromFacilityId, toFacilityId);
 
-        // Run Dijkstra
-        PathResult result = dijkstra(graph, fromFacilityId, toFacilityId);
-
-        if (result == null) {
+        if (result == null || result.path == null || result.path.size() < 2) {
             throw new RuntimeException("No path found from " + fromFacilityId + " to " + toFacilityId);
         }
 
-        // Convert facility path to segment path
-        List<LineSegmentDTO> pathSegments = convertToSegments(result.path, allSegments);
+        // Expand facility-path into LineSegmentDTO-path
+        List<LineSegmentDTO> pathSegments = new ArrayList<>();
+        for (int i = 0; i < result.path.size() - 1; i++) {
+            Long a = result.path.get(i);
+            Long b = result.path.get(i + 1);
 
-        double totalDistance = pathSegments.stream()
-                .mapToDouble(LineSegmentDTO::distance)
-                .sum();
+            List<LineSegmentDTO> hopSegments = trainRepo.getLineSegments(a, b);
+            if (hopSegments == null || hopSegments.isEmpty()) {
+                // If adjacency exists but we cannot fetch segments, your DB function is inconsistent
+                throw new RuntimeException("Adjacency exists but no segments returned for hop: " + a + " -> " + b);
+            }
+            pathSegments.addAll(hopSegments);
+        }
 
-        // Estimate duration (simplified)
+        double totalDistance = pathSegments.stream().mapToDouble(LineSegmentDTO::distance).sum();
+
+        // Duration here is just an estimate; real scheduling uses SpeedCalculatorService later.
+        // Keep simple estimate using segment speed limit.
         double totalDuration = pathSegments.stream()
-                .mapToDouble(seg -> seg.distance() / seg.maxSpeed() * 60) // minutes
+                .mapToDouble(seg -> {
+                    double v = seg.maxSpeed();
+                    if (v <= 0.0) return 0.0;
+                    return (seg.distance() / v) * 60.0;
+                })
                 .sum();
 
         return new PathDTO(
-                null, // routeId not applicable here
+                null,
                 pathSegments,
                 totalDistance,
                 totalDuration
@@ -66,27 +83,35 @@ public class PathFinderService {
 
     /**
      * Find path with manual waypoints
+     * ✅ UPDATED:
+     * - Waypoints do NOT require direct segment between consecutive nodes.
+     * - We call findPath(from,to) for each pair and concatenate.
      */
     public PathDTO findPathWithWaypoints(
             List<Long> facilityIds,
             TrainDTO train
     ) {
+        if (facilityIds == null || facilityIds.size() < 2) {
+            throw new RuntimeException("Manual path must contain at least 2 facilities.");
+        }
+
         List<LineSegmentDTO> allSegments = new ArrayList<>();
         double totalDistance = 0.0;
         double totalDuration = 0.0;
 
-        // Find path between each consecutive pair
         for (int i = 0; i < facilityIds.size() - 1; i++) {
             Long from = facilityIds.get(i);
             Long to = facilityIds.get(i + 1);
 
-            List<LineSegmentDTO> segments = trainRepo.getLineSegments(from, to);
-            allSegments.addAll(segments);
+            PathDTO partial = findPath(from, to, train);
 
-            totalDistance += segments.stream().mapToDouble(LineSegmentDTO::distance).sum();
-            totalDuration += segments.stream()
-                    .mapToDouble(seg -> seg.distance() / seg.maxSpeed() * 60)
-                    .sum();
+            if (partial.segments() == null || partial.segments().isEmpty()) {
+                throw new RuntimeException("No path found for waypoint hop: " + from + " -> " + to);
+            }
+
+            allSegments.addAll(partial.segments());
+            totalDistance += safe(partial.totalDistance(), 0.0);
+            totalDuration += safe(partial.estimatedDuration(), 0.0);
         }
 
         return new PathDTO(
@@ -98,137 +123,83 @@ public class PathFinderService {
     }
 
     // ============================================================
-    // DIJKSTRA'S ALGORITHM
+    // DIJKSTRA'S ALGORITHM (Adjacency-based)
     // ============================================================
-
-    private static class Edge {
-        Long to;
-        double weight;
-        LineSegmentDTO segment;
-
-        Edge(Long to, double weight, LineSegmentDTO segment) {
-            this.to = to;
-            this.weight = weight;
-            this.segment = segment;
-        }
-    }
 
     private static class Node implements Comparable<Node> {
         Long facilityId;
         double distance;
-
-        Node(Long facilityId, double distance) {
-            this.facilityId = facilityId;
-            this.distance = distance;
-        }
-
-        @Override
-        public int compareTo(Node other) {
-            return Double.compare(this.distance, other.distance);
-        }
+        Node(Long facilityId, double distance) { this.facilityId = facilityId; this.distance = distance; }
+        @Override public int compareTo(Node other) { return Double.compare(this.distance, other.distance); }
     }
 
     private static class PathResult {
         List<Long> path;
         double distance;
-
-        PathResult(List<Long> path, double distance) {
-            this.path = path;
-            this.distance = distance;
-        }
+        PathResult(List<Long> path, double distance) { this.path = path; this.distance = distance; }
     }
 
-    private PathResult dijkstra(Map<Long, List<Edge>> graph, Long start, Long end) {
-        Map<Long, Double> distances = new HashMap<>();
-        Map<Long, Long> previous = new HashMap<>();
+    private PathResult dijkstraByAdjacency(Long start, Long end) {
+        Map<Long, Double> dist = new HashMap<>();
+        Map<Long, Long> prev = new HashMap<>();
         PriorityQueue<Node> pq = new PriorityQueue<>();
         Set<Long> visited = new HashSet<>();
 
-        distances.put(start, 0.0);
+        dist.put(start, 0.0);
         pq.offer(new Node(start, 0.0));
 
         while (!pq.isEmpty()) {
-            Node current = pq.poll();
+            Node cur = pq.poll();
+            if (visited.contains(cur.facilityId)) continue;
+            visited.add(cur.facilityId);
 
-            if (visited.contains(current.facilityId)) {
-                continue;
+            if (cur.facilityId.equals(end)) {
+                List<Long> path = reconstruct(prev, end);
+                return new PathResult(path, cur.distance);
             }
 
-            visited.add(current.facilityId);
+            // ✅ neighbors from RailwayLine adjacency
+            List<AdjacentFacilityDTO> neighbors = trainRepo.getAdjacentFacilities(cur.facilityId);
+            for (AdjacentFacilityDTO adj : neighbors) {
+                Long next = adj.toFacilityId();
+                if (next == null || visited.contains(next)) continue;
 
-            if (current.facilityId.equals(end)) {
-                // Reconstruct path
-                List<Long> path = new ArrayList<>();
-                Long at = end;
-                while (at != null) {
-                    path.add(0, at);
-                    at = previous.get(at);
-                }
-                return new PathResult(path, current.distance);
-            }
+                // edge cost = distance between cur and next (sum of hop segments)
+                double edgeCost = hopDistance(cur.facilityId, next);
 
-            List<Edge> edges = graph.getOrDefault(current.facilityId, Collections.emptyList());
-            for (Edge edge : edges) {
-                if (visited.contains(edge.to)) {
-                    continue;
-                }
-
-                double newDist = distances.get(current.facilityId) + edge.weight;
-                if (newDist < distances.getOrDefault(edge.to, Double.MAX_VALUE)) {
-                    distances.put(edge.to, newDist);
-                    previous.put(edge.to, current.facilityId);
-                    pq.offer(new Node(edge.to, newDist));
+                double nd = dist.get(cur.facilityId) + edgeCost;
+                if (nd < dist.getOrDefault(next, Double.MAX_VALUE)) {
+                    dist.put(next, nd);
+                    prev.put(next, cur.facilityId);
+                    pq.offer(new Node(next, nd));
                 }
             }
         }
 
-        return null; // No path found
+        return null;
     }
 
-    // ============================================================
-    // HELPER METHODS
-    // ============================================================
-
-    private Map<Long, List<Edge>> buildGraph(List<LineSegmentDTO> segments) {
-        Map<Long, List<Edge>> graph = new HashMap<>();
-
-        for (LineSegmentDTO seg : segments) {
-            // Forward direction
-            graph.computeIfAbsent(seg.fromFacilityId(), k -> new ArrayList<>())
-                    .add(new Edge(seg.toFacilityId(), seg.distance(), seg));
-
-            // Backward direction (trains can go both ways)
-            graph.computeIfAbsent(seg.toFacilityId(), k -> new ArrayList<>())
-                    .add(new Edge(seg.fromFacilityId(), seg.distance(), seg));
+    private List<Long> reconstruct(Map<Long, Long> prev, Long end) {
+        List<Long> path = new ArrayList<>();
+        Long at = end;
+        while (at != null) {
+            path.add(0, at);
+            at = prev.get(at);
         }
-
-        return graph;
+        return path;
     }
 
-    private List<LineSegmentDTO> convertToSegments(List<Long> facilityPath, List<LineSegmentDTO> allSegments) {
-        List<LineSegmentDTO> result = new ArrayList<>();
-
-        for (int i = 0; i < facilityPath.size() - 1; i++) {
-            Long from = facilityPath.get(i);
-            Long to = facilityPath.get(i + 1);
-
-            // Find segment connecting these facilities
-            LineSegmentDTO segment = allSegments.stream()
-                    .filter(s -> (s.fromFacilityId().equals(from) && s.toFacilityId().equals(to))
-                            || (s.fromFacilityId().equals(to) && s.toFacilityId().equals(from)))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Segment not found: " + from + " -> " + to));
-
-            result.add(segment);
+    private double hopDistance(Long from, Long to) {
+        List<LineSegmentDTO> segs = trainRepo.getLineSegments(from, to);
+        if (segs == null || segs.isEmpty()) {
+            // If there's a RailwayLine adjacency but no segments returned, treat as "very expensive" or fail.
+            // Better to FAIL fast because your data/function is inconsistent.
+            throw new RuntimeException("No segments for hop: " + from + " -> " + to);
         }
-
-        return result;
+        return segs.stream().mapToDouble(LineSegmentDTO::distance).sum();
     }
 
-    private List<LineSegmentDTO> getAllSegmentsInNetwork(Long from, Long to) {
-        // Simplified: get direct segments
-        // In reality, you'd need to query all segments in the network
-        // and build a complete graph
-        return trainRepo.getLineSegments(from, to);
+    private double safe(Double v, double def) {
+        return (v == null || Double.isNaN(v) || Double.isInfinite(v)) ? def : v;
     }
 }

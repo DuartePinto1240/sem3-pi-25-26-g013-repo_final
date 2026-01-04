@@ -14,7 +14,6 @@ public class SpeedCalculatorService {
 
     private static final double GRAVITY = 9.81; // m/s²
     private static final double ROLLING_RESISTANCE_COEF = 0.002; // typical for trains
-    private static final double AIR_RESISTANCE_COEF = 0.0035; // simplified
 
     /**
      * Calculate maximum speed for train on a given segment
@@ -25,44 +24,46 @@ public class SpeedCalculatorService {
             List<WagonDTO> wagons,
             LineSegmentDTO segment
     ) {
-        // Speed is limited by:
-        // 1. Track speed limit
-        // 2. Locomotive max speed
-        // 3. Train power vs weight ratio
+        double trackLimit = safe(segment.maxSpeed(), 0.0);
 
-        double trackLimit = segment.maxSpeed();
+        if (locomotives == null || locomotives.isEmpty()) {
+            // Without locomotives you cannot compute power/tractive limits correctly
+            // but returning 0 here would break scheduling; better to fallback to trackLimit.
+            return trackLimit;
+        }
+
         double locoLimit = locomotives.stream()
-                .mapToDouble(LocomotiveDTO::maxSpeed)
+                .mapToDouble(l -> safe(l.maxSpeed(), trackLimit))
                 .min()
                 .orElse(trackLimit);
 
-        // Power-limited speed (simplified)
-        double totalPower = locomotives.stream()
-                .mapToDouble(LocomotiveDTO::power)
-                .sum(); // kW
+        double totalPowerKw = locomotives.stream()
+                .mapToDouble(l -> safe(l.power(), 0.0))
+                .sum();
 
-        double totalWeight = calculateTotalWeight(locomotives, wagons);
+        double totalWeightTonnes = calculateTotalWeight(locomotives, wagons);
 
-        // Simplified: speed where power = resistance forces
-        // P = F * v => v = P / F
-        // F = rolling resistance + air resistance (simplified)
-        double rollingForce = totalWeight * 1000 * GRAVITY * ROLLING_RESISTANCE_COEF; // N
+        // Rolling resistance force ~ m*g*coef
+        double rollingForceN = totalWeightTonnes * 1000.0 * GRAVITY * ROLLING_RESISTANCE_COEF;
 
-        // Power-limited speed (very simplified)
-        double powerLimitedSpeed = (totalPower * 1000) / rollingForce * 3.6; // convert m/s to km/h
+        double powerLimitedSpeedKmh;
+        if (totalPowerKw <= 0.0 || rollingForceN <= 0.0) {
+            // If something is missing, don't kill the schedule; fallback to track/loco limits
+            powerLimitedSpeedKmh = Math.min(trackLimit, locoLimit);
+        } else {
+            // v = P / F (m/s) -> convert to km/h
+            powerLimitedSpeedKmh = (totalPowerKw * 1000.0) / rollingForceN * 3.6;
+        }
 
-        // Additional limitations
-        if (!segment.isElectrified()) {
-            // Check if any locomotive is electric-only
-            boolean hasOnlyElectric = locomotives.stream()
-                    .allMatch(l -> "ELECTRIC".equals(l.type()));
-            if (hasOnlyElectric) {
-                return 0.0; // Cannot operate!
+        // electrification constraint
+        if (Boolean.FALSE.equals(segment.isElectrified())) {
+            boolean allElectric = locomotives.stream().allMatch(l -> "ELECTRIC".equalsIgnoreCase(l.type()));
+            if (allElectric) {
+                return 0.0; // cannot operate
             }
         }
 
-        // Return minimum of all limits
-        return Math.min(Math.min(trackLimit, locoLimit), powerLimitedSpeed);
+        return Math.min(Math.min(trackLimit, locoLimit), powerLimitedSpeedKmh);
     }
 
     /**
@@ -74,38 +75,34 @@ public class SpeedCalculatorService {
             LineSegmentDTO segment
     ) {
         double maxSpeed = calculateMaxSpeed(locomotives, wagons, segment);
-        return maxSpeed * 0.85; // 85% of max speed
+        return maxSpeed * 0.85;
     }
 
     /**
-     * Calculate acceleration
+     * Calculate acceleration (simplified cap)
      * @return acceleration in m/s²
      */
     public double calculateAcceleration(
             List<LocomotiveDTO> locomotives,
             List<WagonDTO> wagons
     ) {
-        double totalPower = locomotives.stream()
-                .mapToDouble(LocomotiveDTO::power)
-                .sum(); // kW
+        if (locomotives == null || locomotives.isEmpty()) {
+            return 0.12; // safe fallback
+        }
 
-        double totalWeight = calculateTotalWeight(locomotives, wagons) * 1000; // kg
+        double totalMassKg = calculateTotalWeight(locomotives, wagons) * 1000.0;
 
-        // Simplified: assume power can be converted to force at low speeds
-        // F = P / v, but at startup v is small, so use tractive effort
-        // Typical diesel: ~300 kN, electric: ~400 kN
-        double tractiveEffort = locomotives.size() * 350.0 * 1000; // N (simplified)
+        // simplified tractive effort per locomotive
+        double tractiveEffortN = locomotives.size() * 350_000.0;
 
-        // F = m * a => a = F / m
-        double acceleration = tractiveEffort / totalWeight;
+        double a = (totalMassKg <= 0.0) ? 0.12 : (tractiveEffortN / totalMassKg);
 
-        // Realistic limits for freight trains: 0.1 - 0.3 m/s²
-        return Math.min(acceleration, 0.25);
+        // cap realistic freight accel
+        return Math.min(Math.max(a, 0.05), 0.25);
     }
 
     /**
-     * Calculate time to travel a segment (including acceleration)
-     * @param segment distance in kilometers
+     * Calculate time to travel a segment (including accel/decel)
      * @return time in minutes
      */
     public double calculateTravelTime(
@@ -113,97 +110,100 @@ public class SpeedCalculatorService {
             List<WagonDTO> wagons,
             LineSegmentDTO segment
     ) {
-        double distanceKm = segment.distance();
-        double distanceM = distanceKm * 1000;
+        double distanceKm = safe(segment.distance(), 0.0);
+        double distanceM = distanceKm * 1000.0;
 
-        double maxSpeed = calculateOperationalSpeed(locomotives, wagons, segment);
-        double maxSpeedMs = maxSpeed / 3.6; // convert km/h to m/s
+        if (distanceM <= 0.0) return 0.0;
 
-        double acceleration = calculateAcceleration(locomotives, wagons);
+        double vKmh = calculateOperationalSpeed(locomotives, wagons, segment);
+        double vMs = vKmh / 3.6;
 
-        // Time to reach max speed: t = v / a
-        double timeToMaxSpeed = maxSpeedMs / acceleration; // seconds
+        // If v is zero (e.g., electric-only on non-electrified), treat as impossible
+        if (vMs <= 0.0) {
+            throw new RuntimeException("Train cannot operate on segment (speed=0). Check electrification/locomotives.");
+        }
 
-        // Distance covered during acceleration: d = 0.5 * a * t²
-        double accelDistance = 0.5 * acceleration * timeToMaxSpeed * timeToMaxSpeed; // meters
+        double a = calculateAcceleration(locomotives, wagons);
 
-        // Distance covered during deceleration (same as acceleration)
-        double decelDistance = accelDistance;
+        // time to reach v: t=v/a
+        double tToV = vMs / a;
 
-        // Check if we reach max speed at all
-        if ((accelDistance + decelDistance) >= distanceM) {
-            // Triangle profile (never reach max speed)
-            // d = a * t² => t = sqrt(d / a)
-            double totalTime = Math.sqrt(distanceM / acceleration); // seconds
-            return totalTime / 60.0; // convert to minutes
+        // distance during accel: 0.5*a*t^2
+        double dAccel = 0.5 * a * tToV * tToV;
+        double dDecel = dAccel;
+
+        if (dAccel + dDecel >= distanceM) {
+            // triangle profile: never reaches v
+            double t = Math.sqrt(distanceM / a);
+            return (2.0 * t) / 60.0;
         } else {
-            // Trapezoid profile
-            double constantSpeedDistance = distanceM - accelDistance - decelDistance;
-            double constantSpeedTime = constantSpeedDistance / maxSpeedMs; // seconds
-
-            double totalTime = timeToMaxSpeed + constantSpeedTime + timeToMaxSpeed; // seconds
-            return totalTime / 60.0; // convert to minutes
+            double dCruise = distanceM - dAccel - dDecel;
+            double tCruise = dCruise / vMs;
+            double totalSec = tToV + tCruise + tToV;
+            return totalSec / 60.0;
         }
     }
 
     /**
-     * Calculate total weight of train
-     * @return weight in tonnes
+     * Total weight (tonnes): loco weight + (tare + payload)
      */
     public double calculateTotalWeight(
             List<LocomotiveDTO> locomotives,
             List<WagonDTO> wagons
     ) {
-        double locoWeight = locomotives.stream()
-                .mapToDouble(LocomotiveDTO::weight)
-                .sum();
+        double locoWeight = 0.0;
+        if (locomotives != null) {
+            locoWeight = locomotives.stream()
+                    .mapToDouble(l -> safe(l.weight(), 0.0))
+                    .sum();
+        }
 
-        double wagonWeight = wagons.stream()
-                .mapToDouble(w -> w.tareWeight() + w.payload())
-                .sum();
+        double wagonWeight = 0.0;
+        if (wagons != null) {
+            wagonWeight = wagons.stream()
+                    .mapToDouble(w -> safe(w.tareWeight(), 0.0) + safe(w.payload(), 0.0))
+                    .sum();
+        }
 
         return locoWeight + wagonWeight;
     }
 
-    /**
-     * Calculate total length of train
-     * @return length in meters
-     */
     public double calculateTotalLength(
             List<LocomotiveDTO> locomotives,
             List<WagonDTO> wagons
     ) {
-        double locoLength = locomotives.stream()
-                .mapToDouble(l -> 20.0) // approximate locomotive length
-                .sum();
+        double locoLength = 0.0;
+        if (locomotives != null) {
+            // if you don't have loco length, keep approx
+            locoLength = locomotives.size() * 20.0;
+        }
 
-        double wagonLength = wagons.stream()
-                .mapToDouble(WagonDTO::length)
-                .sum();
+        double wagonLength = 0.0;
+        if (wagons != null) {
+            wagonLength = wagons.stream()
+                    .mapToDouble(w -> safe(w.length(), 0.0))
+                    .sum();
+        }
 
         return locoLength + wagonLength;
     }
 
-    /**
-     * Check if train can operate on segment
-     */
     public boolean canOperate(
             List<LocomotiveDTO> locomotives,
             LineSegmentDTO segment
     ) {
-        // Check electrification compatibility
-        if (!segment.isElectrified()) {
-            // Need at least one diesel locomotive
+        if (locomotives == null || locomotives.isEmpty()) return false;
+
+        if (Boolean.FALSE.equals(segment.isElectrified())) {
             boolean hasDiesel = locomotives.stream()
-                    .anyMatch(l -> "DIESEL".equals(l.type()));
-            if (!hasDiesel) {
-                return false;
-            }
+                    .anyMatch(l -> "DIESEL".equalsIgnoreCase(l.type()));
+            return hasDiesel;
         }
 
-        // Check gauge compatibility (simplified - assume all match)
-        // In reality, you'd check locomotive gauge vs segment gauge
-
         return true;
+    }
+
+    private double safe(Double v, double def) {
+        return (v == null || Double.isNaN(v) || Double.isInfinite(v)) ? def : v;
     }
 }

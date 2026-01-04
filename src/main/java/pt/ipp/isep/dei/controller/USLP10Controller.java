@@ -67,11 +67,10 @@ public class USLP10Controller {
         // 3. Determine path
         if ("MANUAL".equalsIgnoreCase(pathMode) && manualPath != null && !manualPath.isEmpty()) {
             System.out.println("ℹ Using manual path (overriding route)");
-            // Manual keeps your existing logic
             return scheduler.calculateScheduleManual(train, manualPath, departureTime);
         }
 
-        // ✅ AUTOMATIC (Option B simple): follow RouteStop sequence exactly
+        // AUTOMATIC: follow RouteStop sequence
         System.out.println("ℹ Using automatic path from assigned route (RouteStop sequence)");
         return scheduler.calculateScheduleForStopSequence(train, route.stops(), departureTime);
     }
