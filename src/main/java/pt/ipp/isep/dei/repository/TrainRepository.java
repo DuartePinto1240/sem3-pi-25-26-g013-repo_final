@@ -15,9 +15,14 @@ public interface TrainRepository {
     RouteDTO getRouteForTrain(Long trainId);
     String getFacilityName(Long facilityId);
 
-    // ✨ NEW - For USLP09
-    List<LocomotiveDTO> getAllLocomotives(); // All locomotives (available + in use)
-    WagonDTO getWagonById(Long wagonId); // Get specific wagon
+    // required for USLP10 speed/time calculation
+    LocomotiveDTO getLocomotiveById(Long locomotiveId);
+
+    // For USLP09
+    List<LocomotiveDTO> getAllLocomotives();
+    WagonDTO getWagonById(Long wagonId);
     List<TrainDTO> getAllTrains();
-    List<TrainDTO> getTrainsWithRoutes();// All trains
+    List<TrainDTO> getTrainsWithRoutes();
+
+    List<AdjacentFacilityDTO> getAdjacentFacilities(Long facilityId);
 }
